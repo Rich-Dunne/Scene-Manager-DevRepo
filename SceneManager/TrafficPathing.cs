@@ -7,7 +7,8 @@ namespace SceneManager
 {
     public static class TrafficPathing
     {
-        public static List<ControlledVehicle> ControlledVehicles = new List<ControlledVehicle> { };
+        public static Dictionary<string, ControlledVehicle> ControlledVehicles = new Dictionary<string, ControlledVehicle>();
+        //public static List<ControlledVehicle> ControlledVehicles = new List<ControlledVehicle> { };
 
         public static void InitialWaypointVehicleCollector(List<WaypointData> waypointData)
         {
@@ -34,6 +35,7 @@ namespace SceneManager
 
             while (waypointData.ElementAtOrDefault(0) != null)
             {
+                Game.DisplaySubtitle($"Vehicles in collection: {ControlledVehicles.Count()}");
                 // Getting vehicles within 3f of waypoint
                 try
                 {
@@ -43,26 +45,26 @@ namespace SceneManager
                         if(VehicleAndDriverValid(v) && v != Game.LocalPlayer.Character.CurrentVehicle && v.HasDriver && v.Driver.IsAlive && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike))
                         {
                             // Check if there's an object in the list with a matching vehicle
-                            var matchingVehicle = ControlledVehicles.Where(cv => cv.Vehicle == v).ToList();
+                            var matchingVehicle = ControlledVehicles.Where(cv => cv.Value.Vehicle == v).ToList();
                             // If there's a match, then check if the first match has tasksAssigned.  If not, AssignTasks
-                            if (matchingVehicle.ElementAtOrDefault(0) != null && !matchingVehicle[0].TasksAssigned && !matchingVehicle[0].DismissNow)
+                            if (matchingVehicle.ElementAtOrDefault(0).Value != null && !matchingVehicle[0].Value.TasksAssigned && !matchingVehicle[0].Value.DismissNow)
                             {
                                 Game.LogTrivial($"[InitialWaypointVehicleCollector] {v.Model.Name} already in collection, but with no tasks.  Assigning tasks.");
-                                matchingVehicle[0].TasksAssigned = true;
-                                GameFiber AssignTasksFiber = new GameFiber(() => AssignTasks(matchingVehicle[0], waypointData));
+                                matchingVehicle[0].Value.TasksAssigned = true;
+                                GameFiber AssignTasksFiber = new GameFiber(() => AssignTasks(matchingVehicle[0].Value, waypointData));
                                 AssignTasksFiber.Start();
                             }
                             // Else if object doesn't exist, add to collection and AssignTasks
-                            else if (matchingVehicle.ElementAtOrDefault(0) != null && matchingVehicle[0].TasksAssigned)
+                            else if (matchingVehicle.ElementAtOrDefault(0).Value != null && matchingVehicle[0].Value.TasksAssigned)
                             {
                                 //Game.LogTrivial($"Vehicle already in collection with tasks.  Do nothing.");
                             }
                             else
                             {
-                                ControlledVehicles.Add(new ControlledVehicle(v, waypointData[0].Path, waypointData.Count, 1, true, false, false));
+                                ControlledVehicles.Add(v.LicensePlate, new ControlledVehicle(v, v.LicensePlate, waypointData[0].Path, waypointData.Count, 1, true, false, false));
                                 Game.LogTrivial($"Added {v.Model.Name} to collection from initial waypoint at path {waypointData[0].Path} with {waypointData.Count} waypoints");
 
-                                GameFiber AssignTasksFiber = new GameFiber(() => AssignTasks(ControlledVehicles.Last(), waypointData));
+                                GameFiber AssignTasksFiber = new GameFiber(() => AssignTasks(ControlledVehicles[v.LicensePlate], waypointData));
                                 AssignTasksFiber.Start();
                             }
                         }
@@ -121,6 +123,7 @@ namespace SceneManager
             {
                 GameFiber.Yield();
             }
+            ControlledVehicles.Remove(cv.LicensePlate);
             Game.LogTrivial($"AssignTasks exit");
         }
 
@@ -199,7 +202,6 @@ namespace SceneManager
                 cv.Vehicle.Driver.Tasks.Clear();
                 //cv.Vehicle.IsPersistent = false;
                 cv.Vehicle.Driver.BlockPermanentEvents = false;
-                ControlledVehicles.Remove(cv);
             }
             else if(!VehicleAndDriverValid(cv))
             {
