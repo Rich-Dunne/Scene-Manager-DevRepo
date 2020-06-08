@@ -1,10 +1,10 @@
-#Scene Manager
+# Scene Manager
 
-##INSTALLATION
+## INSTALLATION
 Drag and drop the included GTA V folder into where your GTA V is installed.
 
-##HOW-TO USE
-###Creating Paths:
+## HOW-TO USE
+### Creating Paths:
 1.  To create paths, open the Scene Manager menu by pressing Left Shift + T (default) while on foot.  Select "Traffic Menu," then "Create New Path."  
 2.  In the Path Creation menu, you can choose different waypoint types and speeds, as well as add and remove waypoints.  The settings for each waypoint are how the AI will drive to THAT waypoint from the PREVIOUS waypoint.
 3.  Adding a waypoint will create a waypoint at your player's position.
@@ -15,17 +15,17 @@ Drag and drop the included GTA V folder into where your GTA V is installed.
 8.  The "Dismiss nearest driver" option in the Traffic Menu allows you to dismiss vehicles at "Stop" waypoints.  This option can also be used to try and get vehicles unstuck from precarious situations.
 9.  Paths and cones will remain in the world after you die.  Be sure to delete them when you're done!
 
-###Cones Management:
+### Cones Management:
 1.  To place cones, open the Scene Manager menu by pressing T (default).
 2.  In the Cone Menu, you may scroll through different types of road cones, as well as place and remove cones.
 3.  For easier and more accurate cone placement, use the first persion view.
 4.  The AI will not drive around cones on their own.  Place cones around your custom paths for maximum immersion.
 
-##PATREON
+## PATREON
 If you enjoy my plugins and would like to help with the development of new plugins, please consider supporting me on Patreon.  Patreon benefits include early access to plugin updates, being able to suggest and vote on new plugin ideas for me to create, early access to new plugins, and access to Patreon-exclusive plugins which will never be released publicly!
 https://www.patreon.com/richdevs
 
 
-##CREDITS
+## CREDITS
 Author: Rich
 Additional credit:  OJdoesIt, Vincentsgm, EchoWolf, Factions, Sereous
