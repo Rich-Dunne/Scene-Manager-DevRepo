@@ -451,7 +451,7 @@ namespace SceneManager
                     deleteAllPaths.Enabled = false;
                     directDriver.Enabled = false;
                 }
-                _menuPool.RefreshIndex();
+                //_menuPool.RefreshIndex(); // Disabling this to stop resetting waypoint menu after waypoint is added
             }
 
             if (selectedItem == trafficRemoveWaypoint)
@@ -466,7 +466,7 @@ namespace SceneManager
                         paths[i].WaypointData.RemoveAt(paths[i].WaypointData.IndexOf(paths[i].WaypointData.Last()));
 
                         // If the path has no waypoints, disable the menu option to remove a waypoint
-                        if (paths[0].WaypointData.Count == 0)
+                        if (paths[i].WaypointData.Count == 0)
                         {
                             trafficRemoveWaypoint.Enabled = false;
                         }
@@ -498,7 +498,7 @@ namespace SceneManager
                         else
                         {
                             Game.LogTrivial($"[Path Error] A minimum of 2 waypoints is required.");
-                            Game.DisplayNotification($"~o~Scene Manager\n~r~[Error]~w~ A minimum of 2 waypoints is required.");
+                            Game.DisplayNotification($"~o~Scene Manager\n~r~[Error]~w~ A minimum of 2 waypoints or one stop waypoint is required to create a path.");
                             foreach (WaypointData wd in paths[i].WaypointData)
                             {
                                 wd.WaypointBlip.Delete();

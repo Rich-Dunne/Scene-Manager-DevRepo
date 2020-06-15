@@ -35,7 +35,7 @@ namespace SceneManager
 
             while (waypointData.ElementAtOrDefault(0) != null)
             {
-                Game.DisplaySubtitle($"Vehicles in collection: {ControlledVehicles.Count()}");
+                //Game.DisplaySubtitle($"Vehicles in collection: {ControlledVehicles.Count()}");
                 // Getting vehicles within 3f of waypoint
                 try
                 {
@@ -240,6 +240,7 @@ namespace SceneManager
             return (from x in World.GetAllVehicles() where !x.IsTrailer && x.DistanceTo(OriginPosition) < radius select x).ToArray();
         }
 
+        // Driving styles https://gtaforums.com/topic/822314-guide-driving-styles/
         [Flags]
         public enum EDrivingFlags
         {
@@ -253,6 +254,7 @@ namespace SceneManager
             IgnoreRoads = 4194304,
             AvoidHighways = 536870912,
             Normal = StopForVehicles | StopForPeds | AvoidEmptyVehicles | StopForTrafficLights | UseBlinkers,
+            //TotalControl = AllowMedianCrossing | AllowWrongWay | DriveAroundObjects | DriveAroundPeds | DriveBySight | FollowTraffic | IgnorePathfinding
         }
 
         public static void SetDriveTaskDrivingFlags(this Ped ped, EDrivingFlags flags)

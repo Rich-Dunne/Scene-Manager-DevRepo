@@ -1,7 +1,7 @@
 ﻿using System.Windows.Forms;
 using Rage;
 
-[assembly: Rage.Attributes.Plugin("Scene Manager V1.7", Author = "Rich", Description = "Manage your scenes with custom AI traffic pathing and cone placement.")]
+[assembly: Rage.Attributes.Plugin("Scene Manager V2.0", Author = "Rich", Description = "Manage your scenes with custom AI traffic pathing and cone placement.")]
 
 namespace SceneManager
 {
