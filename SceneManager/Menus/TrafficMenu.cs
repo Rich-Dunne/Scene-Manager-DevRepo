@@ -103,19 +103,19 @@ namespace SceneManager
 
             // Remove the speed zone so cars don't continue to be affected after the path is deleted
             Game.LogTrivial($"Removing yield zone and waypoint blips");
-            foreach (Waypoint wd in path.Waypoint)
+            foreach (Waypoint wp in path.Waypoint)
             {
-                if (wd.YieldZone != 0)
+                if (wp.YieldZone != 0)
                 {
-                    World.RemoveSpeedZone(wd.YieldZone);
+                    World.RemoveSpeedZone(wp.YieldZone);
                 }
-                if (wd.WaypointBlip)
+                if (wp.Blip)
                 {
-                    wd.WaypointBlip.Delete();
+                    wp.Blip.Delete();
                 }
-                if (wd.CollectorRadiusBlip)
+                if (wp.CollectorRadiusBlip)
                 {
-                    wd.CollectorRadiusBlip.Delete();
+                    wp.CollectorRadiusBlip.Delete();
                 }
             }
 
@@ -167,30 +167,8 @@ namespace SceneManager
                         {
                             GameFiber.StartNew(() =>
                             {
-                                while (SettingsMenu.debugGraphics.Checked && paths[i] != null)
-                                {
-                                    for (int j = 0; j < paths[i].Waypoint.Count; j++)
-                                    {
-                                        if (paths[i].Waypoint[j].Collector)
-                                        {
-                                            Debug.DrawSphere(paths[i].Waypoint[j].WaypointPos, paths[i].Waypoint[j].CollectorRadius, Color.FromArgb(80, Color.Blue));
-                                        }
-                                        else if (paths[i].Waypoint[j].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
-                                        {
-                                            Debug.DrawSphere(paths[i].Waypoint[j].WaypointPos, 1f, Color.FromArgb(80, Color.Red));
-                                        }
-                                        else
-                                        {
-                                            Debug.DrawSphere(paths[i].Waypoint[j].WaypointPos, 1f, Color.FromArgb(80, Color.Green));
-                                        }
-
-                                        if (j != paths[i].Waypoint.Count - 1)
-                                        {
-                                            Debug.DrawLine(paths[i].Waypoint[j].WaypointPos, paths[i].Waypoint[j + 1].WaypointPos, Color.White);
-                                        }
-                                    }
-                                    GameFiber.Yield();
-                                }
+                                DebugGraphics.LoopToDrawDebugGraphics(SettingsMenu.debugGraphics, paths[i]);
+                                //SettingsMenu.LoopToDrawDebugGraphics(paths[i]);
                             });
                         }
                         break;
@@ -342,7 +320,7 @@ namespace SceneManager
                         path.PathDisabled = true;
                         foreach (Waypoint waypoint in path.Waypoint)
                         {
-                            waypoint.WaypointBlip.Alpha = 0.5f;
+                            waypoint.Blip.Alpha = 0.5f;
                             if (waypoint.CollectorRadiusBlip)
                             {
                                 waypoint.CollectorRadiusBlip.Alpha = 0.25f;
@@ -358,7 +336,7 @@ namespace SceneManager
                         path.PathDisabled = false;
                         foreach (Waypoint waypoint in path.Waypoint)
                         {
-                            waypoint.WaypointBlip.Alpha = 1f;
+                            waypoint.Blip.Alpha = 1f;
                             if (waypoint.CollectorRadiusBlip)
                             {
                                 waypoint.CollectorRadiusBlip.Alpha = 0.5f;
