@@ -103,7 +103,7 @@ namespace SceneManager
 
             // Remove the speed zone so cars don't continue to be affected after the path is deleted
             Game.LogTrivial($"Removing yield zone and waypoint blips");
-            foreach (Waypoint wp in path.Waypoint)
+            foreach (Waypoint wp in path.Waypoints)
             {
                 if (wp.YieldZone != 0)
                 {
@@ -120,7 +120,7 @@ namespace SceneManager
             }
 
             Game.LogTrivial($"Clearing path.WaypointData");
-            path.Waypoint.Clear();
+            path.Waypoints.Clear();
             // Manipulating the menu to reflect specific paths being deleted
             if (pathsToDelete == "Single")
             {
@@ -190,7 +190,7 @@ namespace SceneManager
                 }
                 foreach (Path path in paths)
                 {
-                    path.Waypoint.Clear();
+                    path.Waypoints.Clear();
                 }
                 paths.Clear();
                 pathsNum.Clear();
@@ -209,24 +209,25 @@ namespace SceneManager
                     if (nearbyVehicle.IsInCollectedVehicles())
                     {
                         var vehicle = TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate];
+                        var nearestWaypoint = paths[directDriver.Index].Waypoints.OrderBy(wp => wp.Position).Take(1) as Waypoint;
 
                         Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} already in collection.  Clearing tasks.");
                         nearbyVehicle.Driver.Tasks.Clear();
-                        vehicle.Path = paths[directDriver.Index].Waypoint[0].Path;
-                        vehicle.TotalWaypoints = paths[directDriver.Index].Waypoint.Count;
+                        vehicle.Path = paths[directDriver.Index].Waypoints[0].Path;
+                        vehicle.TotalWaypoints = paths[directDriver.Index].Waypoints.Count;
                         vehicle.CurrentWaypoint = 1;
                         vehicle.DismissNow = true;
                         vehicle.StoppedAtWaypoint = false;
                         vehicle.Redirected = true;
-                        GameFiber DirectTaskFiber = new GameFiber(() => TrafficPathing.DirectTask(vehicle, paths[directDriver.Index].Waypoint));
+                        GameFiber DirectTaskFiber = new GameFiber(() => TrafficPathing.DirectTask(vehicle, paths[directDriver.Index].Waypoints));
                         DirectTaskFiber.Start();
                     }
                     else
                     {
-                        TrafficPathing.collectedVehicles.Add(nearbyVehicle.LicensePlate, new CollectedVehicle(nearbyVehicle, nearbyVehicle.LicensePlate, paths[directDriver.Index].Waypoint[0].Path, paths[directDriver.Index].Waypoint.Count, 1, false, false, true));
-                        Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not in collection, adding to collection for path {paths[directDriver.Index].Waypoint[0].Path} with {paths[directDriver.Index].Waypoint.Count} waypoints");
+                        TrafficPathing.collectedVehicles.Add(nearbyVehicle.LicensePlate, new CollectedVehicle(nearbyVehicle, nearbyVehicle.LicensePlate, paths[directDriver.Index].Waypoints[0].Path, paths[directDriver.Index].Waypoints.Count, 1, false, false, true));
+                        Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not in collection, adding to collection for path {paths[directDriver.Index].Waypoints[0].Path} with {paths[directDriver.Index].Waypoints.Count} waypoints");
 
-                        GameFiber DirectTaskFiber = new GameFiber(() => TrafficPathing.DirectTask(TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate], paths[directDriver.Index].Waypoint));
+                        GameFiber DirectTaskFiber = new GameFiber(() => TrafficPathing.DirectTask(TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate], paths[directDriver.Index].Waypoints));
                         DirectTaskFiber.Start();
                     }
                 }
@@ -316,8 +317,8 @@ namespace SceneManager
                 {
                     foreach (Path path in paths)
                     {
-                        path.PathDisabled = true;
-                        foreach (Waypoint waypoint in path.Waypoint)
+                        path.DisablePath();
+                        foreach (Waypoint waypoint in path.Waypoints)
                         {
                             waypoint.Blip.Alpha = 0.5f;
                             if (waypoint.CollectorRadiusBlip)
@@ -332,8 +333,8 @@ namespace SceneManager
                 {
                     foreach (Path path in paths)
                     {
-                        path.PathDisabled = false;
-                        foreach (Waypoint waypoint in path.Waypoint)
+                        path.EnablePath();
+                        foreach (Waypoint waypoint in path.Waypoints)
                         {
                             waypoint.Blip.Alpha = 1f;
                             if (waypoint.CollectorRadiusBlip)

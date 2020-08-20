@@ -15,7 +15,7 @@ namespace SceneManager
             //GameFiber AssignStopForVehiclesFlagFiber = new GameFiber(() => AssignStopForVehiclesFlag(paths, path, waypointData));
             //AssignStopForVehiclesFlagFiber.Start();
 
-            while (paths.Contains(path) && path.Waypoint.Contains(waypoint))
+            while (paths.Contains(path) && path.Waypoints.Contains(waypoint))
             {
                 if (!path.PathDisabled && waypoint.Collector)
                 {
@@ -29,14 +29,14 @@ namespace SceneManager
                         // If the vehicle is not in the collection yet
                         if (!collectedVehicles.ContainsKey(v.LicensePlate))
                         {
-                            var collectedVehicle = new CollectedVehicle(v, v.LicensePlate, path.PathNum, path.Waypoint.Count, waypoint.Number, true, false, false);
+                            var collectedVehicle = new CollectedVehicle(v, v.LicensePlate, path.PathNum, path.Waypoints.Count, waypoint.Number, true, false, false);
                             collectedVehicles.Add(v.LicensePlate, collectedVehicle);
                             Game.LogTrivial($"[WaypointVehicleCollector] Added {v.Model.Name} to collection from path {path.PathNum}, waypoint {waypoint.Number}.");
 
-                            GameFiber DismissCheckFiber = new GameFiber(() => VehicleDismissed(collectedVehicle, path.Waypoint));
+                            GameFiber DismissCheckFiber = new GameFiber(() => VehicleDismissed(collectedVehicle, path.Waypoints));
                             DismissCheckFiber.Start();
 
-                            AssignTasks(collectedVehicle, path.Waypoint, waypoint);
+                            AssignTasks(collectedVehicle, path.Waypoints, waypoint);
                         }
                         // If the vehicle is in the collection, but has no tasks
                         else if (collectedVehicles.ContainsKey(v.LicensePlate) && !collectedVehicles[v.LicensePlate].TasksAssigned)
@@ -44,7 +44,7 @@ namespace SceneManager
                             Game.LogTrivial($"[WaypointVehicleCollector] {v.Model.Name} already in collection, but with no tasks.  Assigning tasks.");
                             collectedVehicles[v.LicensePlate].TasksAssigned = true;
 
-                            AssignTasks(collectedVehicles[v.LicensePlate], path.Waypoint, waypoint);
+                            AssignTasks(collectedVehicles[v.LicensePlate], path.Waypoints, waypoint);
                         }
                         // If the vehicle is in the collection and has tasks
                         else
@@ -201,7 +201,7 @@ namespace SceneManager
 
         public static void AssignStopForVehiclesFlag(List<Path> paths, Path path, Waypoint waypointData)
         {
-            while (paths.Contains(path) && path.Waypoint.Contains(waypointData))
+            while (paths.Contains(path) && path.Waypoints.Contains(waypointData))
             {
                 if (!path.PathDisabled)
                 {
@@ -214,7 +214,7 @@ namespace SceneManager
             }
         }
 
-        public static void DirectTask(CollectedVehicle cv, List<Waypoint> waypointData)
+        public static void DirectTask(CollectedVehicle cv, List<Waypoint> waypoints)
         {
             cv.DismissNow = false;
             if (cv.Vehicle && cv.Vehicle.Driver)
@@ -227,10 +227,10 @@ namespace SceneManager
 
             // Give vehicle task to initial waypoint of desired path, then run a loop to keep giving the task until they're close enough in case they try to wander away too early
             // Need to figure out how to only get waypoints which are in front of or within 90 degrees of either side of the vehicle
-            var nearestWaypoint = waypointData.OrderBy(wp => wp.Position).Take(1) as Waypoint;
+            var nearestWaypoint = waypoints.OrderBy(wp => wp.Position).Take(1) as Waypoint;
 
             cv.Vehicle.Driver.Tasks.DriveToPosition(nearestWaypoint.Position, nearestWaypoint.Speed, (VehicleDrivingFlags)262539, 1f); // waypointData[0].WaypointPos
-            while (waypointData.ElementAtOrDefault(0) != null && cv.Vehicle && cv.Vehicle.Driver && cv.Vehicle.DistanceTo(waypointData[0].Position) > 3f && !cv.DismissNow)
+            while (nearestWaypoint != null && cv.Vehicle && cv.Vehicle.Driver && cv.Vehicle.DistanceTo(waypoints[0].Position) > 3f && !cv.DismissNow)
             {
                 cv.Vehicle.Driver.Tasks.DriveToPosition(nearestWaypoint.Position, nearestWaypoint.Speed, (VehicleDrivingFlags)262539, 1f);
                 GameFiber.Sleep(500);

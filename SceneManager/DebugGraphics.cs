@@ -10,11 +10,11 @@ namespace SceneManager
         {
             while (debugGraphics.Checked && path != null)
             {
-                for (int i = 0; i < path.Waypoint.Count; i++)
+                for (int i = 0; i < path.Waypoints.Count; i++)
                 {
                     DrawSpheresAtWaypoints(path, i);
 
-                    if (i != path.Waypoint.Count - 1)
+                    if (i != path.Waypoints.Count - 1)
                     {
                         DrawLinesBetweenWaypoints(path, i);
                     }
@@ -25,29 +25,29 @@ namespace SceneManager
 
         public static void DrawLinesBetweenWaypoints(Path path, int i)
         {
-            if (path.Waypoint[i + 1].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
+            if (path.Waypoints[i + 1].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
             {
-                Debug.DrawLine(path.Waypoint[i].Position, path.Waypoint[i + 1].Position, Color.Orange);
+                Debug.DrawLine(path.Waypoints[i].Position, path.Waypoints[i + 1].Position, Color.Orange);
             }
             else
             {
-                Debug.DrawLine(path.Waypoint[i].Position, path.Waypoint[i + 1].Position, Color.Green);
+                Debug.DrawLine(path.Waypoints[i].Position, path.Waypoints[i + 1].Position, Color.Green);
             }
         }
 
         public static void DrawSpheresAtWaypoints(Path path, int i)
         {
-            if (path.Waypoint[i].Collector)
+            if (path.Waypoints[i].Collector)
             {
-                Debug.DrawSphere(path.Waypoint[i].Position, path.Waypoint[i].CollectorRadius, Color.FromArgb(80, Color.Blue));
+                Debug.DrawSphere(path.Waypoints[i].Position, path.Waypoints[i].CollectorRadius, Color.FromArgb(80, Color.Blue));
             }
-            else if (path.Waypoint[i].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
+            else if (path.Waypoints[i].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
             {
-                Debug.DrawSphere(path.Waypoint[i].Position, 1f, Color.FromArgb(80, Color.Red));
+                Debug.DrawSphere(path.Waypoints[i].Position, 1f, Color.FromArgb(80, Color.Red));
             }
             else
             {
-                Debug.DrawSphere(path.Waypoint[i].Position, 1f, Color.FromArgb(80, Color.Green));
+                Debug.DrawSphere(path.Waypoints[i].Position, 1f, Color.FromArgb(80, Color.Green));
             }
         }
     }
