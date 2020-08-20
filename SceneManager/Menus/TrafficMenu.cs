@@ -168,7 +168,6 @@ namespace SceneManager
                             GameFiber.StartNew(() =>
                             {
                                 DebugGraphics.LoopToDrawDebugGraphics(SettingsMenu.debugGraphics, paths[i]);
-                                //SettingsMenu.LoopToDrawDebugGraphics(paths[i]);
                             });
                         }
                         break;
