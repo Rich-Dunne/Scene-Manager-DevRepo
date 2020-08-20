@@ -41,22 +41,11 @@ namespace SceneManager
                             {
                                 for (int i = 0; i < path.Waypoint.Count; i++)
                                 {
-                                    if (path.Waypoint[i].Collector)
-                                    {
-                                        Debug.DrawSphere(path.Waypoint[i].WaypointPos, path.Waypoint[i].CollectorRadius, Color.FromArgb(80, Color.Blue));
-                                    }
-                                    else if (path.Waypoint[i].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
-                                    {
-                                        Debug.DrawSphere(path.Waypoint[i].WaypointPos, 1f, Color.FromArgb(80, Color.Red));
-                                    }
-                                    else
-                                    {
-                                        Debug.DrawSphere(path.Waypoint[i].WaypointPos, 1f, Color.FromArgb(80, Color.Green));
-                                    }
+                                    DrawSpheresAtWaypoints(path, i);
 
                                     if (i != path.Waypoint.Count - 1)
                                     {
-                                        Debug.DrawLine(path.Waypoint[i].WaypointPos, path.Waypoint[i + 1].WaypointPos, Color.White);
+                                        DrawLinesBetweenWaypoints(path, i);
                                     }
                                 }
                                 GameFiber.Yield();
@@ -64,6 +53,34 @@ namespace SceneManager
                         });
                     }
                 }
+            }
+        }
+
+        private static void DrawLinesBetweenWaypoints(Path path, int i)
+        {
+            if (path.Waypoint[i+1].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
+            {
+                Debug.DrawLine(path.Waypoint[i].WaypointPos, path.Waypoint[i + 1].WaypointPos, Color.Orange);
+            }
+            else
+            {
+                Debug.DrawLine(path.Waypoint[i].WaypointPos, path.Waypoint[i + 1].WaypointPos, Color.Green);
+            }
+        }
+
+        private static void DrawSpheresAtWaypoints(Path path, int i)
+        {
+            if (path.Waypoint[i].Collector)
+            {
+                Debug.DrawSphere(path.Waypoint[i].WaypointPos, path.Waypoint[i].CollectorRadius, Color.FromArgb(80, Color.Blue));
+            }
+            else if (path.Waypoint[i].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
+            {
+                Debug.DrawSphere(path.Waypoint[i].WaypointPos, 1f, Color.FromArgb(80, Color.Red));
+            }
+            else
+            {
+                Debug.DrawSphere(path.Waypoint[i].WaypointPos, 1f, Color.FromArgb(80, Color.Green));
             }
         }
 
