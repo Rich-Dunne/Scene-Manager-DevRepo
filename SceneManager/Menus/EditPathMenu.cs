@@ -8,14 +8,13 @@ namespace SceneManager
     class EditPathMenu
     {
         private static UIMenuItem editPathWaypoints, deletePath;
-        public static UIMenuCheckboxItem togglePath, debugGraphics;
+        public static UIMenuCheckboxItem togglePath;
 
         public static void BuildEditPathMenu()
         {
             MenuManager.editPathMenu.AddItem(togglePath = new UIMenuCheckboxItem("Disable Path", false));
             MenuManager.editPathMenu.AddItem(editPathWaypoints = new UIMenuItem("Edit Waypoints"));
             MenuManager.editPathMenu.AddItem(deletePath = new UIMenuItem("Delete Path"));
-            //MenuManager.editPathMenu.AddItem(debugGraphics = new UIMenuCheckboxItem("Enable Debug Graphics", false));
 
             MenuManager.editPathMenu.RefreshIndex();
             MenuManager.editPathMenu.OnItemSelect += EditPath_OnItemSelected;
@@ -48,7 +47,7 @@ namespace SceneManager
 
                     foreach (Waypoint wd in TrafficMenu.paths[TrafficMenu.editPath.Index].Waypoint)
                     {
-                        wd.WaypointBlip.Alpha = 0.5f;
+                        wd.Blip.Alpha = 0.5f;
                         if (wd.CollectorRadiusBlip)
                         {
                             wd.CollectorRadiusBlip.Alpha = 0.25f;
@@ -62,7 +61,7 @@ namespace SceneManager
 
                     foreach (Waypoint wd in TrafficMenu.paths[TrafficMenu.editPath.Index].Waypoint)
                     {
-                        wd.WaypointBlip.Alpha = 1.0f;
+                        wd.Blip.Alpha = 1.0f;
                         if (wd.CollectorRadiusBlip)
                         {
                             wd.CollectorRadiusBlip.Alpha = 0.5f;
