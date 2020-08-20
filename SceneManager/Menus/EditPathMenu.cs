@@ -40,33 +40,16 @@ namespace SceneManager
         {
             if (checkboxItem == togglePath)
             {
+                var currentPath = TrafficMenu.paths[TrafficMenu.editPath.Index];
                 if (togglePath.Checked)
                 {
-                    TrafficMenu.paths[TrafficMenu.editPath.Index].PathDisabled = true;
-                    Game.LogTrivial($"Path {TrafficMenu.paths[TrafficMenu.editPath.Index].PathNum} disabled.");
-
-                    foreach (Waypoint wd in TrafficMenu.paths[TrafficMenu.editPath.Index].Waypoint)
-                    {
-                        wd.Blip.Alpha = 0.5f;
-                        if (wd.CollectorRadiusBlip)
-                        {
-                            wd.CollectorRadiusBlip.Alpha = 0.25f;
-                        }
-                    }
+                    currentPath.DisablePath();
+                    Game.LogTrivial($"Path {currentPath.PathNum} disabled.");
                 }
                 else
                 {
-                    TrafficMenu.paths[TrafficMenu.editPath.Index].PathDisabled = false;
-                    Game.LogTrivial($"Path {TrafficMenu.paths[TrafficMenu.editPath.Index].PathNum} enabled.");
-
-                    foreach (Waypoint wd in TrafficMenu.paths[TrafficMenu.editPath.Index].Waypoint)
-                    {
-                        wd.Blip.Alpha = 1.0f;
-                        if (wd.CollectorRadiusBlip)
-                        {
-                            wd.CollectorRadiusBlip.Alpha = 0.5f;
-                        }
-                    }
+                    currentPath.EnablePath();
+                    Game.LogTrivial($"Path {currentPath.PathNum} enabled.");
                 }
             }
         }
