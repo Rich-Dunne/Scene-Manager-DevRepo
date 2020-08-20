@@ -28,7 +28,7 @@ namespace SceneManager
         {
             MenuManager.pathCreationMenu.AddItem(waypointType = new UIMenuListItem("Waypoint Type", waypointTypes, 0));
             MenuManager.pathCreationMenu.AddItem(waypointSpeed = new UIMenuListItem($"Waypoint Speed (in {SettingsMenu.speedUnits.SelectedItem})", waypointSpeeds, 0));
-            MenuManager.pathCreationMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector", false));
+            MenuManager.pathCreationMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector", true)); // true if path's first waypoint
             MenuManager.pathCreationMenu.AddItem(collectorRadius = new UIMenuListItem("Collection Radius", collectorRadii, 0));
             MenuManager.pathCreationMenu.AddItem(trafficAddWaypoint = new UIMenuItem("Add waypoint"));
             MenuManager.pathCreationMenu.AddItem(trafficRemoveWaypoint = new UIMenuItem("Remove last waypoint"));
@@ -44,84 +44,26 @@ namespace SceneManager
             // Do I need to implement a distance restriction?  Idiots place waypoints unnecessarily close, possibly causing AI to drive in circles
             if (selectedItem == trafficAddWaypoint)
             {
-                uint yieldZone = 0;
-                float speed;
+                var firstNonNullPath = TrafficMenu.paths.Where(p => p != null && !p.PathFinished).First();
+                var pathIndex = TrafficMenu.paths.IndexOf(firstNonNullPath);
+                var currentPath = pathIndex + 1;
+                var currentWaypoint = TrafficMenu.paths[pathIndex].Waypoint.Count + 1;
+                var drivingFlag = drivingFlags[waypointType.Index];
+                var blip = CreateWaypointBlip(pathIndex);
 
-                // Loop through each path and find the first one which isn't finished
-                var getFirstNonNullPath = TrafficMenu.paths.Where(p => p != null && !p.PathFinished).First();
-                var pathIndex = TrafficMenu.paths.IndexOf(getFirstNonNullPath);
+                if (collectorWaypoint.Checked) // && is path's first waypoint
+                {
+                    var yieldZone = SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH
+                        ? (uint)World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]))
+                        : (uint)World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]));
 
-                // Create a waypoint blip and set the sprite based on the current path number
-                var blip = new Blip(Game.LocalPlayer.Character.Position)
-                {
-                    Scale = 0.5f
-                };
-                switch (pathIndex)
-                {
-                    case 0:
-                        blip.Sprite = BlipSprite.Numbered1;
-                        break;
-                    case 1:
-                        blip.Sprite = BlipSprite.Numbered2;
-                        break;
-                    case 2:
-                        blip.Sprite = BlipSprite.Numbered3;
-                        break;
-                    case 3:
-                        blip.Sprite = BlipSprite.Numbered4;
-                        break;
-                    case 4:
-                        blip.Sprite = BlipSprite.Numbered5;
-                        break;
-                    case 5:
-                        blip.Sprite = BlipSprite.Numbered6;
-                        break;
-                    case 6:
-                        blip.Sprite = BlipSprite.Numbered7;
-                        break;
-                    case 7:
-                        blip.Sprite = BlipSprite.Numbered8;
-                        break;
-                }
-
-                // If it's the first waypoint, make the blip orange, else make it yellow
-                if (TrafficMenu.paths[pathIndex].Waypoint.Count == 0)
-                {
-                    blip.Color = Color.Orange;
+                    TrafficMenu.paths[pathIndex].Waypoint.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, collectorRadii[collectorRadius.Index], yieldZone));
                 }
                 else
                 {
-                    blip.Color = Color.Yellow;
+                    TrafficMenu.paths[pathIndex].Waypoint.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip));
                 }
-
-                if (collectorWaypoint.Checked)
-                { 
-                    if(SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH)
-                    {
-                        yieldZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]));
-                    }
-                    else
-                    {
-                        yieldZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]));
-                    }
-                }
-
-                if(SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH)
-                {
-                    Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
-                    speed = MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]);
-                    Game.LogTrivial($"Converted speed: {speed}m/s");
-                }
-                else
-                {
-                    Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
-                    speed = MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]);
-                    Game.LogTrivial($"Converted speed: {speed}m/s");
-                }
-
-                // Add the waypoint data to the path
-                TrafficMenu.paths[pathIndex].Waypoint.Add(new Waypoint(pathIndex + 1, TrafficMenu.paths[pathIndex].Waypoint.Count + 1, Game.LocalPlayer.Character.Position, speed, drivingFlags[waypointType.Index], blip, collectorWaypoint.Checked, collectorRadii[collectorRadius.Index], yieldZone));
-                Game.LogTrivial($"[Path {pathIndex + 1}] Waypoint {TrafficMenu.paths[pathIndex].Waypoint[TrafficMenu.paths[pathIndex].Waypoint.Count - 1].WaypointNum} ({drivingFlags[waypointType.Index].ToString()}) added");
+                Game.LogTrivial($"[Path {currentPath}] Waypoint {currentWaypoint} ({drivingFlag.ToString()}) added");
 
                 // Refresh the trafficMenu after a waypoint is added in order to show Continue Creating Current Path instead of Create New Path
                 RefreshTrafficMenu();
@@ -135,7 +77,7 @@ namespace SceneManager
                     if (TrafficMenu.paths.ElementAtOrDefault(i) != null && !TrafficMenu.paths[i].PathFinished)
                     {
                         Game.LogTrivial($"[Path {i + 1}] {TrafficMenu.paths[i].Waypoint.Last().DrivingFlag.ToString()} waypoint removed");
-                        TrafficMenu.paths[i].Waypoint.Last().WaypointBlip.Delete();
+                        TrafficMenu.paths[i].Waypoint.Last().Blip.Delete();
                         if (TrafficMenu.paths[i].Waypoint.Last().CollectorRadiusBlip)
                         {
                             TrafficMenu.paths[i].Waypoint.Last().CollectorRadiusBlip.Delete();
@@ -163,7 +105,7 @@ namespace SceneManager
                         {
                             Game.LogTrivial($"[Path Creation] Path {i + 1} finished with {TrafficMenu.paths[i].Waypoint.Count} waypoints.");
                             Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Path {i + 1} complete.");
-                            TrafficMenu.paths[i].Waypoint.Last().WaypointBlip.Color = Color.OrangeRed;
+                            TrafficMenu.paths[i].Waypoint.Last().Blip.Color = Color.OrangeRed;
                             if (TrafficMenu.paths[i].Waypoint.Last().CollectorRadiusBlip)
                             {
                                 TrafficMenu.paths[i].Waypoint.Last().CollectorRadiusBlip.Color = Color.OrangeRed;
@@ -196,12 +138,12 @@ namespace SceneManager
                         {
                             Game.LogTrivial($"[Path Error] A minimum of 2 waypoints is required.");
                             Game.DisplayNotification($"~o~Scene Manager\n~r~[Error]~w~ A minimum of 2 waypoints or one stop waypoint is required to create a path.");
-                            foreach (Waypoint wd in TrafficMenu.paths[i].Waypoint)
+                            foreach (Waypoint wp in TrafficMenu.paths[i].Waypoint)
                             {
-                                wd.WaypointBlip.Delete();
-                                if (wd.CollectorRadiusBlip)
+                                wp.Blip.Delete();
+                                if (wp.CollectorRadiusBlip)
                                 {
-                                    wd.CollectorRadiusBlip.Delete();
+                                    wp.CollectorRadiusBlip.Delete();
                                 }
                             }
                             TrafficMenu.paths[i].Waypoint.Clear();
@@ -214,6 +156,46 @@ namespace SceneManager
                 // "Refresh" the menu to reflect the new path
                 //TrafficMenu.RebuildTrafficMenu();
             }
+        }
+
+        private static float SetDriveSpeedForWaypoint()
+        {
+            float speed;
+            if (SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH)
+            {
+                //Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
+                speed = MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]);
+                //Game.LogTrivial($"Converted speed: {speed}m/s");
+            }
+            else
+            {
+                //Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
+                speed = MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]);
+                //Game.LogTrivial($"Converted speed: {speed}m/s");
+            }
+
+            return speed;
+        }
+
+        private static Blip CreateWaypointBlip(int pathIndex)
+        {
+            var spriteNumericalEnum = pathIndex + 17; // 17 because the numerical value of these sprites are always 17 more than the path index
+            var blip = new Blip(Game.LocalPlayer.Character.Position)
+            {
+                Scale = 0.5f,
+                Sprite = (BlipSprite)spriteNumericalEnum
+            };
+
+            if (TrafficMenu.paths[pathIndex].Waypoint.Count == 0)
+            {
+                blip.Color = Color.Orange;
+            }
+            else
+            {
+                blip.Color = Color.Yellow;
+            }
+
+            return blip;
         }
 
         private static void RefreshTrafficMenu()
