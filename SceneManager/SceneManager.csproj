@@ -51,6 +51,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="DebugGraphics.cs" />
     <Compile Include="Menus\BarrierMenu.cs" />
     <Compile Include="Object Classes\CollectedVehicle.cs" />
     <Compile Include="Menus\EditPathMenu.cs" />
