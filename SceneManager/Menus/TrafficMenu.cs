@@ -88,7 +88,7 @@ namespace SceneManager
             var pathVehicles = TrafficPathing.collectedVehicles.Where(cv => cv.Value.Path == path.PathNum).ToList();
 
             Game.LogTrivial($"Removing all vehicles on the path");
-            foreach (KeyValuePair<string, ControlledVehicle> cv in pathVehicles.Where(cv => cv.Value.Vehicle && cv.Value.Vehicle.Driver))
+            foreach (KeyValuePair<string, CollectedVehicle> cv in pathVehicles.Where(cv => cv.Value.Vehicle && cv.Value.Vehicle.Driver))
             {
                 cv.Value.DismissNow = true;
                 cv.Value.Vehicle.Driver.Tasks.Clear();
@@ -246,7 +246,7 @@ namespace SceneManager
                     }
                     else
                     {
-                        TrafficPathing.collectedVehicles.Add(nearbyVehicle.LicensePlate, new ControlledVehicle(nearbyVehicle, nearbyVehicle.LicensePlate, paths[directDriver.Index].Waypoint[0].Path, paths[directDriver.Index].Waypoint.Count, 1, false, false, true));
+                        TrafficPathing.collectedVehicles.Add(nearbyVehicle.LicensePlate, new CollectedVehicle(nearbyVehicle, nearbyVehicle.LicensePlate, paths[directDriver.Index].Waypoint[0].Path, paths[directDriver.Index].Waypoint.Count, 1, false, false, true));
                         Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not in collection, adding to collection for path {paths[directDriver.Index].Waypoint[0].Path} with {paths[directDriver.Index].Waypoint.Count} waypoints");
 
                         GameFiber DirectTaskFiber = new GameFiber(() => TrafficPathing.DirectTask(TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate], paths[directDriver.Index].Waypoint));

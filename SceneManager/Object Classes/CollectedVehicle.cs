@@ -2,7 +2,7 @@
 
 namespace SceneManager
 {
-    public class ControlledVehicle
+    public class CollectedVehicle
     {
         public Vehicle Vehicle;
         public string LicensePlate;
@@ -14,7 +14,7 @@ namespace SceneManager
         public bool StoppedAtWaypoint;
         public bool Redirected;
 
-        public ControlledVehicle(Vehicle vehicle, string licensePlate, int path, int totalWaypoints, int currentWaypoint, bool tasksAssigned, bool dismissNow, bool redirected)
+        public CollectedVehicle(Vehicle vehicle, string licensePlate, int path, int totalWaypoints, int currentWaypoint, bool tasksAssigned, bool dismissNow, bool redirected)
         {
             Vehicle = vehicle;
             LicensePlate = licensePlate;

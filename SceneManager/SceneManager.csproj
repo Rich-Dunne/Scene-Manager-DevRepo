@@ -52,7 +52,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Menus\BarrierMenu.cs" />
-    <Compile Include="Object Classes\ControlledVehicle.cs" />
+    <Compile Include="Object Classes\CollectedVehicle.cs" />
     <Compile Include="Menus\EditPathMenu.cs" />
     <Compile Include="Menus\EditWaypointMenu.cs" />
     <Compile Include="EntryPoint.cs" />

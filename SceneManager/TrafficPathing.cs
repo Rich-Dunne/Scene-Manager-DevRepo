@@ -8,7 +8,7 @@ namespace SceneManager
 {
     public static class TrafficPathing
     {
-        public static Dictionary<string, ControlledVehicle> collectedVehicles = new Dictionary<string, ControlledVehicle>();
+        public static Dictionary<string, CollectedVehicle> collectedVehicles = new Dictionary<string, CollectedVehicle>();
 
         public static void WaypointVehicleCollector(List<Path> paths, Path path, Waypoint waypoint)
         {
@@ -29,7 +29,7 @@ namespace SceneManager
                         // If the vehicle is not in the collection yet
                         if (!collectedVehicles.ContainsKey(v.LicensePlate))
                         {
-                            var collectedVehicle = new ControlledVehicle(v, v.LicensePlate, path.PathNum, path.Waypoint.Count, waypoint.WaypointNum, true, false, false);
+                            var collectedVehicle = new CollectedVehicle(v, v.LicensePlate, path.PathNum, path.Waypoint.Count, waypoint.WaypointNum, true, false, false);
                             collectedVehicles.Add(v.LicensePlate, collectedVehicle);
                             Game.LogTrivial($"[WaypointVehicleCollector] Added {v.Model.Name} to collection from path {path.PathNum}, waypoint {waypoint.WaypointNum}.");
 
@@ -70,7 +70,7 @@ namespace SceneManager
             }
         }
 
-        private static void AssignTasks(ControlledVehicle collectedVehicle, List<Waypoint> waypointData, Waypoint waypoint)
+        private static void AssignTasks(CollectedVehicle collectedVehicle, List<Waypoint> waypointData, Waypoint waypoint)
         {
             if (waypointData.Count == 1)
             {
@@ -85,7 +85,7 @@ namespace SceneManager
         }
 
         // TODO:  Combine single and multiwaypoint tasks into one method
-        private static void AssignSingleWaypointTask(ControlledVehicle cv, List<Waypoint> waypointData)
+        private static void AssignSingleWaypointTask(CollectedVehicle cv, List<Waypoint> waypointData)
         {
             // Give driver a task to the single path waypoint.  Run a loop with a condition checking for DismissNow for cases where the driver is dismissed or redirected
             Game.LogTrivial($"Assigning task for single waypoint.");
@@ -109,7 +109,7 @@ namespace SceneManager
             }
         }
 
-        private static void AssignMultiWaypointTasks(ControlledVehicle cv, List<Waypoint> waypointData, Waypoint collectorWaypoint)
+        private static void AssignMultiWaypointTasks(CollectedVehicle cv, List<Waypoint> waypointData, Waypoint collectorWaypoint)
         {
             // For each waypoint in the path, give driver a task to that waypoint
             // i needs to be the index of the waypoint the vehicle was collected from
@@ -173,7 +173,7 @@ namespace SceneManager
             DismissDriver(cv);
         }
 
-        private static void DismissDriver(ControlledVehicle cv)
+        private static void DismissDriver(CollectedVehicle cv)
         {
             cv.DismissNow = true;
             cv.StoppedAtWaypoint = false;
@@ -214,7 +214,7 @@ namespace SceneManager
             }
         }
 
-        public static void DirectTask(ControlledVehicle cv, List<Waypoint> waypointData)
+        public static void DirectTask(CollectedVehicle cv, List<Waypoint> waypointData)
         {
             cv.DismissNow = false;
             if (cv.Vehicle && cv.Vehicle.Driver)
@@ -239,7 +239,7 @@ namespace SceneManager
             Game.LogTrivial($"DirectTask loop over");
         }
 
-        private static void VehicleDismissed(ControlledVehicle cv, List<Waypoint> waypointData)
+        private static void VehicleDismissed(CollectedVehicle cv, List<Waypoint> waypointData)
         {
             while (!cv.DismissNow)
             {
