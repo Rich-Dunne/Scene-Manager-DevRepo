@@ -1,35 +1,22 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Drawing;
-using Rage;
 using RAGENativeUI;
-using RAGENativeUI.Elements;
 
 namespace SceneManager
 {
     public static class MenuManager
     {
         public static MenuPool menuPool = new MenuPool();
-        public static UIMenu mainMenu, pathMenu, barrierMenu, pathCreationMenu, editPathMenu, editWaypointMenu, settingsMenu;
 
         public static void InstantiateMenus()
         {
-            mainMenu = new UIMenu("Scene Manager", "");
-            settingsMenu = new UIMenu("Scene Menu", "~o~Plugin Settings");
-            settingsMenu.ParentMenu = mainMenu;
-            pathMenu = new UIMenu("Scene Manager", "~o~Path Menu");
-            pathMenu.ParentMenu = mainMenu;
-            pathCreationMenu = new UIMenu("Scene Manager", "~o~Path Creation");
-            pathCreationMenu.ParentMenu = pathMenu;
-            barrierMenu = new UIMenu("Scene Manager", "~o~Barrier Management");
-            barrierMenu.ParentMenu = mainMenu;
-            editPathMenu = new UIMenu("Scene Manager", "~o~Edit Path");
-            editPathMenu.ParentMenu = pathMenu;
-            editWaypointMenu = new UIMenu("Scene Manager", "~o~Edit Waypoint");
-            editWaypointMenu.ParentMenu = editPathMenu;
+            MainMenu.InstantiateMenu();
+            SettingsMenu.InstantiateMenu();
+            PathMainMenu.InstantiateMenu();
+            PathCreationMenu.InstantiateMenu();
+            BarrierMenu.InstantiateMenu();
+            EditPathMenu.InstantiateMenu();
+            EditWaypointMenu.InstantiateMenu();
 
-            AddMenusToMenuPool();
             BuildMenus();
             DefineMenuMouseSettings();
         }
@@ -47,7 +34,7 @@ namespace SceneManager
         {
             MainMenu.BuildMainMenu();
             SettingsMenu.BuildSettingsMenu();
-            TrafficMenu.BuildPathMenu();
+            PathMainMenu.BuildPathMenu();
             PathCreationMenu.BuildPathCreationMenu();
             EditPathMenu.BuildEditPathMenu();
             BarrierMenu.BuildBarrierMenu();
@@ -55,13 +42,13 @@ namespace SceneManager
 
         private static void AddMenusToMenuPool()
         {
-            menuPool.Add(mainMenu);
-            menuPool.Add(settingsMenu);
-            menuPool.Add(pathMenu);
-            menuPool.Add(barrierMenu);
-            menuPool.Add(pathCreationMenu);
-            menuPool.Add(editPathMenu);
-            menuPool.Add(editWaypointMenu);
+            menuPool.Add(MainMenu.mainMenu);
+            menuPool.Add(SettingsMenu.settingsMenu);
+            menuPool.Add(PathMainMenu.pathMainMenu);
+            menuPool.Add(BarrierMenu.barrierMenu);
+            menuPool.Add(PathCreationMenu.pathCreationMenu);
+            menuPool.Add(EditPathMenu.editPathMenu);
+            menuPool.Add(EditWaypointMenu.editWaypointMenu);
         }
     }
 }
