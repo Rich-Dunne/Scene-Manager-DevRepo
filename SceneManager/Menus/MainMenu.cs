@@ -11,26 +11,33 @@ namespace SceneManager
 {
     class MainMenu
     {
+        public static UIMenu mainMenu { get; private set; }
         private static UIMenuItem navigateToPathMenu, navigateToBarrierMenu, navigateToSettingsMenu;
+
+        internal static void InstantiateMenu()
+        {
+            mainMenu = new UIMenu("Scene Manager", "");
+            MenuManager.menuPool.Add(mainMenu);
+        }
 
         public static void BuildMainMenu()
         {
-            MenuManager.mainMenu.AddItem(navigateToPathMenu = new UIMenuItem("~o~Path Menu"));
-            MenuManager.mainMenu.BindMenuToItem(MenuManager.pathMenu, navigateToPathMenu);
-            MenuManager.mainMenu.AddItem(navigateToBarrierMenu = new UIMenuItem("~o~Barrier Menu"));
-            MenuManager.mainMenu.BindMenuToItem(MenuManager.barrierMenu, navigateToBarrierMenu);
-            MenuManager.mainMenu.AddItem(navigateToSettingsMenu = new UIMenuItem("~o~Settings"));
-            MenuManager.mainMenu.BindMenuToItem(MenuManager.settingsMenu, navigateToSettingsMenu);
+            mainMenu.AddItem(navigateToPathMenu = new UIMenuItem("~o~Path Menu"));
+            mainMenu.BindMenuToItem(PathMainMenu.pathMainMenu, navigateToPathMenu);
+            mainMenu.AddItem(navigateToBarrierMenu = new UIMenuItem("~o~Barrier Menu"));
+            mainMenu.BindMenuToItem(BarrierMenu.barrierMenu, navigateToBarrierMenu);
+            mainMenu.AddItem(navigateToSettingsMenu = new UIMenuItem("~o~Settings"));
+            mainMenu.BindMenuToItem(SettingsMenu.settingsMenu, navigateToSettingsMenu);
 
-            MenuManager.mainMenu.RefreshIndex();
-            MenuManager.mainMenu.OnItemSelect += MainMenu_OnItemSelected;
+            mainMenu.RefreshIndex();
+            mainMenu.OnItemSelect += MainMenu_OnItemSelected;
         }
 
         private static void MainMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
             if (selectedItem == navigateToBarrierMenu)
             {
-                BarrierMenu.CreateShadowBarrier(MenuManager.barrierMenu);
+                BarrierMenu.CreateShadowBarrier(BarrierMenu.barrierMenu);
             }
         }
     }

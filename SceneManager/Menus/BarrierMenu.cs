@@ -11,6 +11,7 @@ namespace SceneManager
 {
     class BarrierMenu
     {
+        public static UIMenu barrierMenu { get; private set; }
         public static List<Rage.Object> barriers = new List<Rage.Object>() { };
 
         // TODO: Refactor as dictionary
@@ -20,16 +21,23 @@ namespace SceneManager
         private static UIMenuListScrollerItem<string> removeBarrierOptions = new UIMenuListScrollerItem<string>("Remove Barrier", "", new[] { "Last Barrier", "Nearest Barrier", "All Barriers" });
         public static Rage.Object shadowBarrier;
 
+        internal static void InstantiateMenu()
+        {
+            barrierMenu = new UIMenu("Scene Manager", "~o~Barrier Management");
+            barrierMenu.ParentMenu = MainMenu.mainMenu;
+            MenuManager.menuPool.Add(barrierMenu);
+        }
+
         public static void BuildBarrierMenu()
         {
-            MenuManager.barrierMenu.AddItem(removeBarrierOptions, 0);
+            barrierMenu.AddItem(removeBarrierOptions, 0);
             removeBarrierOptions.Enabled = false;
-            MenuManager.barrierMenu.AddItem(rotateBarrier, 0);
-            MenuManager.barrierMenu.AddItem(barrierList, 0);
-            MenuManager.barrierMenu.RefreshIndex();
+            barrierMenu.AddItem(rotateBarrier, 0);
+            barrierMenu.AddItem(barrierList, 0);
+            barrierMenu.RefreshIndex();
 
-            MenuManager.barrierMenu.OnItemSelect += BarrierMenu_OnItemSelected;
-            MenuManager.barrierMenu.OnScrollerChange += BarrierMenu_OnScrollerChange;
+            barrierMenu.OnItemSelect += BarrierMenu_OnItemSelected;
+            barrierMenu.OnScrollerChange += BarrierMenu_OnScrollerChange;
         }
 
         public static void CreateShadowBarrier(UIMenu barrierMenu)
@@ -91,7 +99,7 @@ namespace SceneManager
         {
             if (scrollerItem == barrierList)
             {
-                CreateShadowBarrier(MenuManager.barrierMenu);
+                CreateShadowBarrier(barrierMenu);
 
                 if (barrierObjectNames[barrierList.Index] == "prop_flare_01b")
                 {

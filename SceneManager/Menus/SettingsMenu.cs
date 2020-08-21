@@ -7,6 +7,7 @@ namespace SceneManager
 {
     class SettingsMenu
     {
+        public static UIMenu settingsMenu { get; private set; }
         public static UIMenuCheckboxItem debugGraphics;
         public static UIMenuListScrollerItem<SpeedUnitsOfMeasure> speedUnits;
         public enum SpeedUnitsOfMeasure
@@ -15,13 +16,20 @@ namespace SceneManager
             KPH
         }
 
+        internal static void InstantiateMenu()
+        {
+            settingsMenu = new UIMenu("Scene Menu", "~o~Plugin Settings");
+            settingsMenu.ParentMenu = MainMenu.mainMenu;
+            MenuManager.menuPool.Add(settingsMenu);
+        }
+
         public static void BuildSettingsMenu()
         {
-            MenuManager.settingsMenu.AddItem(debugGraphics = new UIMenuCheckboxItem("Enable Debug Graphics", false));
-            MenuManager.settingsMenu.AddItem(speedUnits = new UIMenuListScrollerItem<SpeedUnitsOfMeasure>("Speed Unit of Measure", "", new[] { SpeedUnitsOfMeasure.MPH, SpeedUnitsOfMeasure.KPH }));
+            settingsMenu.AddItem(debugGraphics = new UIMenuCheckboxItem("Enable Debug Graphics", false));
+            settingsMenu.AddItem(speedUnits = new UIMenuListScrollerItem<SpeedUnitsOfMeasure>("Speed Unit of Measure", "", new[] { SpeedUnitsOfMeasure.MPH, SpeedUnitsOfMeasure.KPH }));
 
-            MenuManager.settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
-            MenuManager.settingsMenu.OnScrollerChange += SettingsMenu_OnScrollerChange;
+            settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
+            settingsMenu.OnScrollerChange += SettingsMenu_OnScrollerChange;
         }
 
         private static void SettingsMenu_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
@@ -32,7 +40,7 @@ namespace SceneManager
                 // TODO: Add branch for this during path creation ... create temp Waypoint list during path creation, then assign to path[i] after creation?
                 if (debugGraphics.Checked)
                 {
-                    foreach (Path path in TrafficMenu.paths)
+                    foreach (Path path in PathMainMenu.GetPaths())
                     {
                         GameFiber.StartNew(() =>
                         {
@@ -47,7 +55,8 @@ namespace SceneManager
         {
             if (scrollerItem == speedUnits)
             {
-                MenuManager.pathCreationMenu.Clear();
+                // Clear the menu and rebuild it to reflect the menu item text change
+                PathCreationMenu.pathCreationMenu.Clear();
                 PathCreationMenu.BuildPathCreationMenu();
             }
         }

@@ -20,7 +20,7 @@ namespace SceneManager
                 GetControllerInput();
 
                 // Display this message for test versions only
-                if (MenuManager.mainMenu.Visible)
+                if (MainMenu.mainMenu.Visible)
                 {
                     Game.DisplaySubtitle($"You are using a test build of Scene Manager.  Please report any bugs/crashes in the Discord server.");
                 }
@@ -36,12 +36,12 @@ namespace SceneManager
             {
                 if (Game.IsControllerButtonDown(EntryPoint.Settings.ToggleButton) && AreMenusClosed())
                 {
-                    MenuManager.mainMenu.Visible = !MenuManager.mainMenu.Visible;
+                    MainMenu.mainMenu.Visible = !MainMenu.mainMenu.Visible;
                 }
             }
             else if (Game.IsControllerButtonDownRightNow(EntryPoint.Settings.ModifierButton) && Game.IsControllerButtonDown(EntryPoint.Settings.ToggleButton) && AreMenusClosed())
             {
-                MenuManager.mainMenu.Visible = !MenuManager.mainMenu.Visible;
+                MainMenu.mainMenu.Visible = !MainMenu.mainMenu.Visible;
             }
         }
 
@@ -51,18 +51,18 @@ namespace SceneManager
             {
                 if (Game.IsKeyDown(EntryPoint.Settings.ToggleKey) && AreMenusClosed())
                 {
-                    MenuManager.mainMenu.Visible = !MenuManager.mainMenu.Visible;
+                    MainMenu.mainMenu.Visible = !MainMenu.mainMenu.Visible;
                 }
             }
             else if (Game.IsKeyDownRightNow(EntryPoint.Settings.ModifierKey) && Game.IsKeyDown(EntryPoint.Settings.ToggleKey) && AreMenusClosed())
             {
-                MenuManager.mainMenu.Visible = !MenuManager.mainMenu.Visible;
+                MainMenu.mainMenu.Visible = !MainMenu.mainMenu.Visible;
             }
         }
 
         private static bool AreMenusClosed()
         {
-            if(!MenuManager.barrierMenu.Visible && !MenuManager.pathMenu.Visible && !MenuManager.pathCreationMenu.Visible && !MenuManager.editPathMenu.Visible && !MenuManager.editWaypointMenu.Visible && !MenuManager.settingsMenu.Visible)
+            if(!BarrierMenu.barrierMenu.Visible && !PathMainMenu.pathMainMenu.Visible && !PathCreationMenu.pathCreationMenu.Visible && !EditPathMenu.editPathMenu.Visible && !EditWaypointMenu.editWaypointMenu.Visible && !SettingsMenu.settingsMenu.Visible)
             {
                 return true;
             }

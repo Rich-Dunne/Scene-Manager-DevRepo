@@ -79,9 +79,9 @@ namespace SceneManager
         private static void MyTerminationHandler(object sender, EventArgs e)
         {
             // Clean up paths
-            for (int i = 0; i < TrafficMenu.paths.Count; i++)
+            for (int i = 0; i < PathMainMenu.GetPaths().Count; i++)
             {
-                TrafficMenu.DeletePath(TrafficMenu.paths[i], i, "All");
+                PathMainMenu.DeletePath(PathMainMenu.GetPaths()[i], i, PathMainMenu.Delete.All);
             }
 
             // Clean up cones

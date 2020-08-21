@@ -7,31 +7,45 @@ using RAGENativeUI.Elements;
 
 namespace SceneManager
 {
-    static class TrafficMenu
+    static class PathMainMenu
     {
-        #pragma warning disable CS0618 // Type or member is obsolete, clear NUI squiggles
-        public static UIMenuItem createNewPath, deleteAllPaths;
-        public static UIMenuListItem editPath, directDriver, dismissDriver;
-        public static UIMenuCheckboxItem disableAllPaths;
-        
-        public static List<dynamic> pathsNum = new List<dynamic>() { };
-        public static List<Path> paths = new List<Path>() { };
-        public static List<dynamic> dismissOptions = new List<dynamic>() { "From path", "From waypoint", "From position" };
+        public static UIMenu pathMainMenu { get; private set; }
+        private static UIMenuItem createNewPath, deleteAllPaths;
+        public static UIMenuListScrollerItem<int> editPath { get; private set; }
+        public static UIMenuListScrollerItem<int> directDriver { get; private set; }
+        public static UIMenuListScrollerItem<string> dismissDriver { get; private set; }
+        public static UIMenuCheckboxItem disableAllPaths { get; private set; }
+
+        private static List<int> pathsNum = new List<int>();
+        private static List<Path> paths = new List<Path>() { };
+        private static List<string> dismissOptions = new List<string>() { "From path", "From waypoint", "From position" };
+        public enum Delete
+        {
+            Single,
+            All
+        }
+
+        internal static void InstantiateMenu()
+        {
+            pathMainMenu = new UIMenu("Scene Menu", "~o~Path Manager Main Menu");
+            pathMainMenu.ParentMenu = MainMenu.mainMenu;
+            MenuManager.menuPool.Add(pathMainMenu);
+        }
 
         public static void BuildPathMenu()
         {
             // New stuff to mitigate Rebuild method
-            MenuManager.pathMenu.OnItemSelect -= PathMenu_OnItemSelected;
-            MenuManager.pathMenu.OnCheckboxChange -= PathMenu_OnCheckboxChange;
+            pathMainMenu.OnItemSelect -= PathMenu_OnItemSelected;
+            pathMainMenu.OnCheckboxChange -= PathMenu_OnCheckboxChange;
             MenuManager.menuPool.CloseAllMenus();
-            MenuManager.pathMenu.Clear();
+            pathMainMenu.Clear();
 
-            MenuManager.pathMenu.AddItem(createNewPath = new UIMenuItem("Create New Path"));
-            MenuManager.pathMenu.AddItem(editPath = new UIMenuListItem("Edit Path", pathsNum, 0));
-            MenuManager.pathMenu.AddItem(disableAllPaths = new UIMenuCheckboxItem("Disable All Paths", false));
-            MenuManager.pathMenu.AddItem(deleteAllPaths = new UIMenuItem("Delete All Paths"));
-            MenuManager.pathMenu.AddItem(directDriver = new UIMenuListItem("Direct nearest driver to path", pathsNum, 0));
-            MenuManager.pathMenu.AddItem(dismissDriver = new UIMenuListItem("Dismiss nearest driver", dismissOptions, 0));
+            pathMainMenu.AddItem(createNewPath = new UIMenuItem("Create New Path"));
+            pathMainMenu.AddItem(editPath = new UIMenuListScrollerItem<int>("Edit Path", "", pathsNum));
+            pathMainMenu.AddItem(disableAllPaths = new UIMenuCheckboxItem("Disable All Paths", false));
+            pathMainMenu.AddItem(deleteAllPaths = new UIMenuItem("Delete All Paths"));
+            pathMainMenu.AddItem(directDriver = new UIMenuListScrollerItem<int>("Direct nearest driver to path", "", pathsNum));
+            pathMainMenu.AddItem(dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", "", dismissOptions));
 
             if (paths.Count == 8)
             {
@@ -45,12 +59,44 @@ namespace SceneManager
                 directDriver.Enabled = false;
             }
 
-            MenuManager.pathMenu.RefreshIndex();
-            MenuManager.pathMenu.OnItemSelect += PathMenu_OnItemSelected;
-            MenuManager.pathMenu.OnCheckboxChange += PathMenu_OnCheckboxChange;
+            pathMainMenu.RefreshIndex();
+            pathMainMenu.OnItemSelect += PathMenu_OnItemSelected;
+            pathMainMenu.OnCheckboxChange += PathMenu_OnCheckboxChange;
 
             // New stuff to mitigate Rebuild method
             MenuManager.menuPool.RefreshIndex();
+        }
+
+        public static ref List<Path> GetPaths()
+        {
+            return ref paths;
+        }
+
+        public static void AddPathToPathCountList(int indexToInsertAt, int pathNum)
+        {
+            pathsNum.Insert(indexToInsertAt, pathNum);
+        }
+
+        public static void RefreshMenu(UIMenuItem trafficRemoveWaypoint)
+        {
+            trafficRemoveWaypoint.Enabled = true;
+            pathMainMenu.Clear();
+            pathMainMenu.AddItem(createNewPath = new UIMenuItem("Continue Creating Current Path"));
+            pathMainMenu.AddItem(deleteAllPaths = new UIMenuItem("Delete All Paths"));
+            pathMainMenu.AddItem(directDriver = new UIMenuListScrollerItem<int>("Direct nearest driver to path", ""));
+            pathMainMenu.AddItem(dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", ""));
+
+            if (GetPaths().Count == 8)
+            {
+                createNewPath.Enabled = false;
+            }
+            if (GetPaths().Count == 0)
+            {
+                editPath.Enabled = false;
+                deleteAllPaths.Enabled = false;
+                disableAllPaths.Enabled = false;
+                directDriver.Enabled = false;
+            }
         }
 
         private static bool VehicleAndDriverValid(this Vehicle v)
@@ -79,8 +125,7 @@ namespace SceneManager
             }
         }
 
-        // Refactor string param to enum
-        public static void DeletePath(Path path, int index, string pathsToDelete)
+        public static void DeletePath(Path path, int index, Delete pathsToDelete)
         {
             // Before deleting a path, we need to dismiss any vehicles controlled by that path and remove the vehicles from ControlledVehicles
             //Game.LogTrivial($"Deleting path {index+1}");
@@ -96,7 +141,7 @@ namespace SceneManager
                 cv.Value.Vehicle.Driver.IsPersistent = false;
                 cv.Value.Vehicle.Dismiss();
                 cv.Value.Vehicle.IsPersistent = false;
-                //TrafficPathing.ControlledVehicles.Remove(cv.Value.LicensePlate);
+
                 //Game.LogTrivial($"{cv.vehicle.Model.Name} cleared from path {cv.path}");
                 TrafficPathing.collectedVehicles.Remove(cv.Value.LicensePlate);
             }
@@ -122,20 +167,19 @@ namespace SceneManager
             Game.LogTrivial($"Clearing path.WaypointData");
             path.Waypoints.Clear();
             // Manipulating the menu to reflect specific paths being deleted
-            if (pathsToDelete == "Single")
+            if (pathsToDelete == Delete.Single)
             {
                 paths.RemoveAt(index);
                 //Game.LogTrivial("pathsNum count: " + pathsNum.Count);
                 //Game.LogTrivial("index: " + index);
                 pathsNum.RemoveAt(index);
-                //RebuildTrafficMenu();
                 BuildPathMenu();
-                MenuManager.pathMenu.Visible = true;
+                pathMainMenu.Visible = true;
                 Game.LogTrivial($"Path {path.PathNum} deleted.");
                 Game.DisplayNotification($"~o~Scene Manager\n~w~Path {path.PathNum} deleted.");
             }
 
-            MenuManager.editPathMenu.Reset(true, true);
+            EditPathMenu.editPathMenu.Reset(true, true);
             EditPathMenu.togglePath.Enabled = true;
         }
 
@@ -143,8 +187,8 @@ namespace SceneManager
         {
             if (selectedItem == createNewPath)
             {
-                MenuManager.pathMenu.Visible = false;
-                MenuManager.pathCreationMenu.Visible = true;
+                pathMainMenu.Visible = false;
+                PathCreationMenu.pathCreationMenu.Visible = true;
 
                 // For each element in paths, determine if the element exists but is not finished yet, or if it doesn't exist, create it.
                 for (int i = 0; i <= paths.Count; i++)
@@ -158,10 +202,11 @@ namespace SceneManager
                     }
                     else if (paths.ElementAtOrDefault(i) == null)
                     {
-                        Game.LogTrivial($"Creating path {i + 1}");
-                        Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Path {i + 1} started.");
-                        paths.Insert(i, new Path(i + 1, false));
-                        PathCreationMenu.trafficRemoveWaypoint.Enabled = false;
+                        PathCreationMenu.AddNewPathToPathsCollection(paths, i);
+                        //Game.LogTrivial($"Creating path {i + 1}");
+                        //Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Path {i + 1} started.");
+                        //paths.Insert(i, new Path(i + 1, false));
+                        //PathCreationMenu.trafficRemoveWaypoint.Enabled = false;
 
                         if (SettingsMenu.debugGraphics.Checked)
                         {
@@ -177,8 +222,8 @@ namespace SceneManager
 
             if (selectedItem == editPath)
             {
-                MenuManager.pathMenu.Visible = false;
-                MenuManager.editPathMenu.Visible = true;
+                pathMainMenu.Visible = false;
+                EditPathMenu.editPathMenu.Visible = true;
             }
 
             if (selectedItem == deleteAllPaths)
@@ -186,17 +231,20 @@ namespace SceneManager
                 // Iterate through each item in paths and delete it
                 for (int i = 0; i < paths.Count; i++)
                 {
-                    DeletePath(paths[i], i, "All");
+                    DeletePath(paths[i], i, Delete.All);
                 }
                 foreach (Path path in paths)
                 {
+                    foreach(Waypoint wp in path.Waypoints.Where(wp => wp.YieldZone != 0))
+                    {
+                        World.RemoveSpeedZone(wp.YieldZone);
+                    }
                     path.Waypoints.Clear();
                 }
                 paths.Clear();
                 pathsNum.Clear();
-                //RebuildTrafficMenu();
                 BuildPathMenu();
-                MenuManager.pathMenu.Visible = true;
+                pathMainMenu.Visible = true;
                 Game.LogTrivial($"All paths deleted");
                 Game.DisplayNotification($"~o~Scene Manager\n~w~All paths deleted.");
             }

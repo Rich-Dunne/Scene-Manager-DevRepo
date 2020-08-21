@@ -7,23 +7,31 @@ namespace SceneManager
 {
     class EditPathMenu
     {
+        public static UIMenu editPathMenu { get; private set; }
         private static UIMenuItem editPathWaypoints, deletePath;
         public static UIMenuCheckboxItem togglePath;
 
+        internal static void InstantiateMenu()
+        {
+            editPathMenu = new UIMenu("Scene Manager", "~o~Edit Path");
+            editPathMenu.ParentMenu = PathMainMenu.pathMainMenu;
+            MenuManager.menuPool.Add(editPathMenu);
+        }
+
         public static void BuildEditPathMenu()
         {
-            MenuManager.editPathMenu.AddItem(togglePath = new UIMenuCheckboxItem("Disable Path", false));
-            MenuManager.editPathMenu.AddItem(editPathWaypoints = new UIMenuItem("Edit Waypoints"));
-            MenuManager.editPathMenu.AddItem(deletePath = new UIMenuItem("Delete Path"));
+            editPathMenu.AddItem(togglePath = new UIMenuCheckboxItem("Disable Path", false));
+            editPathMenu.AddItem(editPathWaypoints = new UIMenuItem("Edit Waypoints"));
+            editPathMenu.AddItem(deletePath = new UIMenuItem("Delete Path"));
 
-            MenuManager.editPathMenu.RefreshIndex();
-            MenuManager.editPathMenu.OnItemSelect += EditPath_OnItemSelected;
-            MenuManager.editPathMenu.OnCheckboxChange += EditPath_OnCheckboxChange;
+            editPathMenu.RefreshIndex();
+            editPathMenu.OnItemSelect += EditPath_OnItemSelected;
+            editPathMenu.OnCheckboxChange += EditPath_OnCheckboxChange;
         }
 
         private static void EditPath_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            var currentPath = TrafficMenu.paths[TrafficMenu.editPath.Index];
+            var currentPath = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index];
 
             if (selectedItem == editPathWaypoints)
             {
@@ -32,7 +40,7 @@ namespace SceneManager
 
             if (selectedItem == deletePath)
             {
-                TrafficMenu.DeletePath(currentPath, currentPath.PathNum - 1, "Single");
+                PathMainMenu.DeletePath(currentPath, currentPath.PathNum - 1, PathMainMenu.Delete.Single);
             }
         }
 
@@ -40,7 +48,7 @@ namespace SceneManager
         {
             if (checkboxItem == togglePath)
             {
-                var currentPath = TrafficMenu.paths[TrafficMenu.editPath.Index];
+                var currentPath = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index];
                 if (togglePath.Checked)
                 {
                     currentPath.DisablePath();
