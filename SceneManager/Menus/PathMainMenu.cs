@@ -135,7 +135,7 @@ namespace SceneManager
             Game.LogTrivial($"Removing all vehicles on the path");
             foreach (KeyValuePair<string, CollectedVehicle> cv in pathVehicles.Where(cv => cv.Value.Vehicle && cv.Value.Vehicle.Driver))
             {
-                cv.Value.DismissNow = true;
+                cv.Value.SetDismissNow(true);
                 cv.Value.Vehicle.Driver.Tasks.Clear();
                 cv.Value.Vehicle.Driver.Dismiss();
                 cv.Value.Vehicle.Driver.IsPersistent = false;
@@ -258,15 +258,13 @@ namespace SceneManager
                     {
                         var vehicle = TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate];
                         var nearestWaypoint = paths[directDriver.Index].Waypoints.OrderBy(wp => wp.Position).Take(1) as Waypoint;
+                        var pathNum = paths[directDriver.Index].Waypoints[0].Path;
+                        var totalPathWaypoints = paths[directDriver.Index].Waypoints.Count;
 
                         Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} already in collection.  Clearing tasks.");
                         nearbyVehicle.Driver.Tasks.Clear();
-                        vehicle.Path = paths[directDriver.Index].Waypoints[0].Path;
-                        vehicle.TotalWaypoints = paths[directDriver.Index].Waypoints.Count;
-                        vehicle.CurrentWaypoint = 1;
-                        vehicle.DismissNow = true;
-                        vehicle.StoppedAtWaypoint = false;
-                        vehicle.Redirected = true;
+                        vehicle.AssignPropertiesFromDirectedTask(pathNum, totalPathWaypoints, 1, tasksAssigned: false, dismiss: true, stoppedAtWaypoint: false, redirected: true);
+
                         GameFiber DirectTaskFiber = new GameFiber(() => TrafficPathing.DirectTask(vehicle, paths[directDriver.Index].Waypoints));
                         DirectTaskFiber.Start();
                     }
@@ -293,7 +291,7 @@ namespace SceneManager
                             if (nearbyVehicle.IsInCollectedVehicles())
                             {
                                 var controlledVehicle = TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate];
-                                controlledVehicle.DismissNow = true;
+                                controlledVehicle.SetDismissNow(true);
                                 controlledVehicle.Vehicle.Driver.Tasks.Clear();
                                 controlledVehicle.Vehicle.Driver.Dismiss();
                                 Game.LogTrivial($"Dismissed driver of {controlledVehicle.Vehicle.Model.Name} from path {controlledVehicle.Path}");
@@ -309,13 +307,13 @@ namespace SceneManager
                             if (nearbyVehicle.IsInCollectedVehicles())
                             {
                                 var controlledVehicle = TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate];
-                                controlledVehicle.StoppedAtWaypoint = false;
+                                controlledVehicle.SetStoppedAtWaypoint(false);
                                 controlledVehicle.Vehicle.Driver.Tasks.Clear();
                                 controlledVehicle.Vehicle.Driver.Dismiss();
 
                                 if (controlledVehicle.CurrentWaypoint == controlledVehicle.TotalWaypoints && !controlledVehicle.StoppedAtWaypoint)
                                 {
-                                    controlledVehicle.DismissNow = true;
+                                    controlledVehicle.SetDismissNow(true);
                                     Game.LogTrivial($"Dismissed driver of {controlledVehicle.Vehicle.Model.Name} from final waypoint and ultimately the path");
                                 }
                                 else
