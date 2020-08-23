@@ -12,7 +12,7 @@ namespace SceneManager
         public VehicleDrivingFlags DrivingFlag { get; private set; }
         public Blip Blip { get; private set; }
         public uint YieldZone { get; private set; }
-        public bool Collector { get; private set; }
+        public bool IsCollector { get; private set; }
         public float CollectorRadius { get; private set; }
         public Blip CollectorRadiusBlip { get; private set; }
 
@@ -35,7 +35,7 @@ namespace SceneManager
             Speed = speed;
             DrivingFlag = drivingFlag;
             Blip = waypointBlip;
-            Collector = collector;
+            IsCollector = collector;
             CollectorRadius = collectorRadius;
             YieldZone = yieldZone;
             CollectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius)
@@ -60,7 +60,7 @@ namespace SceneManager
         {
             if (collectorWaypointChecked)
             {
-                Collector = true;
+                IsCollector = true;
                 YieldZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, drivingSpeed);
                 if (CollectorRadiusBlip)
                 {
@@ -79,7 +79,7 @@ namespace SceneManager
             }
             else
             {
-                Collector = false;
+                IsCollector = false;
                 World.RemoveSpeedZone(YieldZone);
                 if (CollectorRadiusBlip)
                 {
