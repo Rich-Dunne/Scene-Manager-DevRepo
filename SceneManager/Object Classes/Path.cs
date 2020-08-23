@@ -2,18 +2,26 @@
 
 namespace SceneManager
 {
+    public enum Status
+    {
+        IsEnabled,
+        IsDisabled
+    }
+
     public class Path
     { 
         public int PathNum { get; private set; }
         public bool PathFinished { get; private set; }
-        public bool PathDisabled { get; private set; }
+        public bool IsEnabled { get; private set; }
+        public Status Status { get; private set; }
+
         public List<Waypoint> Waypoints = new List<Waypoint>();
 
         public Path(int pathNum, bool pathFinished, bool pathDisabled, List<Waypoint> waypoints)
         {
             PathNum = pathNum;
             PathFinished = pathFinished;
-            PathDisabled = pathDisabled;
+            IsEnabled = pathDisabled;
             Waypoints = waypoints;
         }
 
@@ -21,6 +29,11 @@ namespace SceneManager
         {
             PathNum = pathNum;
             PathFinished = pathFinished;
+        }
+
+        public void SetPathStatus(bool status)
+        {
+            IsEnabled = status;
         }
 
         public void SetPathNumber(int pathNum)
@@ -35,7 +48,7 @@ namespace SceneManager
 
         public void DisablePath()
         {
-            PathDisabled = true;
+            IsEnabled = false;
             LowerWaypointBlipsOpacity();
         }
 
@@ -53,7 +66,7 @@ namespace SceneManager
 
         public void EnablePath()
         {
-            PathDisabled = false;
+            IsEnabled = true;
         }
 
         private void RestoreWaypointBlipsOpacity()
