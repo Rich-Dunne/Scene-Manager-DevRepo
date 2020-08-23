@@ -50,7 +50,7 @@ namespace SceneManager
             editWaypointMenu.AddItem(editWaypoint = new UIMenuListItem("Edit Waypoint", pathWaypoints, 0));
             editWaypointMenu.AddItem(changeWaypointType = new UIMenuListItem("Change Waypoint Type", waypointTypes, Array.IndexOf(drivingFlags, currentPath.Waypoints[editWaypoint.Index].DrivingFlag)));
             editWaypointMenu.AddItem(changeWaypointSpeed = new UIMenuListItem("Change Waypoint Speed", waypointSpeeds, waypointSpeeds.IndexOf(currentPath.Waypoints[editWaypoint.Index].Speed)));
-            editWaypointMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector Waypoint", PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].Collector));
+            editWaypointMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector Waypoint", PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].IsCollector));
             editWaypointMenu.AddItem(changeCollectorRadius = new UIMenuListItem("Change Collection Radius", collectorRadii, collectorRadii.IndexOf(currentPath.Waypoints[editWaypoint.Index].CollectorRadius)));
             editWaypointMenu.AddItem(updateWaypointPosition = new UIMenuCheckboxItem("Update Waypoint Position", false));
             editWaypointMenu.AddItem(editUpdateWaypoint = new UIMenuItem("Update Waypoint"));
@@ -79,7 +79,7 @@ namespace SceneManager
 
                 editWaypointMenu.AddItem(changeWaypointType = new UIMenuListItem("Change Waypoint Type", waypointTypes, Array.IndexOf(drivingFlags, currentWaypoint.DrivingFlag)));
                 editWaypointMenu.AddItem(changeWaypointSpeed = new UIMenuListItem("Change Waypoint Speed", waypointSpeeds, waypointSpeeds.IndexOf(currentWaypoint.Speed)));
-                editWaypointMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Attractor Waypoint", currentWaypoint.Collector));
+                editWaypointMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Attractor Waypoint", currentWaypoint.IsCollector));
                 editWaypointMenu.AddItem(changeCollectorRadius = new UIMenuListItem("Change Collection Radius", collectorRadii, collectorRadii.IndexOf(currentPath.Waypoints[editWaypoint.Index].CollectorRadius)));
                 editWaypointMenu.AddItem(updateWaypointPosition = new UIMenuCheckboxItem("Update Waypoint Position", false));
                 editWaypointMenu.AddItem(editUpdateWaypoint = new UIMenuItem("Update Waypoint"));
@@ -96,7 +96,7 @@ namespace SceneManager
             if (selectedItem == editUpdateWaypoint)
             {
                 currentWaypoint.UpdateWaypoint(currentWaypoint, drivingFlags[changeWaypointType.Index], waypointSpeeds[changeWaypointSpeed.Index], collectorWaypoint.Checked, collectorRadii[changeCollectorRadius.Index], updateWaypointPosition.Checked);
-                Game.LogTrivial($"Updated path {currentPath.PathNum} waypoint {currentWaypoint.Number}: Driving flag is {drivingFlags[changeWaypointType.Index].ToString()}, speed is {waypointSpeeds[changeWaypointSpeed.Index].ToString()}, collector is {currentWaypoint.Collector}");
+                Game.LogTrivial($"Updated path {currentPath.PathNum} waypoint {currentWaypoint.Number}: Driving flag is {drivingFlags[changeWaypointType.Index].ToString()}, speed is {waypointSpeeds[changeWaypointSpeed.Index].ToString()}, collector is {currentWaypoint.IsCollector}");
 
                 if (currentPath.Waypoints.Count < 2 && currentPath.Waypoints[0].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
                 {
