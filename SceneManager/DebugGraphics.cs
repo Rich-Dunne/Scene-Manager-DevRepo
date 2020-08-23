@@ -37,7 +37,7 @@ namespace SceneManager
 
         public static void DrawSpheresAtWaypoints(Path path, int i)
         {
-            if (path.Waypoints[i].Collector)
+            if (path.Waypoints[i].IsCollector)
             {
                 Debug.DrawSphere(path.Waypoints[i].Position, path.Waypoints[i].CollectorRadius, Color.FromArgb(80, Color.Blue));
             }
