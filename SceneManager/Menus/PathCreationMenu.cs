@@ -34,16 +34,29 @@ namespace SceneManager
         public static void BuildPathCreationMenu()
         {
             pathCreationMenu.AddItem(waypointType = new UIMenuListScrollerItem<string>("Waypoint Type", "", waypointTypes));
-            pathCreationMenu.AddItem(waypointSpeed = new UIMenuListScrollerItem<float>($"Waypoint Speed (in {SettingsMenu.speedUnits.SelectedItem}", "", waypointSpeeds));
+            pathCreationMenu.AddItem(waypointSpeed = new UIMenuListScrollerItem<float>($"Waypoint Speed (in {SettingsMenu.speedUnits.SelectedItem})", "", waypointSpeeds));
             pathCreationMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector", true)); // true if path's first waypoint
             pathCreationMenu.AddItem(collectorRadius = new UIMenuListScrollerItem<float>("Collection Radius", "", collectorRadii));
             pathCreationMenu.AddItem(trafficAddWaypoint = new UIMenuItem("Add waypoint"));
+            trafficAddWaypoint.ForeColor = Color.Gold;
             pathCreationMenu.AddItem(trafficRemoveWaypoint = new UIMenuItem("Remove last waypoint"));
+            trafficRemoveWaypoint.ForeColor = Color.Gold;
             trafficRemoveWaypoint.Enabled = false;
             pathCreationMenu.AddItem(trafficEndPath = new UIMenuItem("End path creation"));
+            trafficEndPath.ForeColor = Color.Gold;
+            trafficEndPath.Enabled = false;
 
             pathCreationMenu.RefreshIndex();
             pathCreationMenu.OnItemSelect += PathCreation_OnItemSelected;
+            pathCreationMenu.OnCheckboxChange += PathCreation_OnCheckboxChange;
+        }
+
+        private static void PathCreation_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
+        {
+            if(checkboxItem == collectorWaypoint)
+            {
+                collectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
+            }
         }
 
         private static void PathCreation_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
@@ -58,11 +71,11 @@ namespace SceneManager
                 var drivingFlag = drivingFlags[waypointType.Index];
                 var blip = CreateWaypointBlip(pathIndex);
 
-                if (collectorWaypoint.Checked) // && is path's first waypoint
+                if (collectorWaypoint.Checked)
                 {
                     var yieldZone = SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH
-                        ? (uint)World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]))
-                        : (uint)World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]));
+                        ? World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]))
+                        : World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]));
 
                     PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, collectorRadii[collectorRadius.Index], yieldZone));
                 }
@@ -71,6 +84,8 @@ namespace SceneManager
                     PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip));
                 }
                 Game.LogTrivial($"[Path {currentPath}] Waypoint {currentWaypoint} ({drivingFlag.ToString()}) added");
+
+                ToggleTrafficEndPathMenuItem(pathIndex);
 
                 // Refresh the trafficMenu after a waypoint is added in order to show Continue Creating Current Path instead of Create New Path
                 PathMainMenu.RefreshMenu(trafficRemoveWaypoint);
@@ -85,16 +100,21 @@ namespace SceneManager
                     {
                         Game.LogTrivial($"[Path {i + 1}] {PathMainMenu.GetPaths()[i].Waypoints.Last().DrivingFlag.ToString()} waypoint removed");
                         PathMainMenu.GetPaths()[i].Waypoints.Last().Blip.Delete();
+                        World.RemoveSpeedZone(PathMainMenu.GetPaths()[i].Waypoints.Last().YieldZone);
+
                         if (PathMainMenu.GetPaths()[i].Waypoints.Last().CollectorRadiusBlip)
                         {
                             PathMainMenu.GetPaths()[i].Waypoints.Last().CollectorRadiusBlip.Delete();
                         }
                         PathMainMenu.GetPaths()[i].Waypoints.RemoveAt(PathMainMenu.GetPaths()[i].Waypoints.IndexOf(PathMainMenu.GetPaths()[i].Waypoints.Last()));
 
+                        ToggleTrafficEndPathMenuItem(i);
+
                         // If the path has no waypoints, disable the menu option to remove a waypoint
                         if (PathMainMenu.GetPaths()[i].Waypoints.Count == 0)
                         {
                             trafficRemoveWaypoint.Enabled = false;
+                            trafficEndPath.Enabled = false;
                         }
                     }
                 }
@@ -129,11 +149,11 @@ namespace SceneManager
                             // For each waypoint in the path's WaypointData, start a collector game fiber and loop while the path and waypoint exist, and while the path is enabled
                             foreach (Waypoint wd in PathMainMenu.GetPaths()[i].Waypoints)
                             {
-                                GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => TrafficPathing.WaypointVehicleCollector(PathMainMenu.GetPaths(), PathMainMenu.GetPaths()[i], wd));
+                                GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => TrafficPathing.StartCollectingAtWaypoint(PathMainMenu.GetPaths(), PathMainMenu.GetPaths()[i], wd));
                                 WaypointVehicleCollectorFiber.Start();
 
-                                GameFiber AssignStopForVehiclesFlagFiber = new GameFiber(() => TrafficPathing.AssignStopForVehiclesFlag(PathMainMenu.GetPaths(), PathMainMenu.GetPaths()[i], wd));
-                                AssignStopForVehiclesFlagFiber.Start();
+                                //GameFiber AssignStopForVehiclesFlagFiber = new GameFiber(() => TrafficPathing.AssignStopForVehiclesFlag(PathMainMenu.GetPaths(), PathMainMenu.GetPaths()[i], wd));
+                                //AssignStopForVehiclesFlagFiber.Start();
                             }
 
                             MenuManager.menuPool.CloseAllMenus();
@@ -163,6 +183,18 @@ namespace SceneManager
 
                 // "Refresh" the menu to reflect the new path
                 //TrafficMenu.RebuildTrafficMenu();
+            }
+        }
+
+        private static void ToggleTrafficEndPathMenuItem(int pathIndex)
+        {
+            if ((PathMainMenu.GetPaths()[pathIndex].Waypoints.Count == 1 && PathMainMenu.GetPaths()[pathIndex].Waypoints.First().DrivingFlag == VehicleDrivingFlags.StopAtDestination) || (PathMainMenu.GetPaths()[pathIndex].Waypoints.Count > 1 && PathMainMenu.GetPaths()[pathIndex].Waypoints.Any(p => p.DrivingFlag != VehicleDrivingFlags.StopAtDestination)))
+            {
+                trafficEndPath.Enabled = true;
+            }
+            else
+            {
+                trafficEndPath.Enabled = false;
             }
         }
 
