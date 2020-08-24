@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -54,7 +55,9 @@ namespace SceneManager
             editWaypointMenu.AddItem(changeCollectorRadius = new UIMenuListItem("Change Collection Radius", collectorRadii, collectorRadii.IndexOf(currentPath.Waypoints[editWaypoint.Index].CollectorRadius)));
             editWaypointMenu.AddItem(updateWaypointPosition = new UIMenuCheckboxItem("Update Waypoint Position", false));
             editWaypointMenu.AddItem(editUpdateWaypoint = new UIMenuItem("Update Waypoint"));
+            editUpdateWaypoint.ForeColor = Color.Gold;
             editWaypointMenu.AddItem(editRemoveWaypoint = new UIMenuItem("Remove Waypoint"));
+            editRemoveWaypoint.ForeColor = Color.Gold;
 
             EditPathMenu.editPathMenu.Visible = false;
             editWaypointMenu.RefreshIndex();
@@ -83,7 +86,9 @@ namespace SceneManager
                 editWaypointMenu.AddItem(changeCollectorRadius = new UIMenuListItem("Change Collection Radius", collectorRadii, collectorRadii.IndexOf(currentPath.Waypoints[editWaypoint.Index].CollectorRadius)));
                 editWaypointMenu.AddItem(updateWaypointPosition = new UIMenuCheckboxItem("Update Waypoint Position", false));
                 editWaypointMenu.AddItem(editUpdateWaypoint = new UIMenuItem("Update Waypoint"));
+                editUpdateWaypoint.ForeColor = Color.Gold;
                 editWaypointMenu.AddItem(editRemoveWaypoint = new UIMenuItem("Remove Waypoint"));
+                editRemoveWaypoint.ForeColor = Color.Gold;
                 editWaypointMenu.RefreshIndex();
             }
         }

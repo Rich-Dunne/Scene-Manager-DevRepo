@@ -41,11 +41,16 @@ namespace SceneManager
             pathMainMenu.Clear();
 
             pathMainMenu.AddItem(createNewPath = new UIMenuItem("Create New Path"));
+            createNewPath.ForeColor = Color.Gold;
             pathMainMenu.AddItem(editPath = new UIMenuListScrollerItem<int>("Edit Path", "", pathsNum));
+            editPath.ForeColor = Color.Gold;
             pathMainMenu.AddItem(disableAllPaths = new UIMenuCheckboxItem("Disable All Paths", false));
             pathMainMenu.AddItem(deleteAllPaths = new UIMenuItem("Delete All Paths"));
+            deleteAllPaths.ForeColor = Color.Gold;
             pathMainMenu.AddItem(directDriver = new UIMenuListScrollerItem<int>("Direct nearest driver to path", "", pathsNum));
+            directDriver.ForeColor = Color.Gold;
             pathMainMenu.AddItem(dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", "", dismissOptions));
+            dismissDriver.ForeColor = Color.Gold;
 
             if (paths.Count == 8)
             {
@@ -82,9 +87,13 @@ namespace SceneManager
             trafficRemoveWaypoint.Enabled = true;
             pathMainMenu.Clear();
             pathMainMenu.AddItem(createNewPath = new UIMenuItem("Continue Creating Current Path"));
+            createNewPath.ForeColor = Color.Gold;
             pathMainMenu.AddItem(deleteAllPaths = new UIMenuItem("Delete All Paths"));
+            deleteAllPaths.ForeColor = Color.Gold;
             pathMainMenu.AddItem(directDriver = new UIMenuListScrollerItem<int>("Direct nearest driver to path", ""));
+            directDriver.ForeColor = Color.Gold;
             pathMainMenu.AddItem(dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", ""));
+            dismissDriver.ForeColor = Color.Gold;
 
             if (GetPaths().Count == 8)
             {

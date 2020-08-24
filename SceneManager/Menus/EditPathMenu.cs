@@ -22,7 +22,9 @@ namespace SceneManager
         {
             editPathMenu.AddItem(togglePath = new UIMenuCheckboxItem("Disable Path", false));
             editPathMenu.AddItem(editPathWaypoints = new UIMenuItem("Edit Waypoints"));
+            editPathWaypoints.ForeColor = Color.Gold;
             editPathMenu.AddItem(deletePath = new UIMenuItem("Delete Path"));
+            deletePath.ForeColor = Color.Gold;
 
             editPathMenu.RefreshIndex();
             editPathMenu.OnItemSelect += EditPath_OnItemSelected;
