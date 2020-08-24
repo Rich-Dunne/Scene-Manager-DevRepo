@@ -82,9 +82,9 @@ namespace SceneManager
             pathsNum.Insert(indexToInsertAt, pathNum);
         }
 
-        public static void RefreshMenu(UIMenuItem trafficRemoveWaypoint)
+        public static void RefreshMenu()
         {
-            trafficRemoveWaypoint.Enabled = true;
+            //trafficRemoveWaypoint.Enabled = true;
             pathMainMenu.Clear();
             pathMainMenu.AddItem(createNewPath = new UIMenuItem("Continue Creating Current Path"));
             createNewPath.ForeColor = Color.Gold;
@@ -157,19 +157,19 @@ namespace SceneManager
 
             // Remove the speed zone so cars don't continue to be affected after the path is deleted
             Game.LogTrivial($"Removing yield zone and waypoint blips");
-            foreach (Waypoint wp in path.Waypoints)
+            foreach (Waypoint waypoint in path.Waypoints)
             {
-                if (wp.YieldZone != 0)
+                if (waypoint.YieldZone != 0)
                 {
-                    World.RemoveSpeedZone(wp.YieldZone);
+                    World.RemoveSpeedZone(waypoint.YieldZone);
                 }
-                if (wp.Blip)
+                if (waypoint.Blip)
                 {
-                    wp.Blip.Delete();
+                    waypoint.Blip.Delete();
                 }
-                if (wp.CollectorRadiusBlip)
+                if (waypoint.CollectorRadiusBlip)
                 {
-                    wp.CollectorRadiusBlip.Delete();
+                    waypoint.CollectorRadiusBlip.Delete();
                 }
             }
 
@@ -196,6 +196,7 @@ namespace SceneManager
         {
             if (selectedItem == createNewPath)
             {
+                RefreshMenu();
                 pathMainMenu.Visible = false;
                 PathCreationMenu.pathCreationMenu.Visible = true;
 
@@ -244,9 +245,9 @@ namespace SceneManager
                 }
                 foreach (Path path in paths)
                 {
-                    foreach(Waypoint wp in path.Waypoints.Where(wp => wp.YieldZone != 0))
+                    foreach(Waypoint waypoint in path.Waypoints.Where(wp => wp.YieldZone != 0))
                     {
-                        World.RemoveSpeedZone(wp.YieldZone);
+                        World.RemoveSpeedZone(waypoint.YieldZone);
                     }
                     path.Waypoints.Clear();
                 }
