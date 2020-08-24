@@ -1,5 +1,4 @@
 ﻿using Rage;
-using System.Runtime.InteropServices;
 
 namespace SceneManager
 {
