@@ -1,9 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
@@ -35,7 +32,7 @@ namespace SceneManager
         {
             pathCreationMenu.AddItem(waypointType = new UIMenuListScrollerItem<string>("Waypoint Type", "", waypointTypes));
             pathCreationMenu.AddItem(waypointSpeed = new UIMenuListScrollerItem<float>($"Waypoint Speed (in {SettingsMenu.speedUnits.SelectedItem})", "", waypointSpeeds));
-            pathCreationMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector", true)); // true if path's first waypoint
+            pathCreationMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector", true));
             pathCreationMenu.AddItem(collectorRadius = new UIMenuListScrollerItem<float>("Collection Radius", "", collectorRadii));
             pathCreationMenu.AddItem(trafficAddWaypoint = new UIMenuItem("Add waypoint"));
             trafficAddWaypoint.ForeColor = Color.Gold;
@@ -48,10 +45,10 @@ namespace SceneManager
 
             pathCreationMenu.RefreshIndex();
             pathCreationMenu.OnItemSelect += PathCreation_OnItemSelected;
-            pathCreationMenu.OnCheckboxChange += PathCreation_OnCheckboxChange;
+            pathCreationMenu.OnCheckboxChange += PathCreation_OnCheckboxChanged;
         }
 
-        private static void PathCreation_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
+        private static void PathCreation_OnCheckboxChanged(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
         {
             if(checkboxItem == collectorWaypoint)
             {
@@ -83,12 +80,13 @@ namespace SceneManager
                 {
                     PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip));
                 }
+                
                 Game.LogTrivial($"[Path {currentPath}] Waypoint {currentWaypoint} ({drivingFlag.ToString()}) added");
 
                 ToggleTrafficEndPathMenuItem(pathIndex);
-
+                trafficRemoveWaypoint.Enabled = true;
                 // Refresh the trafficMenu after a waypoint is added in order to show Continue Creating Current Path instead of Create New Path
-                PathMainMenu.RefreshMenu(trafficRemoveWaypoint);
+                PathMainMenu.RefreshMenu();
             }
 
             if (selectedItem == trafficRemoveWaypoint)
@@ -180,7 +178,6 @@ namespace SceneManager
                         }
                     }
                 }
-
                 // "Refresh" the menu to reflect the new path
                 //TrafficMenu.RebuildTrafficMenu();
             }
@@ -200,21 +197,21 @@ namespace SceneManager
 
         private static float SetDriveSpeedForWaypoint()
         {
-            float speed;
+            float convertedSpeed;
             if (SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH)
             {
                 //Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
-                speed = MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]);
-                //Game.LogTrivial($"Converted speed: {speed}m/s");
+                convertedSpeed = MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]);
+                //Game.LogTrivial($"Converted speed: {convertedSpeed}m/s");
             }
             else
             {
                 //Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
-                speed = MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]);
-                //Game.LogTrivial($"Converted speed: {speed}m/s");
+                convertedSpeed = MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]);
+                //Game.LogTrivial($"Converted speed: {convertedSpeed}m/s");
             }
 
-            return speed;
+            return convertedSpeed;
         }
 
         private static Blip CreateWaypointBlip(int pathIndex)
@@ -245,6 +242,7 @@ namespace SceneManager
             Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Path {pathNum} started.");
             paths.Insert(pathIndex, new Path(pathNum, false));
             trafficRemoveWaypoint.Enabled = false;
+            trafficEndPath.Enabled = false;
         }
 
         //private static void RefreshPathMainMenu()
