@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -17,7 +18,7 @@ namespace SceneManager
         // TODO: Refactor as dictionary
         private static UIMenuListScrollerItem<string> barrierList = new UIMenuListScrollerItem<string>("Select Barrier", "", new[] { "Large Striped Cone", "Large Cone", "Medium Striped Cone", "Medium Cone", "Roadpole A", "Roadpole B", "Police Barrier", "Road Barrier", "Flare" });
         private static string[] barrierObjectNames = new string[] { "prop_mp_cone_01", "prop_roadcone01c", "prop_mp_cone_02", "prop_mp_cone_03", "prop_roadpole_01a", "prop_roadpole_01b", "prop_barrier_work05", "prop_barrier_work06a", "prop_flare_01b" };
-        private static UIMenuNumericScrollerItem<int> rotateBarrier = new UIMenuNumericScrollerItem<int>("Rotate Barrier", "Rotate the barrier.", 0, 359, 10);
+        private static UIMenuNumericScrollerItem<int> rotateBarrier = new UIMenuNumericScrollerItem<int>("Rotate Barrier", "Rotate the barrier.", 0, 350, 10);
         private static UIMenuListScrollerItem<string> removeBarrierOptions = new UIMenuListScrollerItem<string>("Remove Barrier", "", new[] { "Last Barrier", "Nearest Barrier", "All Barriers" });
         public static Rage.Object shadowBarrier;
 
@@ -31,9 +32,14 @@ namespace SceneManager
         public static void BuildBarrierMenu()
         {
             barrierMenu.AddItem(removeBarrierOptions, 0);
+            removeBarrierOptions.ForeColor = Color.Gold;
             removeBarrierOptions.Enabled = false;
+
             barrierMenu.AddItem(rotateBarrier, 0);
+
             barrierMenu.AddItem(barrierList, 0);
+            barrierList.ForeColor = Color.Gold;
+
             barrierMenu.RefreshIndex();
 
             barrierMenu.OnItemSelect += BarrierMenu_OnItemSelected;
@@ -78,13 +84,18 @@ namespace SceneManager
             DisableBarrierMenuOptionsIfShadowConeTooFar();
             shadowBarrier.Position = TracePlayerView(15, TraceFlags.IntersectEverything).HitPosition;
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
-            shadowBarrier.Heading = rotateBarrier.Index;
+            shadowBarrier.Heading = rotateBarrier.Value;
 
             void DisableBarrierMenuOptionsIfShadowConeTooFar()
             {
                 if (shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) > 15f)
                 {
                     barrierList.Enabled = false;
+                    rotateBarrier.Enabled = false;
+                }
+                else if(shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) <= 15f && barrierList.SelectedItem == "Flare")
+                {
+                    barrierList.Enabled = true;
                     rotateBarrier.Enabled = false;
                 }
                 else
@@ -101,7 +112,7 @@ namespace SceneManager
             {
                 CreateShadowBarrier(barrierMenu);
 
-                if (barrierObjectNames[barrierList.Index] == "prop_flare_01b")
+                if(barrierList.SelectedItem == "Flare")
                 {
                     rotateBarrier.Enabled = false;
                 }
@@ -123,8 +134,7 @@ namespace SceneManager
             {
                 // Attach some invisible object to the cone which the AI try to drive around
                 // Barrier rotates with cone and becomes invisible similar to ASC when created
-
-                if (shadowBarrier.Model.Name == "prop_flare_01b".ToUpper())
+                if(barrierList.SelectedItem == "Flare")
                 {
                     SpawnFlare();
                 }
@@ -143,7 +153,7 @@ namespace SceneManager
 
         private static void SpawnBarrier()
         {
-            var cone = new Rage.Object(shadowBarrier.Model, shadowBarrier.Position, rotateBarrier.Index);
+            var cone = new Rage.Object(shadowBarrier.Model, shadowBarrier.Position, rotateBarrier.Value);
             cone.SetPositionWithSnap(shadowBarrier.Position);
             Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(cone, true);
             Rage.Native.NativeFunction.Natives.SET_DISABLE_BREAKING(cone, true);
@@ -183,15 +193,15 @@ namespace SceneManager
         private static void SpawnFlare()
         {
             var flare = new Weapon("weapon_flare", shadowBarrier.Position, 1);
-            flare.SetPositionWithSnap(shadowBarrier.Position);
+            //flare.SetPositionWithSnap(shadowBarrier.Position);
 
             // The purpose of this fiber is to allow the flare to spawn and fall to the ground naturally before freezing its position because you can't spawn it on the ground gracefully (it stands upright)
-            GameFiber.StartNew(delegate
-            {
-                GameFiber.Sleep(1000);
-                flare.IsPositionFrozen = true;
-                flare.IsCollisionEnabled = false;
-            });
+            //GameFiber.StartNew(delegate
+            //{
+            //    GameFiber.Sleep(1000);
+            //    flare.IsPositionFrozen = true;
+            //    flare.IsCollisionEnabled = false;
+            //});
 
             barriers.Add(flare);
             removeBarrierOptions.Enabled = true;
