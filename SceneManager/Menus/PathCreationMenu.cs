@@ -80,13 +80,12 @@ namespace SceneManager
                 {
                     PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip));
                 }
-                
+                Game.LogTrivial($"Waypoint speed: {PathMainMenu.GetPaths()[pathIndex].Waypoints.Last().Speed}");
                 Game.LogTrivial($"[Path {currentPath}] Waypoint {currentWaypoint} ({drivingFlag.ToString()}) added");
 
                 ToggleTrafficEndPathMenuItem(pathIndex);
                 trafficRemoveWaypoint.Enabled = true;
-                // Refresh the trafficMenu after a waypoint is added in order to show Continue Creating Current Path instead of Create New Path
-                PathMainMenu.RefreshMenu();
+                PathMainMenu.createNewPath.Text = "Continue Creating Current Path";
             }
 
             if (selectedItem == trafficRemoveWaypoint)
