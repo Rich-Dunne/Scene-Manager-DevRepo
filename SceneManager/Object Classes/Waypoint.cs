@@ -61,6 +61,7 @@ namespace SceneManager
             if (collectorWaypointChecked)
             {
                 IsCollector = true;
+                World.RemoveSpeedZone(YieldZone);
                 YieldZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, drivingSpeed);
                 if (CollectorRadiusBlip)
                 {
