@@ -40,26 +40,24 @@ namespace SceneManager
 
             var currentPath = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index];
 
-            // Populating menu list so user can select which waypoint to edit by index
-            //pathWaypoints.Clear();
-            //for (int i = 0; i < currentPath.Waypoints.Count; i++)
-            //{
-            //    pathWaypoints.Add(i+1);
-            //}
             editWaypoint = new UIMenuNumericScrollerItem<int>("Edit Waypoint", "", PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints.First().Number, PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints.Last().Number, 1);
-            Game.LogTrivial($"First waypoint number: {PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints.First().Number}");
-            Game.LogTrivial($"Last waypoint number: {PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints.Last().Number}");
+
             editWaypointMenu.Clear();
             editWaypointMenu.AddItem(editWaypoint);
             editWaypoint.Index = 0;
 
             editWaypointMenu.AddItem(changeWaypointType = new UIMenuListScrollerItem<string>("Change Waypoint Type", "", new [] { "Drive To", "Stop" }));
             changeWaypointType.Index = Array.IndexOf(drivingFlags, PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].DrivingFlag);
+
+            Game.LogTrivial($"Waypoint speed: {PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].Speed}");
             editWaypointMenu.AddItem(changeWaypointSpeed = new UIMenuListScrollerItem<float>("Change Waypoint Speed", "", waypointSpeeds));
             changeWaypointSpeed.Index = Array.IndexOf(waypointSpeeds, MathHelper.ConvertMetersPerSecondToMilesPerHour(PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].Speed));
+
             editWaypointMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector Waypoint", PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].IsCollector));
+
             editWaypointMenu.AddItem(changeCollectorRadius = new UIMenuListScrollerItem<float>("Change Collection Radius", "", collectorRadii));
             changeCollectorRadius.Index = Array.IndexOf(collectorRadii, PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].CollectorRadius);
+
             editWaypointMenu.AddItem(updateWaypointPosition = new UIMenuCheckboxItem("Update Waypoint Position", false));
             editWaypointMenu.AddItem(editUpdateWaypoint = new UIMenuItem("Update Waypoint"));
             editUpdateWaypoint.ForeColor = Color.Gold;
@@ -79,25 +77,10 @@ namespace SceneManager
         {
             if(scrollerItem == editWaypoint)
             {
-                while (editWaypointMenu.MenuItems.Count > 1)
-                {
-                    editWaypointMenu.RemoveItemAt(1);
-                    GameFiber.Yield();
-                }
-
-                editWaypointMenu.AddItem(changeWaypointType = new UIMenuListScrollerItem<string>("Change Waypoint Type", "", new[] { "Drive To", "Stop" }));
                 changeWaypointType.Index = Array.IndexOf(drivingFlags, PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].DrivingFlag);
-                editWaypointMenu.AddItem(changeWaypointSpeed = new UIMenuListScrollerItem<float>("Change Waypoint Speed", "", waypointSpeeds));
                 changeWaypointSpeed.Index = Array.IndexOf(waypointSpeeds, MathHelper.ConvertMetersPerSecondToMilesPerHour(PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].Speed));
-                editWaypointMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector Waypoint", PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].IsCollector));
-                editWaypointMenu.AddItem(changeCollectorRadius = new UIMenuListScrollerItem<float>("Change Collection Radius", "", collectorRadii));
+                collectorWaypoint.Checked = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].IsCollector;
                 changeCollectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
-                editWaypointMenu.AddItem(updateWaypointPosition = new UIMenuCheckboxItem("Update Waypoint Position", false));
-                editWaypointMenu.AddItem(editUpdateWaypoint = new UIMenuItem("Update Waypoint"));
-                editUpdateWaypoint.ForeColor = Color.Gold;
-                editWaypointMenu.AddItem(editRemoveWaypoint = new UIMenuItem("Remove Waypoint"));
-                editRemoveWaypoint.ForeColor = Color.Gold;
-                //editWaypointMenu.RefreshIndex();
             }
         }
 
@@ -116,7 +99,7 @@ namespace SceneManager
 
             if (selectedItem == editUpdateWaypoint)
             {
-                currentWaypoint.UpdateWaypoint(currentWaypoint, drivingFlags[changeWaypointType.Index], changeWaypointSpeed.SelectedItem, collectorWaypoint.Checked, changeCollectorRadius.SelectedItem, updateWaypointPosition.Checked);
+                currentWaypoint.UpdateWaypoint(currentWaypoint, drivingFlags[changeWaypointType.Index], SetDriveSpeedForWaypoint(), collectorWaypoint.Checked, changeCollectorRadius.SelectedItem, updateWaypointPosition.Checked);
                 //currentWaypoint.UpdateWaypoint(currentWaypoint, drivingFlags[changeWaypointType.Index], waypointSpeeds[changeWaypointSpeed.Index], collectorWaypoint.Checked, collectorRadii[changeCollectorRadius.Index], updateWaypointPosition.Checked);
                 Game.LogTrivial($"Updated path {currentPath.PathNum} waypoint {currentWaypoint.Number}: Driving flag is {drivingFlags[changeWaypointType.Index].ToString()}, speed is {waypointSpeeds[changeWaypointSpeed.Index].ToString()}, collector is {currentWaypoint.IsCollector}");
 
@@ -167,6 +150,25 @@ namespace SceneManager
                     }
                 }
             }
+        }
+
+        private static float SetDriveSpeedForWaypoint()
+        {
+            float convertedSpeed;
+            if (SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH)
+            {
+                //Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
+                convertedSpeed = MathHelper.ConvertMilesPerHourToMetersPerSecond(changeWaypointSpeed.SelectedItem);
+                //Game.LogTrivial($"Converted speed: {convertedSpeed}m/s");
+            }
+            else
+            {
+                //Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
+                convertedSpeed = MathHelper.ConvertKilometersPerHourToMetersPerSecond(changeWaypointSpeed.SelectedItem);
+                //Game.LogTrivial($"Converted speed: {convertedSpeed}m/s");
+            }
+
+            return convertedSpeed;
         }
     }
 }
