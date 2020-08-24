@@ -10,7 +10,8 @@ namespace SceneManager
     static class PathMainMenu
     {
         public static UIMenu pathMainMenu { get; private set; }
-        private static UIMenuItem createNewPath, deleteAllPaths;
+        public static UIMenuItem createNewPath { get; private set; }
+        private static UIMenuItem deleteAllPaths;
         public static UIMenuListScrollerItem<int> editPath { get; private set; }
         public static UIMenuListScrollerItem<int> directDriver { get; private set; }
         public static UIMenuListScrollerItem<string> dismissDriver { get; private set; }
@@ -80,32 +81,6 @@ namespace SceneManager
         public static void AddPathToPathCountList(int indexToInsertAt, int pathNum)
         {
             pathsNum.Insert(indexToInsertAt, pathNum);
-        }
-
-        public static void RefreshMenu()
-        {
-            //trafficRemoveWaypoint.Enabled = true;
-            pathMainMenu.Clear();
-            pathMainMenu.AddItem(createNewPath = new UIMenuItem("Continue Creating Current Path"));
-            createNewPath.ForeColor = Color.Gold;
-            pathMainMenu.AddItem(deleteAllPaths = new UIMenuItem("Delete All Paths"));
-            deleteAllPaths.ForeColor = Color.Gold;
-            pathMainMenu.AddItem(directDriver = new UIMenuListScrollerItem<int>("Direct nearest driver to path", ""));
-            directDriver.ForeColor = Color.Gold;
-            pathMainMenu.AddItem(dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", ""));
-            dismissDriver.ForeColor = Color.Gold;
-
-            if (GetPaths().Count == 8)
-            {
-                createNewPath.Enabled = false;
-            }
-            if (GetPaths().Count == 0)
-            {
-                editPath.Enabled = false;
-                deleteAllPaths.Enabled = false;
-                disableAllPaths.Enabled = false;
-                directDriver.Enabled = false;
-            }
         }
 
         private static bool VehicleAndDriverValid(this Vehicle v)
@@ -196,7 +171,7 @@ namespace SceneManager
         {
             if (selectedItem == createNewPath)
             {
-                RefreshMenu();
+                createNewPath.Text = "Continue Creating Current Path";
                 pathMainMenu.Visible = false;
                 PathCreationMenu.pathCreationMenu.Visible = true;
 
@@ -212,11 +187,8 @@ namespace SceneManager
                     }
                     else if (paths.ElementAtOrDefault(i) == null)
                     {
+                        // Do we only want to do this once the first waypoint is added?
                         PathCreationMenu.AddNewPathToPathsCollection(paths, i);
-                        //Game.LogTrivial($"Creating path {i + 1}");
-                        //Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Path {i + 1} started.");
-                        //paths.Insert(i, new Path(i + 1, false));
-                        //PathCreationMenu.trafficRemoveWaypoint.Enabled = false;
 
                         if (SettingsMenu.debugGraphics.Checked)
                         {
