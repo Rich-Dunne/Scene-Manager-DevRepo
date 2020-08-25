@@ -56,7 +56,10 @@ namespace SceneManager
             editWaypointMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector Waypoint", PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].IsCollector));
 
             editWaypointMenu.AddItem(changeCollectorRadius = new UIMenuListScrollerItem<float>("Change Collection Radius", "", collectorRadii));
-            changeCollectorRadius.Index = Array.IndexOf(collectorRadii, PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].CollectorRadius);
+            if (PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].CollectorRadius != 0)
+            {
+                changeCollectorRadius.Index = Array.IndexOf(collectorRadii, PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].CollectorRadius);
+            }
 
             editWaypointMenu.AddItem(updateWaypointPosition = new UIMenuCheckboxItem("Update Waypoint Position", false));
             editWaypointMenu.AddItem(editUpdateWaypoint = new UIMenuItem("Update Waypoint"));
