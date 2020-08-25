@@ -1,7 +1,6 @@
 ﻿using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
-using System.Drawing;
 
 namespace SceneManager
 {
