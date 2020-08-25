@@ -184,7 +184,7 @@ namespace SceneManager
 
         private static void ToggleTrafficEndPathMenuItem(int pathIndex)
         {
-            if ((PathMainMenu.GetPaths()[pathIndex].Waypoints.Count == 1 && PathMainMenu.GetPaths()[pathIndex].Waypoints.First().DrivingFlag == VehicleDrivingFlags.StopAtDestination) || (PathMainMenu.GetPaths()[pathIndex].Waypoints.Count > 1 && PathMainMenu.GetPaths()[pathIndex].Waypoints.Any(p => p.DrivingFlag != VehicleDrivingFlags.StopAtDestination)))
+            if ((PathMainMenu.GetPaths()[pathIndex].Waypoints.Count == 1 && PathMainMenu.GetPaths()[pathIndex].Waypoints.First().DrivingFlag == VehicleDrivingFlags.StopAtDestination) || (PathMainMenu.GetPaths()[pathIndex].Waypoints.Count > 1))
             {
                 trafficEndPath.Enabled = true;
             }
