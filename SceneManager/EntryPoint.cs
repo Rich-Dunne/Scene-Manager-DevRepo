@@ -96,7 +96,7 @@ namespace SceneManager
 
             // Clear everything
             BarrierMenu.barriers.Clear();
-            TrafficPathing.collectedVehicles.Clear();
+            VehicleCollector.collectedVehicles.Clear();
 
             Game.LogTrivial($"Scene Manager has been terminated.");
             Game.DisplayNotification($"~o~Scene Manager\n~r~[Notice]~w~ The plugin has shut down.");

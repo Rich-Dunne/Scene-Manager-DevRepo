@@ -146,7 +146,7 @@ namespace SceneManager
                             // For each waypoint in the path's WaypointData, start a collector game fiber and loop while the path and waypoint exist, and while the path is enabled
                             foreach (Waypoint wd in PathMainMenu.GetPaths()[i].Waypoints)
                             {
-                                GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => TrafficPathing.StartCollectingAtWaypoint(PathMainMenu.GetPaths(), PathMainMenu.GetPaths()[i], wd));
+                                GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => VehicleCollector.StartCollectingAtWaypoint(PathMainMenu.GetPaths(), PathMainMenu.GetPaths()[i], wd));
                                 WaypointVehicleCollectorFiber.Start();
 
                                 //GameFiber AssignStopForVehiclesFlagFiber = new GameFiber(() => TrafficPathing.AssignStopForVehiclesFlag(PathMainMenu.GetPaths(), PathMainMenu.GetPaths()[i], wd));

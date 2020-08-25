@@ -99,7 +99,7 @@ namespace SceneManager
 
         private static bool IsInCollectedVehicles(this Vehicle v)
         {
-            if (v && TrafficPathing.collectedVehicles.ContainsKey(v.LicensePlate))
+            if (v && VehicleCollector.collectedVehicles.ContainsKey(v.LicensePlate))
             {
                 Game.LogTrivial($"{v.Model.Name} was found in the collection.");
                 return true;
@@ -116,7 +116,7 @@ namespace SceneManager
             // Before deleting a path, we need to dismiss any vehicles controlled by that path and remove the vehicles from ControlledVehicles
             //Game.LogTrivial($"Deleting path {index+1}");
             Game.LogTrivial($"Deleting path {path.PathNum}");
-            var pathVehicles = TrafficPathing.collectedVehicles.Where(cv => cv.Value.Path == path.PathNum).ToList();
+            var pathVehicles = VehicleCollector.collectedVehicles.Where(cv => cv.Value.Path == path.PathNum).ToList();
 
             Game.LogTrivial($"Removing all vehicles on the path");
             foreach (KeyValuePair<string, CollectedVehicle> cv in pathVehicles.Where(cv => cv.Value.Vehicle && cv.Value.Vehicle.Driver))
@@ -129,7 +129,7 @@ namespace SceneManager
                 cv.Value.Vehicle.IsPersistent = false;
 
                 //Game.LogTrivial($"{cv.vehicle.Model.Name} cleared from path {cv.path}");
-                TrafficPathing.collectedVehicles.Remove(cv.Value.LicensePlate);
+                VehicleCollector.collectedVehicles.Remove(cv.Value.LicensePlate);
             }
 
             // Remove the speed zone so cars don't continue to be affected after the path is deleted
@@ -245,10 +245,10 @@ namespace SceneManager
                 {
                     var nearestWaypoint = paths[directDriver.Index].Waypoints.Where(wp => wp.Position.DistanceTo2D(nearbyVehicle.FrontPosition) < wp.Position.DistanceTo2D(nearbyVehicle.RearPosition)).OrderBy(wp => wp.Position.DistanceTo2D(nearbyVehicle)).ToArray();
 
-                    TrafficPathing.SetVehicleAndDriverPersistence(nearbyVehicle);
+                    VehicleCollector.SetVehicleAndDriverPersistence(nearbyVehicle);
                     if (nearbyVehicle.IsInCollectedVehicles())
                     {
-                        var vehicle = TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate];
+                        var vehicle = VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate];
 
                         Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} already in collection.  Clearing tasks.");
                         nearbyVehicle.Driver.Tasks.Clear();
@@ -271,14 +271,14 @@ namespace SceneManager
                     }
                     else
                     {
-                        TrafficPathing.collectedVehicles.Add(nearbyVehicle.LicensePlate, new CollectedVehicle(nearbyVehicle, nearbyVehicle.LicensePlate, paths[directDriver.Index].Waypoints[0].Path, paths[directDriver.Index].Waypoints.Count, 1, false, false, true));
+                        VehicleCollector.collectedVehicles.Add(nearbyVehicle.LicensePlate, new CollectedVehicle(nearbyVehicle, nearbyVehicle.LicensePlate, paths[directDriver.Index].Waypoints[0].Path, paths[directDriver.Index].Waypoints.Count, 1, false, false, true));
                         Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not in collection, adding to collection for path {paths[directDriver.Index].PathNum} with {paths[directDriver.Index].Waypoints.Count} waypoints");
 
                         if (directOptions.SelectedItem == "First waypoint")
                         {
                             GameFiber.StartNew(() =>
                             {
-                                TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.DriveToPosition(firstWaypoint.Position, firstWaypoint.Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
+                                VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.DriveToPosition(firstWaypoint.Position, firstWaypoint.Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
 
                                 for (int nextWaypoint = firstWaypoint.Number; nextWaypoint < paths[directDriver.Index].Waypoints.Count; nextWaypoint++)
                                 {
@@ -288,28 +288,28 @@ namespace SceneManager
                                         break;
                                     }
 
-                                    Game.LogTrivial($"{TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} is driving to waypoint {paths[directDriver.Index].Waypoints[nextWaypoint].Number}");
-                                    if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) != null && !TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].StoppedAtWaypoint)
+                                    Game.LogTrivial($"{VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} is driving to waypoint {paths[directDriver.Index].Waypoints[nextWaypoint].Number}");
+                                    if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) != null && !VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].StoppedAtWaypoint)
                                     {
-                                        TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.DriveToPosition(paths[directDriver.Index].Waypoints[nextWaypoint].Position, paths[directDriver.Index].Waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
+                                        VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.DriveToPosition(paths[directDriver.Index].Waypoints[nextWaypoint].Position, paths[directDriver.Index].Waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
                                     }
 
                                     if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) != null && paths[directDriver.Index].Waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
                                     {
-                                        Game.LogTrivial($"{TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} stopping at waypoint.");
-                                        TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.PerformDrivingManeuver(VehicleManeuver.GoForwardStraightBraking);
-                                        TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].SetStoppedAtWaypoint(true);
+                                        Game.LogTrivial($"{VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} stopping at waypoint.");
+                                        VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.PerformDrivingManeuver(VehicleManeuver.GoForwardStraightBraking);
+                                        VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].SetStoppedAtWaypoint(true);
                                     }
                                 }
-                                Game.LogTrivial($"{TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} all tasks complete.");
-                                TrafficPathing.DismissDriver(TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate]);
+                                Game.LogTrivial($"{VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} all tasks complete.");
+                                AITasking.DismissDriver(VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate]);
                             });
                         }
                         else
                         {
                             GameFiber.StartNew(() =>
                             {
-                                TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.DriveToPosition(nearestWaypoint[0].Position, nearestWaypoint[0].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
+                                VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.DriveToPosition(nearestWaypoint[0].Position, nearestWaypoint[0].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
 
                                 for (int nextWaypoint = nearestWaypoint[0].Number; nextWaypoint < paths[directDriver.Index].Waypoints.Count; nextWaypoint++)
                                 {
@@ -319,21 +319,21 @@ namespace SceneManager
                                         break;
                                     }
 
-                                    Game.LogTrivial($"{TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} is driving to waypoint {paths[directDriver.Index].Waypoints[nextWaypoint].Number}");
-                                    if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) != null && !TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].StoppedAtWaypoint)
+                                    Game.LogTrivial($"{VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} is driving to waypoint {paths[directDriver.Index].Waypoints[nextWaypoint].Number}");
+                                    if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) != null && !VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].StoppedAtWaypoint)
                                     {
-                                        TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.DriveToPosition(paths[directDriver.Index].Waypoints[nextWaypoint].Position, paths[directDriver.Index].Waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
+                                        VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.DriveToPosition(paths[directDriver.Index].Waypoints[nextWaypoint].Position, paths[directDriver.Index].Waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
                                     }
 
                                     if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) != null && paths[directDriver.Index].Waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
                                     {
-                                        Game.LogTrivial($"{TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} stopping at waypoint.");
-                                        TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.PerformDrivingManeuver(VehicleManeuver.GoForwardStraightBraking);
-                                        TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].SetStoppedAtWaypoint(true);
+                                        Game.LogTrivial($"{VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} stopping at waypoint.");
+                                        VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Driver.Tasks.PerformDrivingManeuver(VehicleManeuver.GoForwardStraightBraking);
+                                        VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].SetStoppedAtWaypoint(true);
                                     }
                                 }
-                                Game.LogTrivial($"{TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} all tasks complete.");
-                                TrafficPathing.DismissDriver(TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate]);
+                                Game.LogTrivial($"{VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate].Vehicle.Model.Name} all tasks complete.");
+                                AITasking.DismissDriver(VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate]);
                             });
                         }
                     }
@@ -351,7 +351,7 @@ namespace SceneManager
                             Game.LogTrivial($"Dismiss from path");
                             if (nearbyVehicle.IsInCollectedVehicles())
                             {
-                                var controlledVehicle = TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate];
+                                var controlledVehicle = VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate];
                                 controlledVehicle.SetDismissNow(true);
                                 controlledVehicle.Vehicle.Driver.Tasks.Clear();
                                 controlledVehicle.Vehicle.Driver.Dismiss();
@@ -367,7 +367,7 @@ namespace SceneManager
                             Game.LogTrivial($"Dismiss from waypoint");
                             if (nearbyVehicle.IsInCollectedVehicles())
                             {
-                                var controlledVehicle = TrafficPathing.collectedVehicles[nearbyVehicle.LicensePlate];
+                                var controlledVehicle = VehicleCollector.collectedVehicles[nearbyVehicle.LicensePlate];
                                 controlledVehicle.SetStoppedAtWaypoint(false);
                                 controlledVehicle.Vehicle.Driver.Tasks.Clear();
                                 controlledVehicle.Vehicle.Driver.Dismiss();
