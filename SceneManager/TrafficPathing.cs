@@ -60,7 +60,7 @@ namespace SceneManager
             return collectedVehicle;
         }
 
-        private static void SetVehicleAndDriverPersistence(Vehicle v)
+        public static void SetVehicleAndDriverPersistence(Vehicle v)
         {
             v.IsPersistent = true;
             v.Driver.IsPersistent = true;
@@ -80,7 +80,8 @@ namespace SceneManager
             }
         }
 
-        private static void AssignWaypointTasks(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint)
+        // TODO:  Refactor, extract methods
+        public static void AssignWaypointTasks(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint)
         {
             var vehicle = collectedVehicle.Vehicle;
             var driver = vehicle.Driver;
@@ -92,21 +93,21 @@ namespace SceneManager
                 collectedVehicle.SetStoppedAtWaypoint(true);
             }
 
-            for (int i = currentWaypoint.Number; i < waypoints.Count; i++)
+            for (int nextWaypoint = currentWaypoint.Number; nextWaypoint < waypoints.Count; nextWaypoint++)
             {
-                if (waypoints.ElementAtOrDefault(i) == null)
+                if (waypoints.ElementAtOrDefault(nextWaypoint) == null)
                 {
                     Game.LogTrivial($"Waypoint is null");
                     break;
                 }
 
-                Game.LogTrivial($"{vehicle.Model.Name} is driving to waypoint {waypoints[i].Number}");
-                if (waypoints.ElementAtOrDefault(i) != null && !collectedVehicle.StoppedAtWaypoint)
+                Game.LogTrivial($"{vehicle.Model.Name} is driving to waypoint {waypoints[nextWaypoint].Number}");
+                if (waypoints.ElementAtOrDefault(nextWaypoint) != null && !collectedVehicle.StoppedAtWaypoint)
                 {
-                    collectedVehicle.Vehicle.Driver.Tasks.DriveToPosition(waypoints[i].Position, waypoints[i].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
+                    collectedVehicle.Vehicle.Driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
                 }
 
-                if (waypoints.ElementAtOrDefault(i) != null && waypoints[i].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
+                if (waypoints.ElementAtOrDefault(nextWaypoint) != null && waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
                 {
                     Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} stopping at waypoint.");
                     collectedVehicle.Vehicle.Driver.Tasks.PerformDrivingManeuver(VehicleManeuver.GoForwardStraightBraking);
@@ -117,11 +118,11 @@ namespace SceneManager
             DismissDriver(collectedVehicle);
         }
 
-        private static void DismissDriver(CollectedVehicle cv)
+        public static void DismissDriver(CollectedVehicle cv)
         {
             cv.SetDismissNow(true);
             cv.SetStoppedAtWaypoint(false);
-            if (cv.Vehicle && cv.Vehicle.Driver && !cv.Redirected)
+            if (cv.Vehicle && cv.Vehicle.Driver)// && !cv.Redirected)
             {
                 cv.Vehicle.Driver.Dismiss();
                 cv.Vehicle.Driver.Tasks.Clear();
@@ -158,30 +159,27 @@ namespace SceneManager
             }
         }
 
-        public static void DirectTask(CollectedVehicle cv, List<Waypoint> waypoints)
-        {
-            cv.SetDismissNow(false);
-            if (cv.Vehicle && cv.Vehicle.Driver)
-            {
-                cv.Vehicle.IsPersistent = true;
-                cv.Vehicle.Driver.IsPersistent = true;
-                cv.Vehicle.Driver.BlockPermanentEvents = true;
-                cv.Vehicle.Driver.Tasks.Clear();
-            }
+        //public static void DirectTask(CollectedVehicle collectedVehicle, List<Waypoint> waypoints)
+        //{
+        //    // Set persistence
 
-            // Give vehicle task to initial waypoint of desired path, then run a loop to keep giving the task until they're close enough in case they try to wander away too early
-            // Need to figure out how to only get waypoints which are in front of or within 90 degrees of either side of the vehicle
-            var nearestWaypoint = waypoints.OrderBy(wp => wp.Position).Take(1) as Waypoint;
+        //    // Assign tasks similar to joining from collection waypoint
+        //    //GameFiber AssignTasksFiber = new GameFiber(() => AssignWaypointTasks(collectedVehicle, waypoints, waypoint));
+        //    //AssignTasksFiber.Start();
 
-            cv.Vehicle.Driver.Tasks.DriveToPosition(nearestWaypoint.Position, nearestWaypoint.Speed, (VehicleDrivingFlags)262539, 1f); // waypointData[0].WaypointPos
-            while (nearestWaypoint != null && cv.Vehicle && cv.Vehicle.Driver && cv.Vehicle.DistanceTo(waypoints[0].Position) > 3f && !cv.DismissNow)
-            {
-                cv.Vehicle.Driver.Tasks.DriveToPosition(nearestWaypoint.Position, nearestWaypoint.Speed, (VehicleDrivingFlags)262539, 1f);
-                GameFiber.Sleep(500);
-            }
-            cv.SetRedirected(false);
-            Game.LogTrivial($"DirectTask loop over");
-        }
+        //    // Give vehicle task to initial waypoint of desired path, then run a loop to keep giving the task until they're close enough in case they try to wander away too early
+        //    // Need to figure out how to only get waypoints which are in front of or within 90 degrees of either side of the vehicle
+        //    var nearestWaypoint = waypoints.OrderBy(wp => wp.Position).Take(1) as Waypoint;
+
+        //    collectedVehicle.Vehicle.Driver.Tasks.DriveToPosition(nearestWaypoint.Position, nearestWaypoint.Speed, (VehicleDrivingFlags)262539, 1f); // waypointData[0].WaypointPos
+        //    while (nearestWaypoint != null && collectedVehicle.Vehicle && collectedVehicle.Vehicle.Driver && collectedVehicle.Vehicle.DistanceTo(waypoints[0].Position) > 3f && !collectedVehicle.DismissNow)
+        //    {
+        //        collectedVehicle.Vehicle.Driver.Tasks.DriveToPosition(nearestWaypoint.Position, nearestWaypoint.Speed, (VehicleDrivingFlags)262539, 1f);
+        //        GameFiber.Sleep(500);
+        //    }
+        //    collectedVehicle.SetRedirected(false);
+        //    Game.LogTrivial($"DirectTask loop over");
+        //}
 
         private static void VehicleDismissed(CollectedVehicle cv, List<Waypoint> waypointData)
         {
