@@ -26,7 +26,7 @@ namespace SceneManager
             Redirected = redirected;
         }
 
-        public void AssignPropertiesFromDirectedTask(int pathNum, int totalPathWaypoints, int currentWaypoint, bool tasksAssigned, bool dismiss, bool stoppedAtWaypoint, bool redirected)
+        public void AssignPropertiesFromDirectedTask(int pathNum, int totalPathWaypoints, int currentWaypoint, bool tasksAssigned, bool dismiss, bool stoppedAtWaypoint)//, bool redirected)
         {
             Path = pathNum;
             TotalWaypoints = totalPathWaypoints;
@@ -34,7 +34,7 @@ namespace SceneManager
             TasksAssigned = tasksAssigned;
             DismissNow = dismiss;
             StoppedAtWaypoint = stoppedAtWaypoint;
-            Redirected = redirected;
+            //Redirected = redirected;
         }
 
         public void SetCurrentWaypoint(int currentWaypoint)
