@@ -74,7 +74,7 @@ namespace SceneManager
 
         private static Vehicle[] GetNearbyVehicles(Vector3 OriginPosition, float radius)
         {
-            return (from x in World.GetAllVehicles() where !x.IsTrailer && x.DistanceTo(OriginPosition) < radius select x).ToArray();
+            return (from x in World.GetAllVehicles() where !x.IsTrailer && x.DistanceTo(OriginPosition) <= radius select x).ToArray();
         }
 
         private static void AssignStopForVehiclesFlag(List<Path> paths, Path path, Waypoint waypointData)
@@ -116,10 +116,20 @@ namespace SceneManager
 
         private static bool IsValidForCollection(this Vehicle v)
         {
-            if (v && v.HasDriver && v.Driver && v.Driver.IsAlive && v != Game.LocalPlayer.Character.CurrentVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)))
+            if(v && v.Speed > 0 && v.IsOnAllWheels && !v != Game.LocalPlayer.Character.CurrentVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)))
             {
+                if (!v.HasDriver)
+                {
+                    v.CreateRandomDriver();
+                    v.Driver.IsPersistent = true;
+                    v.Driver.BlockPermanentEvents = true;
+                }
                 return true;
             }
+            //if (v && v.HasDriver && v.Driver && v.Driver.IsAlive && v != Game.LocalPlayer.Character.CurrentVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)))
+            //{
+            //    return true;
+            //}
             else
             {
                 return false;
