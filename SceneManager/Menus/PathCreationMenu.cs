@@ -9,17 +9,15 @@ namespace SceneManager
 {
     class PathCreationMenu
     {
+
+        private static VehicleDrivingFlags[] drivingFlags = new VehicleDrivingFlags[] { VehicleDrivingFlags.Normal, VehicleDrivingFlags.StopAtDestination }; // Implement custom driving flag for normal
+        private static string[] waypointTypes = new string[] { "Drive To", "Stop" };
         public static UIMenu pathCreationMenu { get; private set; }
         private static UIMenuItem trafficAddWaypoint, trafficRemoveWaypoint, trafficEndPath;
-        private static UIMenuListScrollerItem<string> waypointType;
-        private static UIMenuListScrollerItem<float> waypointSpeed;
-        private static UIMenuListScrollerItem<float> collectorRadius;
-        private static UIMenuCheckboxItem collectorWaypoint;
-
-        private static List<string> waypointTypes = new List<string>() { "Drive To", "Stop" };
-        private static List<float> waypointSpeeds = new List<float>() { 5f, 10f, 15f, 20f, 30f, 40f, 50f, 60f, 70f };
-        private static List<float> collectorRadii = new List<float>() { 3f, 5f, 10f, 15f, 20f, 30f, 40f, 50f };
-        private static VehicleDrivingFlags[] drivingFlags = new VehicleDrivingFlags[] { VehicleDrivingFlags.Normal, VehicleDrivingFlags.StopAtDestination }; // Implement custom driving flag for normal
+        private static UIMenuListScrollerItem<string> waypointType = new UIMenuListScrollerItem<string>("Waypoint Type", "", waypointTypes);
+        private static UIMenuNumericScrollerItem<int> waypointSpeed;
+        private static UIMenuNumericScrollerItem<int> collectorRadius = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint in meters vehicles will be collected", 1, 50, 1);
+        private static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If this waypoint will collect vehicles to follow the path");
 
         internal static void InstantiateMenu()
         {
@@ -30,10 +28,12 @@ namespace SceneManager
 
         public static void BuildPathCreationMenu()
         {
-            pathCreationMenu.AddItem(waypointType = new UIMenuListScrollerItem<string>("Waypoint Type", "", waypointTypes));
-            pathCreationMenu.AddItem(waypointSpeed = new UIMenuListScrollerItem<float>($"Waypoint Speed (in {SettingsMenu.speedUnits.SelectedItem})", "", waypointSpeeds));
-            pathCreationMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector", true));
-            pathCreationMenu.AddItem(collectorRadius = new UIMenuListScrollerItem<float>("Collection Radius", "", collectorRadii));
+            pathCreationMenu.AddItem(waypointType);
+            pathCreationMenu.AddItem(waypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to the waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 80, 5));
+            waypointSpeed.Index = 0;
+            pathCreationMenu.AddItem(collectorWaypoint);
+            pathCreationMenu.AddItem(collectorRadius);
+            collectorRadius.Index = 0;
             pathCreationMenu.AddItem(trafficAddWaypoint = new UIMenuItem("Add waypoint"));
             trafficAddWaypoint.ForeColor = Color.Gold;
             pathCreationMenu.AddItem(trafficRemoveWaypoint = new UIMenuItem("Remove last waypoint"));
@@ -61,9 +61,37 @@ namespace SceneManager
             // Do I need to implement a distance restriction?  Idiots place waypoints unnecessarily close, possibly causing AI to drive in circles
             if (selectedItem == trafficAddWaypoint)
             {
+                var anyPathsExist = PathMainMenu.GetPaths().Count > 0;
+
+                // If no paths exist, then add a new path to the collection at index 0.  If paths do exist, then we want to add a new path at the first null index if there are no non-null paths where pathFinished = false
+                if (!anyPathsExist)
+                {
+                    AddNewPathToPathsCollection(PathMainMenu.GetPaths(), 0);
+
+                    if (SettingsMenu.debugGraphics.Checked)
+                    {
+                        GameFiber.StartNew(() =>
+                        {
+                            DebugGraphics.LoopToDrawDebugGraphics(SettingsMenu.debugGraphics, PathMainMenu.GetPaths()[0]);
+                        });
+                    }
+                }
+                else if(anyPathsExist && !PathMainMenu.GetPaths().Any(p => p != null && !p.PathFinished))
+                {
+                    AddNewPathToPathsCollection(PathMainMenu.GetPaths(), PathMainMenu.GetPaths().IndexOf(PathMainMenu.GetPaths().Where(p => p.PathFinished).First()) + 1);
+
+                    if (SettingsMenu.debugGraphics.Checked)
+                    {
+                        GameFiber.StartNew(() =>
+                        {
+                            DebugGraphics.LoopToDrawDebugGraphics(SettingsMenu.debugGraphics, PathMainMenu.GetPaths().Where(p => p != null && !p.PathFinished).First());
+                        });
+                    }
+                }
+
                 var firstNonNullPath = PathMainMenu.GetPaths().Where(p => p != null && !p.PathFinished).First();
                 var pathIndex = PathMainMenu.GetPaths().IndexOf(firstNonNullPath);
-                var currentPath = pathIndex + 1;
+                var currentPath = firstNonNullPath.PathNum;
                 var currentWaypoint = PathMainMenu.GetPaths()[pathIndex].Waypoints.Count + 1;
                 var drivingFlag = drivingFlags[waypointType.Index];
                 var blip = CreateWaypointBlip(pathIndex);
@@ -71,21 +99,20 @@ namespace SceneManager
                 if (collectorWaypoint.Checked)
                 {
                     var yieldZone = SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH
-                        ? World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]))
-                        : World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]));
+                        ? World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeed.Value))
+                        : World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeed.Value));
 
-                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, collectorRadii[collectorRadius.Index], yieldZone));
+                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, collectorRadius.Value, yieldZone));
                 }
                 else
                 {
                     PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip));
                 }
-                Game.LogTrivial($"Waypoint speed: {PathMainMenu.GetPaths()[pathIndex].Waypoints.Last().Speed}");
                 Game.LogTrivial($"[Path {currentPath}] Waypoint {currentWaypoint} ({drivingFlag.ToString()}) added");
 
                 ToggleTrafficEndPathMenuItem(pathIndex);
                 trafficRemoveWaypoint.Enabled = true;
-                PathMainMenu.createNewPath.Text = "Continue Creating Current Path";
+                PathMainMenu.createNewPath.Text = $"Continue Creating Path {currentPath}";
             }
 
             if (selectedItem == trafficRemoveWaypoint)
@@ -125,66 +152,39 @@ namespace SceneManager
                     var currentPath = PathMainMenu.GetPaths()[i];
                     if (PathMainMenu.GetPaths().ElementAtOrDefault(i) != null && !currentPath.PathFinished)
                     {
-                        // If the path has one stop waypoint or at least two waypoints, finish the path and start the vehicle collector loop, else show user the error and delete any waypoints they made and clear the invalid path
-                        if (currentPath.Waypoints.Count >= 2 || (currentPath.Waypoints.Count == 1 && currentPath.Waypoints[0].DrivingFlag == VehicleDrivingFlags.StopAtDestination))
+                        Game.LogTrivial($"[Path Creation] Path {currentPath.PathNum} finished with {currentPath.Waypoints.Count} waypoints.");
+                        Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Path {i + 1} complete.");
+                        currentPath.Waypoints.Last().Blip.Color = Color.OrangeRed;
+                        if (currentPath.Waypoints.Last().CollectorRadiusBlip)
                         {
-                            Game.LogTrivial($"[Path Creation] Path {i + 1} finished with {currentPath.Waypoints.Count} waypoints.");
-                            Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Path {i + 1} complete.");
-                            currentPath.Waypoints.Last().Blip.Color = Color.OrangeRed;
-                            if (currentPath.Waypoints.Last().CollectorRadiusBlip)
-                            {
-                                currentPath.Waypoints.Last().CollectorRadiusBlip.Color = Color.OrangeRed;
-                            }
-                            currentPath.FinishPath();
-                            currentPath.EnablePath();
-                            currentPath.SetPathNumber(i + 1);
-                            PathMainMenu.AddPathToPathCountList(i, currentPath.PathNum);
-
-                            //GameFiber InitialWaypointVehicleCollectorFiber = new GameFiber(() => TrafficPathing.InitialWaypointVehicleCollector(paths[i]));
-                            //InitialWaypointVehicleCollectorFiber.Start();
-
-                            // For each waypoint in the path's WaypointData, start a collector game fiber and loop while the path and waypoint exist, and while the path is enabled
-                            foreach (Waypoint wd in PathMainMenu.GetPaths()[i].Waypoints)
-                            {
-                                GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => VehicleCollector.StartCollectingAtWaypoint(PathMainMenu.GetPaths(), PathMainMenu.GetPaths()[i], wd));
-                                WaypointVehicleCollectorFiber.Start();
-
-                                //GameFiber AssignStopForVehiclesFlagFiber = new GameFiber(() => TrafficPathing.AssignStopForVehiclesFlag(PathMainMenu.GetPaths(), PathMainMenu.GetPaths()[i], wd));
-                                //AssignStopForVehiclesFlagFiber.Start();
-                            }
-
-                            MenuManager.menuPool.CloseAllMenus();
-                            PathMainMenu.pathMainMenu.Clear();
-                            PathMainMenu.BuildPathMenu();
-                            PathMainMenu.pathMainMenu.Visible = true;
-                            break;
+                            currentPath.Waypoints.Last().CollectorRadiusBlip.Color = Color.OrangeRed;
                         }
-                        else
+                        currentPath.FinishPath();
+                        currentPath.EnablePath();
+                        currentPath.SetPathNumber(i + 1);
+                        PathMainMenu.AddPathToPathCountList(i, currentPath.PathNum);
+
+                        // For each waypoint in the path's WaypointData, start a collector game fiber and loop while the path and waypoint exist, and while the path is enabled
+                        foreach (Waypoint wd in PathMainMenu.GetPaths()[i].Waypoints)
                         {
-                            Game.LogTrivial($"[Path Error] A minimum of 2 waypoints is required.");
-                            Game.DisplayNotification($"~o~Scene Manager\n~r~[Error]~w~ A minimum of 2 waypoints or one stop waypoint is required to create a path.");
-                            foreach (Waypoint wp in PathMainMenu.GetPaths()[i].Waypoints)
-                            {
-                                wp.Blip.Delete();
-                                if (wp.CollectorRadiusBlip)
-                                {
-                                    wp.CollectorRadiusBlip.Delete();
-                                }
-                            }
-                            PathMainMenu.GetPaths()[i].Waypoints.Clear();
-                            PathMainMenu.GetPaths().RemoveAt(i);
-                            break;
+                            GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => VehicleCollector.StartCollectingAtWaypoint(PathMainMenu.GetPaths(), PathMainMenu.GetPaths()[i], wd));
+                            WaypointVehicleCollectorFiber.Start();
                         }
+
+                        MenuManager.menuPool.CloseAllMenus();
+                        PathMainMenu.pathMainMenu.Clear();
+                        PathMainMenu.BuildPathMenu();
+                        trafficEndPath.Enabled = false;
+                        PathMainMenu.pathMainMenu.Visible = true;
+                        break;
                     }
                 }
-                // "Refresh" the menu to reflect the new path
-                //TrafficMenu.RebuildTrafficMenu();
             }
         }
 
         private static void ToggleTrafficEndPathMenuItem(int pathIndex)
         {
-            if ((PathMainMenu.GetPaths()[pathIndex].Waypoints.Count == 1 && PathMainMenu.GetPaths()[pathIndex].Waypoints.First().DrivingFlag == VehicleDrivingFlags.StopAtDestination) || (PathMainMenu.GetPaths()[pathIndex].Waypoints.Count > 1))
+            if (PathMainMenu.GetPaths()[pathIndex].Waypoints.Count > 0)
             {
                 trafficEndPath.Enabled = true;
             }
@@ -200,13 +200,13 @@ namespace SceneManager
             if (SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH)
             {
                 //Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
-                convertedSpeed = MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]);
+                convertedSpeed = MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeed.Value);
                 //Game.LogTrivial($"Converted speed: {convertedSpeed}m/s");
             }
             else
             {
                 //Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
-                convertedSpeed = MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeeds[waypointSpeed.Index]);
+                convertedSpeed = MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeed.Value);
                 //Game.LogTrivial($"Converted speed: {convertedSpeed}m/s");
             }
 
@@ -243,28 +243,5 @@ namespace SceneManager
             trafficRemoveWaypoint.Enabled = false;
             trafficEndPath.Enabled = false;
         }
-
-        //private static void RefreshPathMainMenu()
-        //{
-        //    trafficRemoveWaypoint.Enabled = true;
-        //    MenuManager.pathMenu.Clear();
-        //    //MenuManager.pathMenu.AddItem(PathMainMenu.AddNewMenuItem())
-        //    MenuManager.pathMenu.AddItem(PathMainMenu.createNewPath = new UIMenuItem("Continue Creating Current Path"));
-        //    MenuManager.pathMenu.AddItem(PathMainMenu.deleteAllPaths = new UIMenuItem("Delete All Paths"));
-        //    MenuManager.pathMenu.AddItem(PathMainMenu.directDriver = new UIMenuListScrollerItem<int>("Direct nearest driver to path", ""));
-        //    MenuManager.pathMenu.AddItem(PathMainMenu.dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", ""));
-
-        //    if (PathMainMenu.GetPaths().Count == 8)
-        //    {
-        //        PathMainMenu.createNewPath.Enabled = false;
-        //    }
-        //    if (PathMainMenu.GetPaths().Count == 0)
-        //    {
-        //        PathMainMenu.editPath.Enabled = false;
-        //        PathMainMenu.deleteAllPaths.Enabled = false;
-        //        PathMainMenu.disableAllPaths.Enabled = false;
-        //        PathMainMenu.directDriver.Enabled = false;
-        //    }
-        //}
     }
 }
