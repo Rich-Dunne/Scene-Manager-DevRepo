@@ -173,7 +173,6 @@ namespace SceneManager
         {
             if (selectedItem == createNewPath)
             {
-                createNewPath.Text = "Continue Creating Current Path";
                 pathMainMenu.Visible = false;
                 PathCreationMenu.pathCreationMenu.Visible = true;
 
@@ -183,24 +182,24 @@ namespace SceneManager
                     if (paths.ElementAtOrDefault(i) != null && paths[i].PathFinished == false)
                     {
                         //Game.LogTrivial($"pathFinished: {paths[i].PathFinished}");
-                        Game.LogTrivial($"Resuming path {i + 1}");
-                        Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Resuming path {i + 1}");
+                        Game.LogTrivial($"Resuming path {paths[i].PathNum}");
+                        Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Resuming path {paths[i].PathNum}");
                         break;
                     }
-                    else if (paths.ElementAtOrDefault(i) == null)
-                    {
-                        // Do we only want to do this once the first waypoint is added?
-                        PathCreationMenu.AddNewPathToPathsCollection(paths, i);
+                    //else if (paths.ElementAtOrDefault(i) == null)
+                    //{
+                    //    Do we only want to do this once the first waypoint is added ?
+                    //   PathCreationMenu.AddNewPathToPathsCollection(paths, i);
 
-                        if (SettingsMenu.debugGraphics.Checked)
-                        {
-                            GameFiber.StartNew(() =>
-                            {
-                                DebugGraphics.LoopToDrawDebugGraphics(SettingsMenu.debugGraphics, paths[i]);
-                            });
-                        }
-                        break;
-                    }
+                    //    if (SettingsMenu.debugGraphics.Checked)
+                    //    {
+                    //        GameFiber.StartNew(() =>
+                    //        {
+                    //            DebugGraphics.LoopToDrawDebugGraphics(SettingsMenu.debugGraphics, paths[i]);
+                    //        });
+                    //    }
+                    //    break;
+                    //}
                 }
             }
 
