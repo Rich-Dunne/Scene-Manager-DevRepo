@@ -179,27 +179,13 @@ namespace SceneManager
                 // For each element in paths, determine if the element exists but is not finished yet, or if it doesn't exist, create it.
                 for (int i = 0; i <= paths.Count; i++)
                 {
-                    if (paths.ElementAtOrDefault(i) != null && paths[i].PathFinished == false)
+                    if (paths.ElementAtOrDefault(i) != null && paths[i].State == State.Creating)
                     {
                         //Game.LogTrivial($"pathFinished: {paths[i].PathFinished}");
                         Game.LogTrivial($"Resuming path {paths[i].PathNum}");
                         Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Resuming path {paths[i].PathNum}");
                         break;
                     }
-                    //else if (paths.ElementAtOrDefault(i) == null)
-                    //{
-                    //    Do we only want to do this once the first waypoint is added ?
-                    //   PathCreationMenu.AddNewPathToPathsCollection(paths, i);
-
-                    //    if (SettingsMenu.debugGraphics.Checked)
-                    //    {
-                    //        GameFiber.StartNew(() =>
-                    //        {
-                    //            DebugGraphics.LoopToDrawDebugGraphics(SettingsMenu.debugGraphics, paths[i]);
-                    //        });
-                    //    }
-                    //    break;
-                    //}
                 }
             }
 
