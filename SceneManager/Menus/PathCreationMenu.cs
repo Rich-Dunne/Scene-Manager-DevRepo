@@ -76,20 +76,20 @@ namespace SceneManager
                         });
                     }
                 }
-                else if(anyPathsExist && !PathMainMenu.GetPaths().Any(p => p != null && !p.PathFinished))
+                else if(anyPathsExist && !PathMainMenu.GetPaths().Any(p => p != null && p.State == State.Creating))
                 {
-                    AddNewPathToPathsCollection(PathMainMenu.GetPaths(), PathMainMenu.GetPaths().IndexOf(PathMainMenu.GetPaths().Where(p => p.PathFinished).First()) + 1);
+                    AddNewPathToPathsCollection(PathMainMenu.GetPaths(), PathMainMenu.GetPaths().IndexOf(PathMainMenu.GetPaths().Where(p => p.State == State.Finished).First()) + 1);
 
                     if (SettingsMenu.debugGraphics.Checked)
                     {
                         GameFiber.StartNew(() =>
                         {
-                            DebugGraphics.LoopToDrawDebugGraphics(SettingsMenu.debugGraphics, PathMainMenu.GetPaths().Where(p => p != null && !p.PathFinished).First());
+                            DebugGraphics.LoopToDrawDebugGraphics(SettingsMenu.debugGraphics, PathMainMenu.GetPaths().Where(p => p != null && p.State == State.Creating).First());
                         });
                     }
                 }
 
-                var firstNonNullPath = PathMainMenu.GetPaths().Where(p => p != null && !p.PathFinished).First();
+                var firstNonNullPath = PathMainMenu.GetPaths().Where(p => p != null && p.State == State.Creating).First();
                 var pathIndex = PathMainMenu.GetPaths().IndexOf(firstNonNullPath);
                 var currentPath = firstNonNullPath.PathNum;
                 var currentWaypoint = PathMainMenu.GetPaths()[pathIndex].Waypoints.Count + 1;
@@ -120,7 +120,7 @@ namespace SceneManager
                 // Loop through each path and find the first one which isn't finished, then delete the path's last waypoint and corresponding blip
                 for (int i = 0; i < PathMainMenu.GetPaths().Count; i++)
                 {
-                    if (PathMainMenu.GetPaths().ElementAtOrDefault(i) != null && !PathMainMenu.GetPaths()[i].PathFinished)
+                    if (PathMainMenu.GetPaths().ElementAtOrDefault(i) != null && PathMainMenu.GetPaths()[i].State == State.Creating)
                     {
                         Game.LogTrivial($"[Path {i + 1}] {PathMainMenu.GetPaths()[i].Waypoints.Last().DrivingFlag.ToString()} waypoint removed");
                         PathMainMenu.GetPaths()[i].Waypoints.Last().Blip.Delete();
@@ -150,7 +150,7 @@ namespace SceneManager
                 for (int i = 0; i < PathMainMenu.GetPaths().Count; i++)
                 {
                     var currentPath = PathMainMenu.GetPaths()[i];
-                    if (PathMainMenu.GetPaths().ElementAtOrDefault(i) != null && !currentPath.PathFinished)
+                    if (PathMainMenu.GetPaths().ElementAtOrDefault(i) != null && currentPath.State == State.Creating)
                     {
                         Game.LogTrivial($"[Path Creation] Path {currentPath.PathNum} finished with {currentPath.Waypoints.Count} waypoints.");
                         Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Path {i + 1} complete.");
@@ -159,7 +159,8 @@ namespace SceneManager
                         {
                             currentPath.Waypoints.Last().CollectorRadiusBlip.Color = Color.OrangeRed;
                         }
-                        currentPath.FinishPath();
+                        currentPath.State = State.Finished;
+                        //currentPath.FinishPath();
                         currentPath.EnablePath();
                         currentPath.SetPathNumber(i + 1);
                         PathMainMenu.AddPathToPathCountList(i, currentPath.PathNum);
@@ -172,9 +173,10 @@ namespace SceneManager
                         }
 
                         MenuManager.menuPool.CloseAllMenus();
-                        PathMainMenu.pathMainMenu.Clear();
-                        PathMainMenu.BuildPathMenu();
-                        trafficEndPath.Enabled = false;
+                        pathCreationMenu.Reset(true, true); // Trying to see if we can get away with resetting the menu instead of rebuilding it
+                        //PathMainMenu.pathMainMenu.Clear();
+                        //PathMainMenu.BuildPathMenu();
+                        //trafficEndPath.Enabled = false;
                         PathMainMenu.pathMainMenu.Visible = true;
                         break;
                     }
@@ -239,7 +241,7 @@ namespace SceneManager
             var pathNum = pathIndex + 1;
             Game.LogTrivial($"Creating path {pathNum}");
             Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Path {pathNum} started.");
-            paths.Insert(pathIndex, new Path(pathNum, false));
+            paths.Insert(pathIndex, new Path(pathNum, State.Creating));
             trafficRemoveWaypoint.Enabled = false;
             trafficEndPath.Enabled = false;
         }

@@ -21,15 +21,16 @@ namespace SceneManager
         public Path(int pathNum, bool pathFinished, bool pathDisabled, List<Waypoint> waypoints)
         {
             PathNum = pathNum;
-            PathFinished = pathFinished;
+            //PathFinished = pathFinished;
             IsEnabled = pathDisabled;
             Waypoints = waypoints;
         }
 
-        public Path(int pathNum, bool pathFinished)
+        public Path(int pathNum, State pathState)
         {
             PathNum = pathNum;
-            PathFinished = pathFinished;
+            State = pathState;
+            //PathFinished = pathFinished;
         }
 
         public void SetPathStatus(bool status)
