@@ -270,7 +270,7 @@ namespace SceneManager
                     }
                     else
                     {
-                        VehicleCollector.collectedVehicles.Add(nearbyVehicle.LicensePlate, new CollectedVehicle(nearbyVehicle, nearbyVehicle.LicensePlate, paths[directDriver.Index].Waypoints[0].Path, paths[directDriver.Index].Waypoints.Count, 1, false, false, true));
+                        VehicleCollector.collectedVehicles.Add(nearbyVehicle.LicensePlate, new CollectedVehicle(nearbyVehicle, nearbyVehicle.LicensePlate, paths[directDriver.Index].Waypoints[0].Path, paths[directDriver.Index].Waypoints.Count, 1, false, false));
                         Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not in collection, adding to collection for path {paths[directDriver.Index].PathNum} with {paths[directDriver.Index].Waypoints.Count} waypoints");
 
                         if (directOptions.SelectedItem == "First waypoint")

@@ -100,7 +100,7 @@ namespace SceneManager
 
         private static CollectedVehicle AddVehicleToCollection(Path path, Waypoint waypoint, Vehicle v)
         {
-            var collectedVehicle = new CollectedVehicle(v, v.LicensePlate, path.PathNum, path.Waypoints.Count, waypoint.Number, true, false, false);
+            var collectedVehicle = new CollectedVehicle(v, v.LicensePlate, path.PathNum, path.Waypoints.Count, waypoint.Number, true, false);
             collectedVehicles.Add(v.LicensePlate, collectedVehicle);
             Game.LogTrivial($"[WaypointVehicleCollector] Added {v.Model.Name} to collection from path {path.PathNum}, waypoint {waypoint.Number}.");
             return collectedVehicle;

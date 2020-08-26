@@ -12,9 +12,8 @@ namespace SceneManager
         public bool TasksAssigned { get; private set; }
         public bool DismissNow { get; private set; }
         public bool StoppedAtWaypoint { get; private set; }
-        public bool Redirected { get; private set; }
 
-        public CollectedVehicle(Vehicle vehicle, string licensePlate, int path, int totalWaypoints, int currentWaypoint, bool tasksAssigned, bool dismissNow, bool redirected)
+        public CollectedVehicle(Vehicle vehicle, string licensePlate, int path, int totalWaypoints, int currentWaypoint, bool tasksAssigned, bool dismissNow)
         {
             Vehicle = vehicle;
             LicensePlate = licensePlate;
@@ -23,10 +22,9 @@ namespace SceneManager
             CurrentWaypoint = currentWaypoint;
             TasksAssigned = tasksAssigned;
             DismissNow = dismissNow;
-            Redirected = redirected;
         }
 
-        public void AssignPropertiesFromDirectedTask(int pathNum, int totalPathWaypoints, int currentWaypoint, bool tasksAssigned, bool dismiss, bool stoppedAtWaypoint)//, bool redirected)
+        public void AssignPropertiesFromDirectedTask(int pathNum, int totalPathWaypoints, int currentWaypoint, bool tasksAssigned, bool dismiss, bool stoppedAtWaypoint)
         {
             Path = pathNum;
             TotalWaypoints = totalPathWaypoints;
@@ -34,7 +32,6 @@ namespace SceneManager
             TasksAssigned = tasksAssigned;
             DismissNow = dismiss;
             StoppedAtWaypoint = stoppedAtWaypoint;
-            //Redirected = redirected;
         }
 
         public void SetCurrentWaypoint(int currentWaypoint)
@@ -55,11 +52,6 @@ namespace SceneManager
         public void SetStoppedAtWaypoint(bool stoppedAtWaypoint)
         {
             StoppedAtWaypoint = stoppedAtWaypoint;
-        }
-
-        public void SetRedirected(bool redirected)
-        {
-            Redirected = redirected;
         }
     }
 }
