@@ -10,30 +10,6 @@ namespace SceneManager
 {
     public class EntryPoint
     {
-        internal static class Settings
-        {
-            internal static Keys ToggleKey = Keys.T;
-            internal static Keys ModifierKey = Keys.LShiftKey;
-            internal static ControllerButtons ToggleButton = ControllerButtons.Y;
-            internal static ControllerButtons ModifierButton = ControllerButtons.A;
-            internal static bool EnableHints = true;
-            //internal static string id = Verification.passThrough(Verification.GetID());
-            //internal static string PatronKey = null; // This cannot reference VerifyUser because the file can just be shared and it will always work.  Must be manually set to each user's ID
-
-            internal static void LoadSettings()
-            {
-                Game.LogTrivial("Loading SceneManager.ini settings");
-                InitializationFile ini = new InitializationFile("Plugins/SceneManager.ini");
-                ini.Create();
-                //PatronKey = ini.ReadString("Patreon","PatronKey", null);
-                ToggleKey = ini.ReadEnum("Keybindings", "ToggleKey", Keys.T);
-                ModifierKey = ini.ReadEnum("Keybindings", "ModifierKey", Keys.LShiftKey);
-                ToggleButton = ini.ReadEnum("Keybindings", "ToggleButton", ControllerButtons.A);
-                ModifierButton = ini.ReadEnum("Keybindings", "ModifierButton", ControllerButtons.DPadDown);
-                EnableHints = ini.ReadBoolean("Other Settings", "EnableHints", true);
-            }
-        }
-
         public static void Main()
         {
             AppDomain.CurrentDomain.DomainUnload += MyTerminationHandler;
