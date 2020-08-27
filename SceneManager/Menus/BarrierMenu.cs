@@ -193,15 +193,20 @@ namespace SceneManager
         private static void SpawnFlare()
         {
             var flare = new Weapon("weapon_flare", shadowBarrier.Position, 1);
-            //flare.SetPositionWithSnap(shadowBarrier.Position);
 
-            // The purpose of this fiber is to allow the flare to spawn and fall to the ground naturally before freezing its position because you can't spawn it on the ground gracefully (it stands upright)
-            //GameFiber.StartNew(delegate
-            //{
-            //    GameFiber.Sleep(1000);
-            //    flare.IsPositionFrozen = true;
-            //    flare.IsCollisionEnabled = false;
-            //});
+            Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(flare, true);
+            GameFiber.StartNew(() =>
+            {
+                while (flare && flare.HeightAboveGround > 0.05f)
+                {
+                    GameFiber.Yield();
+                }
+                GameFiber.Sleep(1000);
+                if (flare)
+                {
+                    flare.IsPositionFrozen = true;
+                }
+            });
 
             barriers.Add(flare);
             removeBarrierOptions.Enabled = true;
