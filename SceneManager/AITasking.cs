@@ -8,6 +8,12 @@ namespace SceneManager
     {
         public static void AssignWaypointTasks(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint)
         {
+            if(!collectedVehicle.Vehicle || !collectedVehicle.Vehicle.Driver)
+            {
+                Game.LogTrivial($"Collected vehicle or driver is null");
+                return;
+            }
+
             if (currentWaypoint != null && currentWaypoint.DrivingFlag == VehicleDrivingFlags.StopAtDestination)
             {
                 StopVehicleAtWaypoint(collectedVehicle);
@@ -15,6 +21,11 @@ namespace SceneManager
 
             DriveVehicleToNextWaypoint(collectedVehicle, waypoints, currentWaypoint);
 
+            if (!collectedVehicle.Vehicle || !collectedVehicle.Vehicle.Driver)
+            {
+                Game.LogTrivial($"Collected vehicle or driver is null");
+                return;
+            }
             Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} all tasks complete.");
             DismissDriver(collectedVehicle);
         }

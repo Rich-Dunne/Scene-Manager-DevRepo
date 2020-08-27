@@ -48,8 +48,13 @@ namespace SceneManager
 
         private static void LoopForNearbyValidVehicles(Path path, Waypoint waypoint)
         {
-            foreach (Vehicle vehicle in GetNearbyVehicles(waypoint.Position, waypoint.CollectorRadius).Where(v => v.IsValidForCollection()))
+            foreach (Vehicle vehicle in GetNearbyVehicles(waypoint.Position, waypoint.CollectorRadius))
             {
+                if (!vehicle)
+                {
+                    break;
+                }
+
                 // If the vehicle is not in the collection yet
                 if (!collectedVehicles.ContainsKey(vehicle.LicensePlate))
                 {
@@ -72,9 +77,9 @@ namespace SceneManager
             }
         }
 
-        private static Vehicle[] GetNearbyVehicles(Vector3 OriginPosition, float radius)
+        private static Vehicle[] GetNearbyVehicles(Vector3 collectorPosition, float radius)
         {
-            return (from x in World.GetAllVehicles() where !x.IsTrailer && x.DistanceTo(OriginPosition) <= radius select x).ToArray();
+            return (from v in World.GetAllVehicles() where v.IsValidForCollection() && v.DistanceTo(collectorPosition) <= radius select v).ToArray();
         }
 
         private static void AssignStopForVehiclesFlag(List<Path> paths, Path path, Waypoint waypointData)
@@ -118,6 +123,10 @@ namespace SceneManager
         {
             if(v && v.Speed > 0 && v.IsOnAllWheels && !v != Game.LocalPlayer.Character.CurrentVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)))
             {
+                if(v.HasDriver && !v.Driver.IsAlive)
+                {
+                    return false;
+                }
                 if (!v.HasDriver)
                 {
                     v.CreateRandomDriver();
@@ -126,10 +135,6 @@ namespace SceneManager
                 }
                 return true;
             }
-            //if (v && v.HasDriver && v.Driver && v.Driver.IsAlive && v != Game.LocalPlayer.Character.CurrentVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)))
-            //{
-            //    return true;
-            //}
             else
             {
                 return false;
