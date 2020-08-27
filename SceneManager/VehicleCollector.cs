@@ -29,7 +29,8 @@ namespace SceneManager
             TotalControl = AllowWrongWay | AvoidObjects | AvoidPeds | TakeShortestPath | StopForTrafficLights | IgnorePathfinding | StopForVehicles
         }
 
-        public static Dictionary<string, CollectedVehicle> collectedVehicles = new Dictionary<string, CollectedVehicle>();
+        //public static Dictionary<string, CollectedVehicle> collectedVehicles = new Dictionary<string, CollectedVehicle>();
+        public static List<CollectedVehicle> collectedVehicles = new List<CollectedVehicle>();
 
         public static void StartCollectingAtWaypoint(List<Path> paths, Path path, Waypoint waypoint)
         {
@@ -55,8 +56,9 @@ namespace SceneManager
                     break;
                 }
 
+                var collectedVehicle = collectedVehicles.Where(cv => cv.Vehicle == vehicle) as CollectedVehicle;
                 // If the vehicle is not in the collection yet
-                if (!collectedVehicles.ContainsKey(vehicle.LicensePlate))
+                if(collectedVehicle == null)
                 {
                     SetVehicleAndDriverPersistence(vehicle);
                     CollectedVehicle newCollectedVehicle = AddVehicleToCollection(path, waypoint, vehicle);
@@ -66,20 +68,20 @@ namespace SceneManager
                     AssignTasksFiber.Start();
                 }
                 // If the vehicle is in the collection, but has no tasks
-                else if (collectedVehicles.ContainsKey(vehicle.LicensePlate) && !collectedVehicles[vehicle.LicensePlate].TasksAssigned)
+                else if (!collectedVehicle.TasksAssigned)
                 {
                     Game.LogTrivial($"[WaypointVehicleCollector] {vehicle.Model.Name} already in collection, but with no tasks.  Assigning tasks.");
-                    collectedVehicles[vehicle.LicensePlate].SetTasksAssigned(true);
+                    collectedVehicle.SetTasksAssigned(true);
 
-                    GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(collectedVehicles[vehicle.LicensePlate], path.Waypoints, waypoint));
+                    GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(collectedVehicle, path.Waypoints, waypoint));
                     AssignTasksFiber.Start();
                 }
             }
         }
 
-        private static Vehicle[] GetNearbyVehicles(Vector3 collectorPosition, float radius)
+        private static Vehicle[] GetNearbyVehicles(Vector3 collectorPosition, float collectorRadius)
         {
-            return (from v in World.GetAllVehicles() where v.IsValidForCollection() && v.DistanceTo(collectorPosition) <= radius select v).ToArray(); //v.IsValidForCollection()
+            return (from v in World.GetAllVehicles() where v.DistanceTo(collectorPosition) <= collectorRadius && v.IsValidForCollection() select v).ToArray();
         }
 
         private static void AssignStopForVehiclesFlag(List<Path> paths, Path path, Waypoint waypointData)
@@ -106,7 +108,7 @@ namespace SceneManager
         private static CollectedVehicle AddVehicleToCollection(Path path, Waypoint waypoint, Vehicle v)
         {
             var collectedVehicle = new CollectedVehicle(v, v.LicensePlate, path.PathNum, path.Waypoints.Count, waypoint.Number, true, false);
-            collectedVehicles.Add(v.LicensePlate, collectedVehicle);
+            collectedVehicles.Add(collectedVehicle);
             Game.LogTrivial($"[WaypointVehicleCollector] Added {v.Model.Name} to collection from path {path.PathNum}, waypoint {waypoint.Number}.");
             return collectedVehicle;
         }
@@ -121,7 +123,7 @@ namespace SceneManager
 
         private static bool IsValidForCollection(this Vehicle v)
         {
-            if(v && v.Speed > 0 && v.IsOnAllWheels && v != Game.LocalPlayer.Character.CurrentVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)) && !collectedVehicles.ContainsKey(v.LicensePlate))
+            if(v && v.Speed > 1 && v.IsOnAllWheels && v != Game.LocalPlayer.Character.CurrentVehicle && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)) && !collectedVehicles.Any(cv => cv.Vehicle == v))
             {
                 if(v.HasDriver && !v.Driver.IsAlive)
                 {
@@ -157,14 +159,14 @@ namespace SceneManager
                 var collectorWaypoints = waypointData.Where(wp => wp.IsCollector);
                 var vehicleFarEnoughAwayFromCollectors = collectorWaypoints.All(wp => cv.Vehicle.DistanceTo(wp.Position) > wp.CollectorRadius);
 
-                if (collectedVehicles.ContainsKey(cv.LicensePlate) && vehicleFarEnoughAwayFromCollectors)
+                if (collectedVehicles.Contains(cv) && vehicleFarEnoughAwayFromCollectors)
                 {
                     Game.LogTrivial($"{cv.Vehicle.Model.Name} is far enough away from all attractor waypoints and has been removed from the collection.");
                     cv.SetTasksAssigned(false);
                     cv.Vehicle.Driver.BlockPermanentEvents = false;
                     cv.Vehicle.Driver.IsPersistent = false;
                     cv.Vehicle.IsPersistent = false;
-                    collectedVehicles.Remove(cv.LicensePlate);
+                    collectedVehicles.Remove(cv);
 
                     break;
                 }

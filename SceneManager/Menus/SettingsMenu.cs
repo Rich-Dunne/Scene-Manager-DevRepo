@@ -8,7 +8,7 @@ namespace SceneManager
     {
         public static UIMenu settingsMenu { get; private set; }
         public static UIMenuCheckboxItem debugGraphics = new UIMenuCheckboxItem("Enable 3D Waypoints", false), 
-            hints = new UIMenuCheckboxItem("Enable Hints", true);
+            hints = new UIMenuCheckboxItem("Enable Hints", true);  // Refactor this to be true/false based off the ini
         public static UIMenuListScrollerItem<SpeedUnitsOfMeasure> speedUnits = new UIMenuListScrollerItem<SpeedUnitsOfMeasure>("Speed Unit of Measure", "", new[] { SpeedUnitsOfMeasure.MPH, SpeedUnitsOfMeasure.KPH });
         public enum SpeedUnitsOfMeasure
         {
@@ -52,6 +52,7 @@ namespace SceneManager
             if(checkboxItem == hints)
             {
                 Hints.Enabled = hints.Checked ? true : false;
+                // Update the setting in the .ini when check state is changed
             }
         }
 
