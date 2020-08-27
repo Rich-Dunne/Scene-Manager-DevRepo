@@ -11,7 +11,7 @@ namespace SceneManager
     {
         public static UIMenu pathMainMenu { get; private set; }
         public static UIMenuItem createNewPath { get; private set; }
-        private static UIMenuItem deleteAllPaths;
+        public static UIMenuItem deleteAllPaths;
         public static UIMenuListScrollerItem<int> editPath { get; private set; }
         public static UIMenuListScrollerItem<string> directOptions { get; private set; }
         public static UIMenuListScrollerItem<int> directDriver { get; private set; }

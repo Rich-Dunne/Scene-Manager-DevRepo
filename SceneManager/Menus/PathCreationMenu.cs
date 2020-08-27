@@ -173,10 +173,11 @@ namespace SceneManager
                         }
 
                         MenuManager.menuPool.CloseAllMenus();
-                        pathCreationMenu.Reset(true, true); // Trying to see if we can get away with resetting the menu instead of rebuilding it
-                        //PathMainMenu.pathMainMenu.Clear();
-                        //PathMainMenu.BuildPathMenu();
-                        //trafficEndPath.Enabled = false;
+                        //pathCreationMenu.Reset(true, true); // Trying to see if we can get away with resetting the menu instead of rebuilding it
+                        PathMainMenu.createNewPath.Text = "Create New Path";
+                        PathMainMenu.pathMainMenu.Clear();
+                        PathMainMenu.BuildPathMenu();
+                        trafficEndPath.Enabled = false;
                         PathMainMenu.pathMainMenu.Visible = true;
                         break;
                     }
