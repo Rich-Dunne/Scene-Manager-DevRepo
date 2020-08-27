@@ -46,6 +46,8 @@ namespace SceneManager
                             DebugGraphics.LoopToDrawDebugGraphics(debugGraphics, path);
                         });
                     }
+
+                    DebugGraphics.DrawSphereOnPlayer(debugGraphics);
                 }
             }
 

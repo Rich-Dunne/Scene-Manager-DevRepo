@@ -23,7 +23,7 @@ namespace SceneManager
             }
         }
 
-        public static void DrawLinesBetweenWaypoints(Path path, int i)
+        private static void DrawLinesBetweenWaypoints(Path path, int i)
         {
             if (path.Waypoints[i + 1].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
             {
@@ -35,7 +35,7 @@ namespace SceneManager
             }
         }
 
-        public static void DrawSpheresAtWaypoints(Path path, int i)
+        private static void DrawSpheresAtWaypoints(Path path, int i)
         {
             if (path.Waypoints[i].IsCollector)
             {
@@ -49,6 +49,32 @@ namespace SceneManager
             {
                 Debug.DrawSphere(path.Waypoints[i].Position, 1f, Color.FromArgb(80, Color.Green));
             }
+        }
+
+        public static void DrawSphereOnPlayer(UIMenuCheckboxItem debugGraphics)
+        {
+            GameFiber.StartNew(() =>
+            {
+                while (debugGraphics.Checked)
+                {
+                    if (PathCreationMenu.pathCreationMenu.Visible)
+                    {
+                        if (PathCreationMenu.collectorWaypoint.Checked)
+                        {
+                            Debug.DrawSphere(Game.LocalPlayer.Character.Position, PathCreationMenu.collectorRadius.Value, Color.FromArgb(80, Color.Blue));
+                        }
+                        else if (PathCreationMenu.waypointType.SelectedItem == "Drive To")
+                        {
+                            Debug.DrawSphere(Game.LocalPlayer.Character.Position, PathCreationMenu.collectorRadius.Value, Color.FromArgb(80, Color.Green));
+                        }
+                        else
+                        {
+                            Debug.DrawSphere(Game.LocalPlayer.Character.Position, PathCreationMenu.collectorRadius.Value, Color.FromArgb(80, Color.Red));
+                        }
+                    }
+                    GameFiber.Yield();
+                }
+            });
         }
     }
 }

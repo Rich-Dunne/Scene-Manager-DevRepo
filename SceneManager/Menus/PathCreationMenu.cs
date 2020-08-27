@@ -14,10 +14,10 @@ namespace SceneManager
         private static string[] waypointTypes = new string[] { "Drive To", "Stop" };
         public static UIMenu pathCreationMenu { get; private set; }
         private static UIMenuItem trafficAddWaypoint, trafficRemoveWaypoint, trafficEndPath;
-        private static UIMenuListScrollerItem<string> waypointType = new UIMenuListScrollerItem<string>("Waypoint Type", "", waypointTypes);
+        public static UIMenuListScrollerItem<string> waypointType = new UIMenuListScrollerItem<string>("Waypoint Type", "", waypointTypes);
         private static UIMenuNumericScrollerItem<int> waypointSpeed;
-        private static UIMenuNumericScrollerItem<int> collectorRadius = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint in meters vehicles will be collected", 1, 50, 1);
-        private static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If this waypoint will collect vehicles to follow the path");
+        public static UIMenuNumericScrollerItem<int> collectorRadius = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint in meters vehicles will be collected", 1, 50, 1);
+        public static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If this waypoint will collect vehicles to follow the path");
 
         internal static void InstantiateMenu()
         {
