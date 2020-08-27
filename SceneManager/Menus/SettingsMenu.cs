@@ -7,8 +7,9 @@ namespace SceneManager
     class SettingsMenu
     {
         public static UIMenu settingsMenu { get; private set; }
-        public static UIMenuCheckboxItem debugGraphics;
-        public static UIMenuListScrollerItem<SpeedUnitsOfMeasure> speedUnits;
+        public static UIMenuCheckboxItem debugGraphics = new UIMenuCheckboxItem("Enable 3D Waypoints", false), 
+            hints = new UIMenuCheckboxItem("Enable Hints", true);
+        public static UIMenuListScrollerItem<SpeedUnitsOfMeasure> speedUnits = new UIMenuListScrollerItem<SpeedUnitsOfMeasure>("Speed Unit of Measure", "", new[] { SpeedUnitsOfMeasure.MPH, SpeedUnitsOfMeasure.KPH });
         public enum SpeedUnitsOfMeasure
         {
             MPH,
@@ -24,8 +25,9 @@ namespace SceneManager
 
         public static void BuildSettingsMenu()
         {
-            settingsMenu.AddItem(debugGraphics = new UIMenuCheckboxItem("Enable Debug Graphics", false));
-            settingsMenu.AddItem(speedUnits = new UIMenuListScrollerItem<SpeedUnitsOfMeasure>("Speed Unit of Measure", "", new[] { SpeedUnitsOfMeasure.MPH, SpeedUnitsOfMeasure.KPH }));
+            settingsMenu.AddItem(debugGraphics);
+            settingsMenu.AddItem(hints);
+            settingsMenu.AddItem(speedUnits);
 
             settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
             settingsMenu.OnScrollerChange += SettingsMenu_OnScrollerChange;
@@ -35,8 +37,6 @@ namespace SceneManager
         {
             if (checkboxItem == debugGraphics)
             {
-                // TODO: Fix graphics don't display when new path is created, have to uncheck and re-check the option
-                // TODO: Add branch for this during path creation ... create temp Waypoint list during path creation, then assign to path[i] after creation?
                 if (debugGraphics.Checked)
                 {
                     foreach (Path path in PathMainMenu.GetPaths())
@@ -47,6 +47,11 @@ namespace SceneManager
                         });
                     }
                 }
+            }
+
+            if(checkboxItem == hints)
+            {
+                Hints.Enabled = hints.Checked ? true : false;
             }
         }
 

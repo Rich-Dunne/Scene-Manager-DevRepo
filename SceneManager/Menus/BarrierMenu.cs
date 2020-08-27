@@ -15,7 +15,6 @@ namespace SceneManager
         public static UIMenu barrierMenu { get; private set; }
         public static List<Rage.Object> barriers = new List<Rage.Object>() { };
 
-        // TODO: Refactor as dictionary
         private static UIMenuListScrollerItem<string> barrierList = new UIMenuListScrollerItem<string>("Select Barrier", "", new[] { "Large Striped Cone", "Large Cone", "Medium Striped Cone", "Medium Cone", "Roadpole A", "Roadpole B", "Police Barrier", "Road Barrier", "Flare" });
         private static string[] barrierObjectNames = new string[] { "prop_mp_cone_01", "prop_roadcone01c", "prop_mp_cone_02", "prop_mp_cone_03", "prop_roadpole_01a", "prop_roadpole_01b", "prop_barrier_work05", "prop_barrier_work06a", "prop_flare_01b" };
         private static UIMenuNumericScrollerItem<int> rotateBarrier = new UIMenuNumericScrollerItem<int>("Rotate Barrier", "Rotate the barrier.", 0, 350, 10);
@@ -48,12 +47,12 @@ namespace SceneManager
 
         public static void CreateShadowBarrier(UIMenu barrierMenu)
         {
-            if (EntryPoint.Settings.EnableHints)
+            if (Settings.EnableHints)
             {
-                Game.DisplayNotification($"~o~Scene Manager\n~y~[Hint]~y~ ~w~The shadow cone will disappear if you aim too far away.");
+                Hints.Display($"~o~Scene Manager\n~y~[Hint]~y~ ~w~The shadow cone will disappear if you aim too far away.");
             }
 
-            //Game.LogTrivial("Creating shadow cone");
+            //Game.LogTrivial("Creating shadow barrier");
             if (shadowBarrier)
                 shadowBarrier.Delete();
 

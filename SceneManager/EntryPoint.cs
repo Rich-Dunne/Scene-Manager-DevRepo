@@ -17,8 +17,7 @@ namespace SceneManager
             GetAssemblyVersion();
             MenuManager.InstantiateMenus();
 
-            if (Settings.EnableHints)
-                DisplayHintsToOpenMenu();
+            DisplayHintsToOpenMenu();
 
             GameFiber UserInputFiber = new GameFiber(() => GetUserInput.LoopForUserInput());
             UserInputFiber.Start();
@@ -36,19 +35,19 @@ namespace SceneManager
         {
             if (Settings.ModifierKey == Keys.None && Settings.ModifierButton == ControllerButtons.None)
             {
-                Game.DisplayNotification($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ToggleButton} button ~w~while on foot");
+                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ToggleButton} button ~w~while on foot");
             }
             else if (Settings.ModifierKey == Keys.None)
             {
-                Game.DisplayNotification($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons ~w~while on foot");
+                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons ~w~while on foot");
             }
             else if (Settings.ModifierButton == ControllerButtons.None)
             {
-                Game.DisplayNotification($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} ~w~or the ~b~{Settings.ToggleButton} button ~w~while on foot");
+                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} ~w~or the ~b~{Settings.ToggleButton} button ~w~while on foot");
             }
             else
             {
-                Game.DisplayNotification($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} keys ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons ~w~while on foot");
+                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} keys ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons ~w~while on foot");
             }
         }
 

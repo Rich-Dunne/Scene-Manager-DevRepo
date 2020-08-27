@@ -52,6 +52,7 @@
   <ItemGroup>
     <Compile Include="AITasking.cs" />
     <Compile Include="DebugGraphics.cs" />
+    <Compile Include="Hints.cs" />
     <Compile Include="Menus\BarrierMenu.cs" />
     <Compile Include="Object Classes\CollectedVehicle.cs" />
     <Compile Include="Menus\EditPathMenu.cs" />
