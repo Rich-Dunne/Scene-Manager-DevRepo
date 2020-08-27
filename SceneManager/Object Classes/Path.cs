@@ -33,11 +33,6 @@ namespace SceneManager
             //PathFinished = pathFinished;
         }
 
-        public void SetPathStatus(bool status)
-        {
-            IsEnabled = status;
-        }
-
         public void SetPathNumber(int pathNum)
         {
             PathNum = pathNum;
