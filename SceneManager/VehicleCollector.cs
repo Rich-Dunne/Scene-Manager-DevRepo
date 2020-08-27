@@ -79,7 +79,7 @@ namespace SceneManager
 
         private static Vehicle[] GetNearbyVehicles(Vector3 collectorPosition, float radius)
         {
-            return (from v in World.GetAllVehicles() where v.IsValidForCollection() && v.DistanceTo(collectorPosition) <= radius select v).ToArray();
+            return (from v in World.GetAllVehicles() where v.IsValidForCollection() && v.DistanceTo(collectorPosition) <= radius select v).ToArray(); //v.IsValidForCollection()
         }
 
         private static void AssignStopForVehiclesFlag(List<Path> paths, Path path, Waypoint waypointData)
@@ -121,7 +121,7 @@ namespace SceneManager
 
         private static bool IsValidForCollection(this Vehicle v)
         {
-            if(v && v.Speed > 0 && v.IsOnAllWheels && !v != Game.LocalPlayer.Character.CurrentVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)))
+            if(v && v.Speed > 0 && v.IsOnAllWheels && v != Game.LocalPlayer.Character.CurrentVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)) && !collectedVehicles.ContainsKey(v.LicensePlate))
             {
                 if(v.HasDriver && !v.Driver.IsAlive)
                 {
@@ -132,6 +132,7 @@ namespace SceneManager
                     v.CreateRandomDriver();
                     v.Driver.IsPersistent = true;
                     v.Driver.BlockPermanentEvents = true;
+                    Game.LogTrivial($"A missing driver was created for {v.Model.Name}");
                 }
                 return true;
             }
