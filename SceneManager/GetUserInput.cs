@@ -27,14 +27,14 @@ namespace SceneManager
         
         private static void GetControllerInput()
         {
-            if (EntryPoint.Settings.ModifierButton == ControllerButtons.None)
+            if (Settings.ModifierButton == ControllerButtons.None)
             {
-                if (Game.IsControllerButtonDown(EntryPoint.Settings.ToggleButton) && AreMenusClosed())
+                if (Game.IsControllerButtonDown(Settings.ToggleButton) && AreMenusClosed())
                 {
                     MainMenu.mainMenu.Visible = !MainMenu.mainMenu.Visible;
                 }
             }
-            else if (Game.IsControllerButtonDownRightNow(EntryPoint.Settings.ModifierButton) && Game.IsControllerButtonDown(EntryPoint.Settings.ToggleButton) && AreMenusClosed())
+            else if (Game.IsControllerButtonDownRightNow(Settings.ModifierButton) && Game.IsControllerButtonDown(Settings.ToggleButton) && AreMenusClosed())
             {
                 MainMenu.mainMenu.Visible = !MainMenu.mainMenu.Visible;
             }
@@ -42,14 +42,14 @@ namespace SceneManager
 
         private static void GetKeyboardInput()
         {
-            if (EntryPoint.Settings.ModifierKey == System.Windows.Forms.Keys.None)
+            if (Settings.ModifierKey == System.Windows.Forms.Keys.None)
             {
-                if (Game.IsKeyDown(EntryPoint.Settings.ToggleKey) && AreMenusClosed())
+                if (Game.IsKeyDown(Settings.ToggleKey) && AreMenusClosed())
                 {
                     MainMenu.mainMenu.Visible = !MainMenu.mainMenu.Visible;
                 }
             }
-            else if (Game.IsKeyDownRightNow(EntryPoint.Settings.ModifierKey) && Game.IsKeyDown(EntryPoint.Settings.ToggleKey) && AreMenusClosed())
+            else if (Game.IsKeyDownRightNow(Settings.ModifierKey) && Game.IsKeyDown(Settings.ToggleKey) && AreMenusClosed())
             {
                 MainMenu.mainMenu.Visible = !MainMenu.mainMenu.Visible;
             }
