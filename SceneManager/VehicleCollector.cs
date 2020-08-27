@@ -81,7 +81,7 @@ namespace SceneManager
 
         private static Vehicle[] GetNearbyVehicles(Vector3 collectorPosition, float collectorRadius)
         {
-            return (from v in World.GetAllVehicles() where v.DistanceTo(collectorPosition) <= collectorRadius && v.IsValidForCollection() select v).ToArray();
+            return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorPosition) <= collectorRadius && v.IsValidForCollection() select v).ToArray();
         }
 
         private static void AssignStopForVehiclesFlag(List<Path> paths, Path path, Waypoint waypointData)
