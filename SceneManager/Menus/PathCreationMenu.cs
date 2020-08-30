@@ -213,7 +213,7 @@ namespace SceneManager
             return convertedSpeed;
         }
 
-        private static Blip CreateWaypointBlip(int pathIndex)
+        public static Blip CreateWaypointBlip(int pathIndex)
         {
             var spriteNumericalEnum = pathIndex + 17; // 17 because the numerical value of these sprites are always 17 more than the path index
             var blip = new Blip(Game.LocalPlayer.Character.Position)
