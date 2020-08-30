@@ -13,12 +13,14 @@ namespace SceneManager
     class BarrierMenu
     {
         public static UIMenu barrierMenu { get; private set; }
-        public static List<Rage.Object> barriers = new List<Rage.Object>() { };
+        public static List<Barrier> barriers = new List<Barrier>();
+        //public static List<Rage.Object> barriers = new List<Rage.Object>() { };
 
         private static UIMenuListScrollerItem<string> barrierList = new UIMenuListScrollerItem<string>("Select Barrier", "", new[] { "Large Striped Cone", "Large Cone", "Medium Striped Cone", "Medium Cone", "Roadpole A", "Roadpole B", "Police Barrier", "Road Barrier", "Flare" });
         private static string[] barrierObjectNames = new string[] { "prop_mp_cone_01", "prop_roadcone01c", "prop_mp_cone_02", "prop_mp_cone_03", "prop_roadpole_01a", "prop_roadpole_01b", "prop_barrier_work05", "prop_barrier_work06a", "prop_flare_01b" };
-        private static UIMenuNumericScrollerItem<int> rotateBarrier = new UIMenuNumericScrollerItem<int>("Rotate Barrier", "Rotate the barrier.", 0, 350, 10);
+        private static UIMenuNumericScrollerItem<int> rotateBarrier = new UIMenuNumericScrollerItem<int>("Rotate Barrier", "", 0, 350, 10);
         private static UIMenuListScrollerItem<string> removeBarrierOptions = new UIMenuListScrollerItem<string>("Remove Barrier", "", new[] { "Last Barrier", "Nearest Barrier", "All Barriers" });
+        private static UIMenuItem resetBarriers = new UIMenuItem("Reset Barriers", "Reset all spawned barriers to their original position and rotation");
         public static Rage.Object shadowBarrier;
 
         internal static void InstantiateMenu()
@@ -30,6 +32,10 @@ namespace SceneManager
 
         public static void BuildBarrierMenu()
         {
+            barrierMenu.AddItem(resetBarriers);
+            resetBarriers.ForeColor = Color.Gold;
+            resetBarriers.Enabled = false;
+
             barrierMenu.AddItem(removeBarrierOptions, 0);
             removeBarrierOptions.ForeColor = Color.Gold;
             removeBarrierOptions.Enabled = false;
@@ -148,17 +154,27 @@ namespace SceneManager
             {
                 RemoveBarrier();
             }
+
+            if(selectedItem == resetBarriers)
+            {
+                foreach(Barrier barrier in barriers.Where(b => b.GetBarrier()))
+                {
+                    barrier.GetBarrier().Position = barrier.GetPosition();
+                    barrier.GetBarrier().Heading = barrier.GetRotation();
+                }
+            }
         }
 
         private static void SpawnBarrier()
         {
-            var cone = new Rage.Object(shadowBarrier.Model, shadowBarrier.Position, rotateBarrier.Value);
-            cone.SetPositionWithSnap(shadowBarrier.Position);
-            Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(cone, true);
-            Rage.Native.NativeFunction.Natives.SET_DISABLE_BREAKING(cone, true);
+            var barrier = new Rage.Object(shadowBarrier.Model, shadowBarrier.Position, rotateBarrier.Value);
+            barrier.SetPositionWithSnap(shadowBarrier.Position);
+            Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(barrier, true);
+            Rage.Native.NativeFunction.Natives.SET_DISABLE_BREAKING(barrier, true);
 
-            barriers.Add(cone);
+            barriers.Add(new Barrier(barrier, barrier.Position, barrier.Heading));
             removeBarrierOptions.Enabled = true;
+            resetBarriers.Enabled = true;
         }
 
         private static void RemoveBarrier()
@@ -166,18 +182,18 @@ namespace SceneManager
             switch (removeBarrierOptions.Index)
             {
                 case 0:
-                    barriers[barriers.Count - 1].Delete();
+                    barriers[barriers.Count - 1].GetBarrier().Delete();
                     barriers.RemoveAt(barriers.Count - 1);
                     break;
                 case 1:
                     barriers = barriers.OrderBy(c => c.DistanceTo(Game.LocalPlayer.Character)).ToList();
-                    barriers[0].Delete();
+                    barriers[0].GetBarrier().Delete();
                     barriers.RemoveAt(0);
                     break;
                 case 2:
-                    foreach (Rage.Object c in barriers.Where(c => c))
+                    foreach (Barrier b in barriers.Where(b => b.GetBarrier()))
                     {
-                        c.Delete();
+                        b.GetBarrier().Delete();
                     }
                     if (barriers.Count > 0)
                     {
@@ -187,6 +203,7 @@ namespace SceneManager
             }
 
             removeBarrierOptions.Enabled = barriers.Count == 0 ? false : true;
+            resetBarriers.Enabled = barriers.Count == 0 ? false : true;
         }
 
         private static void SpawnFlare()
@@ -207,7 +224,7 @@ namespace SceneManager
                 }
             });
 
-            barriers.Add(flare);
+            barriers.Add(new Barrier(flare, flare.Position, flare.Heading));
             removeBarrierOptions.Enabled = true;
         }
 
