@@ -8,19 +8,26 @@ namespace SceneManager
     {
         public static void LoopToDrawDebugGraphics(UIMenuCheckboxItem debugGraphics, Path path)
         {
-            while (debugGraphics.Checked && path != null)
+            GameFiber.StartNew(() =>
             {
-                for (int i = 0; i < path.Waypoints.Count; i++)
+                while (debugGraphics.Checked)
                 {
-                    DrawSpheresAtWaypoints(path, i);
-
-                    if (i != path.Waypoints.Count - 1)
+                    if (MenuManager.menuPool.IsAnyMenuOpen() && path != null)
                     {
-                        DrawLinesBetweenWaypoints(path, i);
+                        for (int i = 0; i < path.Waypoints.Count; i++)
+                        {
+                            //Draw3DMarkersAtWaypoints(path, i);
+                            path.Waypoints[i].DrawWaypointMarker();
+
+                            if (i != path.Waypoints.Count - 1)
+                            {
+                                DrawLinesBetweenWaypoints(path, i);
+                            }
+                        }
                     }
+                    GameFiber.Yield();
                 }
-                GameFiber.Yield();
-            }
+            });
         }
 
         private static void DrawLinesBetweenWaypoints(Path path, int i)
@@ -35,41 +42,26 @@ namespace SceneManager
             }
         }
 
-        private static void DrawSpheresAtWaypoints(Path path, int i)
-        {
-            if (path.Waypoints[i].IsCollector)
-            {
-                Debug.DrawSphere(path.Waypoints[i].Position, path.Waypoints[i].CollectorRadius, Color.FromArgb(80, Color.Blue));
-            }
-            else if (path.Waypoints[i].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
-            {
-                Debug.DrawSphere(path.Waypoints[i].Position, 1f, Color.FromArgb(80, Color.Red));
-            }
-            else
-            {
-                Debug.DrawSphere(path.Waypoints[i].Position, 1f, Color.FromArgb(80, Color.Green));
-            }
-        }
-
-        public static void DrawSphereOnPlayer(UIMenuCheckboxItem debugGraphics)
+        public static void Draw3DWaypointOnPlayer()
         {
             GameFiber.StartNew(() =>
             {
-                while (debugGraphics.Checked)
+                while (SettingsMenu.debugGraphics.Checked)
                 {
                     if (PathCreationMenu.pathCreationMenu.Visible)
                     {
                         if (PathCreationMenu.collectorWaypoint.Checked)
                         {
-                            Debug.DrawSphere(Game.LocalPlayer.Character.Position, PathCreationMenu.collectorRadius.Value, Color.FromArgb(80, Color.Blue));
+                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.collectorRadius.Value, (float)PathCreationMenu.collectorRadius.Value, 1f, 80, 130, 255, 80, false, false, 2, false, 0, 0, false);
+                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.speedZoneRadius.Value, (float)PathCreationMenu.speedZoneRadius.Value, 1f, 255, 185, 80, 80, false, false, 2, false, 0, 0, false);
                         }
                         else if (PathCreationMenu.waypointType.SelectedItem == "Drive To")
                         {
-                            Debug.DrawSphere(Game.LocalPlayer.Character.Position, PathCreationMenu.collectorRadius.Value, Color.FromArgb(80, Color.Green));
+                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z-1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 80, false, false, 2, false, 0, 0, false);
                         }
                         else
                         {
-                            Debug.DrawSphere(Game.LocalPlayer.Character.Position, PathCreationMenu.collectorRadius.Value, Color.FromArgb(80, Color.Red));
+                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z-1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 80, false, false, 2, false, 0, 0, false);
                         }
                     }
                     GameFiber.Yield();
