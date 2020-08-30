@@ -13,6 +13,7 @@ namespace SceneManager
         public uint YieldZone { get; private set; }
         public bool IsCollector { get; private set; }
         public float CollectorRadius { get; private set; }
+        public float SpeedZoneRadius { get; private set; }
         public Blip CollectorRadiusBlip { get; private set; }
 
         public Waypoint(int path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip)
@@ -26,7 +27,7 @@ namespace SceneManager
 
         }
 
-        public Waypoint(int path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector, float collectorRadius, uint yieldZone)
+        public Waypoint(int path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector, float collectorRadius, float speedZoneRadius, uint yieldZone)
         {
             Path = path;
             Number = waypointNum;
@@ -36,6 +37,7 @@ namespace SceneManager
             Blip = waypointBlip;
             IsCollector = collector;
             CollectorRadius = collectorRadius;
+            SpeedZoneRadius = speedZoneRadius;
             YieldZone = yieldZone;
             CollectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius)
             {
@@ -44,24 +46,24 @@ namespace SceneManager
             };
         }
 
-        public void UpdateWaypoint(Waypoint currentWaypoint, VehicleDrivingFlags drivingFlag, float drivingSpeed, bool collectorWaypointChecked, float collectorRadius, bool updateWaypointPositionChecked)
+        public void UpdateWaypoint(Waypoint currentWaypoint, VehicleDrivingFlags drivingFlag, float drivingSpeed, bool collectorWaypointChecked, float collectorRadius, float speedZoneRadius, bool updateWaypointPositionChecked)
         {
             UpdateDrivingFlag(drivingFlag);
             UpdateWaypointSpeed(drivingSpeed);
-            UpdateCollectorOptions(currentWaypoint, drivingSpeed, collectorWaypointChecked, collectorRadius);
+            UpdateCollectorOptions(currentWaypoint, drivingSpeed, collectorWaypointChecked, collectorRadius, speedZoneRadius);
             if (updateWaypointPositionChecked)
             {
                 UpdateWaypointPosition(Game.LocalPlayer.Character.Position);
             }
         }
 
-        private void UpdateCollectorOptions(Waypoint currentWaypoint, float drivingSpeed, bool collectorWaypointChecked, float collectorRadius)
+        private void UpdateCollectorOptions(Waypoint currentWaypoint, float drivingSpeed, bool collectorWaypointChecked, float collectorRadius, float speedZoneRadius)
         {
             if (collectorWaypointChecked)
             {
                 IsCollector = true;
                 World.RemoveSpeedZone(YieldZone);
-                YieldZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, 50f, drivingSpeed);
+                YieldZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, SpeedZoneRadius, drivingSpeed);
                 if (CollectorRadiusBlip)
                 {
                     currentWaypoint.CollectorRadiusBlip.Alpha = 0.5f;
@@ -76,6 +78,7 @@ namespace SceneManager
                     };
                 }
                 CollectorRadius = collectorRadius;
+                SpeedZoneRadius = speedZoneRadius;
             }
             else
             {
@@ -117,6 +120,26 @@ namespace SceneManager
         public void UpdateWaypointNumber(int newWaypointNumber)
         {
             Number = newWaypointNumber;
+        }
+
+        public void DrawWaypointMarker()
+        {
+            if(IsCollector && CollectorRadius > 0)
+            {
+                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, CollectorRadius, CollectorRadius, 1f, 80, 130, 255, 80, false, false, 2, false, 0, 0, false);
+                if(SpeedZoneRadius > 0)
+                {
+                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, SpeedZoneRadius, SpeedZoneRadius, 1f, 255, 185, 80, 80, false, false, 2, false, 0, 0, false);
+                }
+            }
+            else if(DrivingFlag == VehicleDrivingFlags.StopAtDestination)
+            {
+                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 80, false, false, 2, false, 0, 0, false);
+            }
+            else
+            {
+                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 80, false, false, 2, false, 0, 0, false);
+            }
         }
     }
 }

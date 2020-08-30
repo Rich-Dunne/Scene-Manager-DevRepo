@@ -18,8 +18,9 @@ namespace SceneManager
         public static UIMenuNumericScrollerItem<int> editWaypoint;
         private static UIMenuListScrollerItem<string> changeWaypointType = new UIMenuListScrollerItem<string>("New Waypoint Type", "", waypointTypes);
         private static UIMenuNumericScrollerItem<int> changeWaypointSpeed;
-        private static UIMenuNumericScrollerItem<int> changeCollectorRadius = new UIMenuNumericScrollerItem<int>("New Collection Radius", "The distance from this waypoint in meters vehicles will be collected", 1, 50, 1);
         private static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If this waypoint will collect vehicles to follow the path");
+        private static UIMenuNumericScrollerItem<int> changeCollectorRadius = new UIMenuNumericScrollerItem<int>("New Collection Radius", "The distance from this waypoint (in meters) vehicles will be collected", 1, 50, 1);
+        private static UIMenuNumericScrollerItem<int> changeSpeedZoneRadius = new UIMenuNumericScrollerItem<int>("New Speed Zone Radius", "The distance from this collector waypoint (in meters) non-collected vehicles will drive at this waypoint's speed", 1, 50, 1);
         private static UIMenuCheckboxItem updateWaypointPosition;
 
         internal static void InstantiateMenu()
@@ -47,7 +48,6 @@ namespace SceneManager
             editWaypointMenu.AddItem(changeWaypointType);
             changeWaypointType.Index = Array.IndexOf(drivingFlags, PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].DrivingFlag);
 
-            //Game.LogTrivial($"Waypoint speed: {PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].Speed}");
             editWaypointMenu.AddItem(changeWaypointSpeed = new UIMenuNumericScrollerItem<int>("New Waypoint Speed", $"How fast the AI will drive to the waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 80, 5));
             changeWaypointSpeed.Value = (int)MathHelper.ConvertMetersPerSecondToMilesPerHour(PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].Speed);
 
@@ -57,6 +57,14 @@ namespace SceneManager
             changeCollectorRadius.Value = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].CollectorRadius != 0
                 ? (int)PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].CollectorRadius
                 : changeCollectorRadius.Minimum;
+
+            editWaypointMenu.AddItem(changeSpeedZoneRadius);
+            changeSpeedZoneRadius.Value = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].CollectorRadius != 0
+                ? (int)PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].SpeedZoneRadius
+                : changeSpeedZoneRadius.Minimum;
+
+            changeCollectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
+            changeSpeedZoneRadius.Enabled = collectorWaypoint.Checked ? true : false;
 
             editWaypointMenu.AddItem(updateWaypointPosition = new UIMenuCheckboxItem("Update Waypoint Position", false));
             editWaypointMenu.AddItem(editUpdateWaypoint = new UIMenuItem("Update Waypoint"));
@@ -78,10 +86,10 @@ namespace SceneManager
             if(scrollerItem == editWaypoint)
             {
                 changeWaypointType.Index = Array.IndexOf(drivingFlags, PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].DrivingFlag);
-                //changeWaypointSpeed.Index = Array.IndexOf(waypointSpeeds, MathHelper.ConvertMetersPerSecondToMilesPerHour(PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].Speed));
                 changeWaypointSpeed.Value = (int)MathHelper.ConvertMetersPerSecondToMilesPerHour(PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].Speed);
                 collectorWaypoint.Checked = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].IsCollector;
                 changeCollectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
+                changeSpeedZoneRadius.Enabled = collectorWaypoint.Checked ? true : false;
             }
         }
 
@@ -90,6 +98,7 @@ namespace SceneManager
             if (checkboxItem == collectorWaypoint)
             {
                 changeCollectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
+                changeSpeedZoneRadius.Enabled = collectorWaypoint.Checked ? true : false;
             }
         }
 
@@ -100,7 +109,7 @@ namespace SceneManager
 
             if (selectedItem == editUpdateWaypoint)
             {
-                currentWaypoint.UpdateWaypoint(currentWaypoint, drivingFlags[changeWaypointType.Index], SetDriveSpeedForWaypoint(), collectorWaypoint.Checked, changeCollectorRadius.Value, updateWaypointPosition.Checked);
+                currentWaypoint.UpdateWaypoint(currentWaypoint, drivingFlags[changeWaypointType.Index], SetDriveSpeedForWaypoint(), collectorWaypoint.Checked, changeCollectorRadius.Value, changeSpeedZoneRadius.Value, updateWaypointPosition.Checked);
                 Game.LogTrivial($"Updated path {currentPath.PathNum} waypoint {currentWaypoint.Number}: Driving flag is {drivingFlags[changeWaypointType.Index].ToString()}, speed is {changeWaypointSpeed.Value}, collector is {currentWaypoint.IsCollector}");
 
                 if (currentPath.Waypoints.Count < 2 && currentPath.Waypoints[0].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
