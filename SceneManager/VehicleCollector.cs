@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using Rage;
 
@@ -49,12 +50,14 @@ namespace SceneManager
 
         private static void LoopForNearbyValidVehicles(Path path, Waypoint waypoint)
         {
-            foreach (Vehicle vehicle in GetNearbyVehicles(waypoint.Position, waypoint.CollectorRadius))
+            foreach (Vehicle vehicle in GetNearbyVehiclesForCollection(waypoint.Position, waypoint.CollectorRadius))
             {
                 if (!vehicle)
-                {
+                { 
                     break;
                 }
+
+                Game.LogTrivial($"Vehicle: {vehicle.Model.Name}, Distance to waypoint: {vehicle.DistanceTo2D(waypoint.Position)}");
 
                 var collectedVehicle = collectedVehicles.Where(cv => cv.Vehicle == vehicle) as CollectedVehicle;
                 // If the vehicle is not in the collection yet
@@ -79,18 +82,23 @@ namespace SceneManager
             }
         }
 
-        private static Vehicle[] GetNearbyVehicles(Vector3 collectorPosition, float collectorRadius)
+        private static Vehicle[] GetNearbyVehiclesForCollection(Vector3 collectorPosition, float collectorRadius)
         {
             return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorPosition) <= collectorRadius && v.IsValidForCollection() select v).ToArray();
         }
 
-        private static void AssignStopForVehiclesFlag(List<Path> paths, Path path, Waypoint waypointData)
+        private static Vehicle[] GetNearbyVehiclesForStopFlag(Vector3 collectorPosition)
         {
-            while (paths.Contains(path) && path.Waypoints.Contains(waypointData))
+            return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorPosition) <= 50f select v).ToArray();
+        }
+
+        private static void AssignStopForVehiclesFlag(List<Path> paths, Path path, Waypoint waypoint)
+        {
+            while (paths.Contains(path) && path.Waypoints.Contains(waypoint))
             {
                 if (path.IsEnabled)
                 {
-                    foreach (Vehicle v in GetNearbyVehicles(waypointData.Position, 50f).Where(v => v && v.HasDriver && v.Driver))
+                    foreach (Vehicle v in GetNearbyVehiclesForStopFlag(waypoint.Position).Where(v => v && v.HasDriver && v.Driver))
                     {
                         SetDriveTaskDrivingFlags(v.Driver, EDrivingFlags.StopForVehicles);
                     }
@@ -132,6 +140,9 @@ namespace SceneManager
                 if (!v.HasDriver)
                 {
                     v.CreateRandomDriver();
+                    var driverBlip = v.Driver.AttachBlip();
+                    driverBlip.Color = Color.Green;
+                    driverBlip.Scale = 0.25f;
                     v.Driver.IsPersistent = true;
                     v.Driver.BlockPermanentEvents = true;
                     Game.LogTrivial($"A missing driver was created for {v.Model.Name}");
