@@ -57,6 +57,7 @@ namespace SceneManager
                 if (waypoints.ElementAtOrDefault(nextWaypoint) != null && !collectedVehicle.StoppedAtWaypoint)
                 {
                     collectedVehicle.Vehicle.Driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
+                    collectedVehicle.Vehicle.Driver.Tasks.PerformDrivingManeuver(collectedVehicle.Vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3);
                 }
 
                 if (waypoints.ElementAtOrDefault(nextWaypoint) != null && waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
@@ -95,6 +96,10 @@ namespace SceneManager
                 cv.Vehicle.Driver.Dismiss();
                 cv.Vehicle.Driver.Tasks.Clear();
                 cv.Vehicle.Driver.BlockPermanentEvents = false;
+                if (cv.Vehicle.Driver.GetAttachedBlip())
+                {
+                    cv.Vehicle.Driver.GetAttachedBlip().Delete();
+                }
                 cv.Vehicle.Driver.IsPersistent = false;
 
                 cv.Vehicle.Dismiss();
