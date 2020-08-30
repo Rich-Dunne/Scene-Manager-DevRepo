@@ -51,6 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AITasking.cs" />
+    <Compile Include="Barrier.cs" />
     <Compile Include="DebugGraphics.cs" />
     <Compile Include="Hints.cs" />
     <Compile Include="Menus\BarrierMenu.cs" />
