@@ -81,7 +81,7 @@ namespace SceneManager
         private static void UpdateShadowBarrierPosition()
         {
             DisableBarrierMenuOptionsIfShadowConeTooFar();
-            shadowBarrier.Position = TracePlayerView(15, TraceFlags.IntersectEverything).HitPosition;
+            shadowBarrier.Position = TracePlayerView(SettingsMenu.barrierPlacementDistance.Value, TraceFlags.IntersectEverything).HitPosition;
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
             shadowBarrier.Heading = rotateBarrier.Value;
 
@@ -239,7 +239,7 @@ namespace SceneManager
             return World.TraceLine(start, end, flags);
         }
 
-        internal static HitResult TracePlayerView(float maxTraceDistance = 15f, TraceFlags flags = TraceFlags.IntersectEverything) => TracePlayerView(out Vector3 v1, out Vector3 v2, maxTraceDistance, flags);
+        internal static HitResult TracePlayerView(float maxTraceDistance = 30f, TraceFlags flags = TraceFlags.IntersectEverything) => TracePlayerView(out Vector3 v1, out Vector3 v2, maxTraceDistance, flags);
         //------------ CREDIT PNWPARKS FOR THESE FUNCTIONS ------------\\
     }
 }

@@ -10,6 +10,8 @@ namespace SceneManager
         public static UIMenuCheckboxItem debugGraphics = new UIMenuCheckboxItem("Enable 3D Waypoints", false), 
             hints = new UIMenuCheckboxItem("Enable Hints", true);  // Refactor this to be true/false based off the ini
         public static UIMenuListScrollerItem<SpeedUnitsOfMeasure> speedUnits = new UIMenuListScrollerItem<SpeedUnitsOfMeasure>("Speed Unit of Measure", "", new[] { SpeedUnitsOfMeasure.MPH, SpeedUnitsOfMeasure.KPH });
+        public static UIMenuNumericScrollerItem<int> barrierPlacementDistance = new UIMenuNumericScrollerItem<int>("Barrier Placement Distance", "How far away you can place a barrier (in meters)", 1, 30, 1);
+
         public enum SpeedUnitsOfMeasure
         {
             MPH,
@@ -28,6 +30,8 @@ namespace SceneManager
             settingsMenu.AddItem(debugGraphics);
             settingsMenu.AddItem(hints);
             settingsMenu.AddItem(speedUnits);
+            settingsMenu.AddItem(barrierPlacementDistance);
+            barrierPlacementDistance.Index = 14;
 
             settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
             settingsMenu.OnScrollerChange += SettingsMenu_OnScrollerChange;
@@ -47,7 +51,7 @@ namespace SceneManager
                         });
                     }
 
-                    DebugGraphics.DrawSphereOnPlayer(debugGraphics);
+                    DebugGraphics.Draw3DWaypointOnPlayer();
                 }
             }
 
