@@ -93,12 +93,12 @@ namespace SceneManager
 
             void DisableBarrierMenuOptionsIfShadowConeTooFar()
             {
-                if (shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) > 15f)
+                if (shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) > SettingsMenu.barrierPlacementDistance.Value)
                 {
                     barrierList.Enabled = false;
                     rotateBarrier.Enabled = false;
                 }
-                else if(shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) <= 15f && barrierList.SelectedItem == "Flare")
+                else if(shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) <= SettingsMenu.barrierPlacementDistance.Value && barrierList.SelectedItem == "Flare")
                 {
                     barrierList.Enabled = true;
                     rotateBarrier.Enabled = false;
