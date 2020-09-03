@@ -1,4 +1,5 @@
 ﻿using Rage;
+using System.Drawing;
 
 namespace SceneManager
 {
@@ -39,7 +40,7 @@ namespace SceneManager
             CollectorRadius = collectorRadius;
             SpeedZoneRadius = speedZoneRadius;
             YieldZone = yieldZone;
-            CollectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius)
+            CollectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius * 0.5f)
             {
                 Color = waypointBlip.Color,
                 Alpha = 0.5f
@@ -63,15 +64,17 @@ namespace SceneManager
             {
                 IsCollector = true;
                 World.RemoveSpeedZone(YieldZone);
-                YieldZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, SpeedZoneRadius, drivingSpeed);
+                YieldZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, SpeedZoneRadius * 0.5f, drivingSpeed);
+                Blip.Color = Color.Blue;
                 if (CollectorRadiusBlip)
                 {
+                    currentWaypoint.CollectorRadiusBlip.Position = Game.LocalPlayer.Character.Position;
                     currentWaypoint.CollectorRadiusBlip.Alpha = 0.5f;
-                    currentWaypoint.CollectorRadiusBlip.Scale = collectorRadius;
+                    currentWaypoint.CollectorRadiusBlip.Scale = collectorRadius * 0.5f;
                 }
                 else
                 {
-                    CollectorRadiusBlip = new Blip(Blip.Position, collectorRadius)
+                    CollectorRadiusBlip = new Blip(Blip.Position, collectorRadius * 0.5f)
                     {
                         Color = Blip.Color,
                         Alpha = 0.5f
@@ -105,6 +108,14 @@ namespace SceneManager
         private void UpdateDrivingFlag(VehicleDrivingFlags newDrivingFlag)
         {
             DrivingFlag = newDrivingFlag;
+            if (newDrivingFlag == VehicleDrivingFlags.StopAtDestination)
+            {
+                Blip.Color = Color.Red;
+            }
+            else
+            {
+                Blip.Color = Color.Green;
+            }
         }
 
         private void UpdateWaypointBlipPosition()
