@@ -4,6 +4,7 @@ namespace SceneManager
 {
     public class CollectedVehicle
     {
+        public Ped Driver { get; private set; }
         public Vehicle Vehicle { get; private set; }
         public string LicensePlate { get; private set; }
         public int Path { get; private set; }
@@ -16,6 +17,7 @@ namespace SceneManager
         public CollectedVehicle(Vehicle vehicle, string licensePlate, int path, int totalWaypoints, int currentWaypoint, bool tasksAssigned, bool dismissNow)
         {
             Vehicle = vehicle;
+            Driver = vehicle.Driver;
             LicensePlate = licensePlate;
             Path = path;
             TotalWaypoints = totalWaypoints;
