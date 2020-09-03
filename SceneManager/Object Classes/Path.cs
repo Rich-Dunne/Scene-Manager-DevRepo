@@ -12,7 +12,6 @@ namespace SceneManager
     public class Path
     { 
         public int PathNum { get; private set; }
-        //public bool PathFinished { get; private set; }
         public bool IsEnabled { get; private set; }
         public State State { get; set; }
 
@@ -21,7 +20,6 @@ namespace SceneManager
         public Path(int pathNum, bool pathFinished, bool pathDisabled, List<Waypoint> waypoints)
         {
             PathNum = pathNum;
-            //PathFinished = pathFinished;
             IsEnabled = pathDisabled;
             Waypoints = waypoints;
         }
@@ -30,18 +28,12 @@ namespace SceneManager
         {
             PathNum = pathNum;
             State = pathState;
-            //PathFinished = pathFinished;
         }
 
         public void SetPathNumber(int pathNum)
         {
             PathNum = pathNum;
         }
-
-        //public void FinishPath()
-        //{
-        //    PathFinished = true;
-        //}
 
         private void LowerWaypointBlipsOpacity()
         {
@@ -59,10 +51,13 @@ namespace SceneManager
         {
             foreach (Waypoint wp in Waypoints)
             {
-                wp.Blip.Alpha = 1.0f;
-                if (wp.CollectorRadiusBlip)
+                if (wp.Blip)
                 {
-                    wp.CollectorRadiusBlip.Alpha = 0.5f;
+                    wp.Blip.Alpha = 1.0f;
+                    if (wp.CollectorRadiusBlip)
+                    {
+                        wp.CollectorRadiusBlip.Alpha = 0.5f;
+                    }
                 }
             }
         }
@@ -76,6 +71,7 @@ namespace SceneManager
         public void EnablePath()
         {
             IsEnabled = true;
+            RestoreWaypointBlipsOpacity();
         }
 
 
