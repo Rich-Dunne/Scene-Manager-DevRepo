@@ -326,7 +326,7 @@ namespace SceneManager
 
             if (selectedItem == dismissDriver)
             {
-                var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(1).Where(v => v.VehicleAndDriverValid()).SingleOrDefault();
+                var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(1).Where(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid()).SingleOrDefault();
                 if (nearbyVehicle)
                 {
                     switch (dismissDriver.Index)
@@ -336,10 +336,13 @@ namespace SceneManager
                             if (nearbyVehicle.IsInCollectedVehicles())
                             {
                                 var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle) as CollectedVehicle;
-                                collectedVehicle.SetDismissNow(true);
-                                collectedVehicle.Vehicle.Driver.Tasks.Clear();
-                                collectedVehicle.Vehicle.Driver.Dismiss();
-                                Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from path {collectedVehicle.Path}");
+                                if (collectedVehicle != null)
+                                {
+                                    collectedVehicle.SetDismissNow(true);
+                                    collectedVehicle.Vehicle.Driver.Tasks.Clear();
+                                    collectedVehicle.Vehicle.Driver.Dismiss();
+                                    Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from path {collectedVehicle.Path}");
+                                }
                             }
                             else
                             {
@@ -352,18 +355,21 @@ namespace SceneManager
                             if (nearbyVehicle.IsInCollectedVehicles())
                             {
                                 var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle) as CollectedVehicle;
-                                collectedVehicle.SetStoppedAtWaypoint(false);
-                                collectedVehicle.Vehicle.Driver.Tasks.Clear();
-                                collectedVehicle.Vehicle.Driver.Dismiss();
+                                if(collectedVehicle != null)
+                                {
+                                    collectedVehicle.SetStoppedAtWaypoint(false);
+                                    collectedVehicle.Vehicle.Driver.Tasks.Clear();
+                                    collectedVehicle.Vehicle.Driver.Dismiss();
 
-                                if (collectedVehicle.CurrentWaypoint == collectedVehicle.TotalWaypoints && !collectedVehicle.StoppedAtWaypoint)
-                                {
-                                    collectedVehicle.SetDismissNow(true);
-                                    Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from final waypoint and ultimately the path");
-                                }
-                                else
-                                {
-                                    Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from waypoint {collectedVehicle.CurrentWaypoint}");
+                                    if (collectedVehicle.CurrentWaypoint == collectedVehicle.TotalWaypoints && !collectedVehicle.StoppedAtWaypoint)
+                                    {
+                                        collectedVehicle.SetDismissNow(true);
+                                        Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from final waypoint and ultimately the path");
+                                    }
+                                    else
+                                    {
+                                        Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from waypoint {collectedVehicle.CurrentWaypoint}");
+                                    }
                                 }
                             }
                             else
