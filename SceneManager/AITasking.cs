@@ -1,4 +1,5 @@
 ﻿using Rage;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -32,6 +33,15 @@ namespace SceneManager
 
         private static void DriveVehicleToNextWaypoint(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint)
         {
+            if (!collectedVehicle.Vehicle)
+            {
+                return;
+            }
+            if (!collectedVehicle.Driver)
+            {
+                return;
+            }
+
             var vehicle = collectedVehicle.Vehicle;
             var driver = vehicle.Driver;
 
@@ -72,8 +82,13 @@ namespace SceneManager
         private static void StopVehicleAtWaypoint(CollectedVehicle collectedVehicle)
         {
             Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} stopping at waypoint.");
-            collectedVehicle.Vehicle.Driver.Tasks.PerformDrivingManeuver(VehicleManeuver.GoForwardStraightBraking);
+            collectedVehicle.Driver.Tasks.DriveToPosition(collectedVehicle.Vehicle.FrontPosition, 10f, VehicleDrivingFlags.StopAtDestination);
             collectedVehicle.SetStoppedAtWaypoint(true);
+
+            while (collectedVehicle.Vehicle && collectedVehicle.StoppedAtWaypoint)
+            {
+                GameFiber.Yield();
+            }
         }
 
         public static void DismissDriver(CollectedVehicle cv)
@@ -103,6 +118,7 @@ namespace SceneManager
                 cv.Vehicle.Driver.IsPersistent = false;
 
                 cv.Vehicle.Dismiss();
+                cv.Vehicle.IsSirenOn = false;
                 cv.Vehicle.IsPersistent = false;
 
                 Game.LogTrivial($"{cv.Vehicle.Model.Name} dismissed successfully.");

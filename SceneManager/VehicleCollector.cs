@@ -10,34 +10,11 @@ namespace SceneManager
     {
         // Driving styles https://gtaforums.com/topic/822314-guide-driving-styles/
         // also https://vespura.com/fivem/drivingstyle/
-        [Flags]
-        private enum EDrivingFlags
-        {
-            None = 0,
-            StopForVehicles = 1,
-            StopForPeds = 2,
-            AvoidEmptyVehicles = 8,
-            AvoidPeds = 16,
-            AvoidObjects = 32,
-            StopForTrafficLights = 128,
-            UseBlinkers = 256,
-            AllowWrongWay = 512,
-            TakeShortestPath = 262144,
-            IgnoreRoads = 4194304,
-            IgnorePathfinding = 16777216,
-            AvoidHighways = 536870912,
-            Normal = StopForVehicles | StopForPeds | AvoidEmptyVehicles | StopForTrafficLights | UseBlinkers | AllowWrongWay | IgnoreRoads,
-            TotalControl = AllowWrongWay | AvoidObjects | AvoidPeds | TakeShortestPath | StopForTrafficLights | IgnorePathfinding | StopForVehicles
-        }
 
-        //public static Dictionary<string, CollectedVehicle> collectedVehicles = new Dictionary<string, CollectedVehicle>();
         public static List<CollectedVehicle> collectedVehicles = new List<CollectedVehicle>();
 
         public static void StartCollectingAtWaypoint(List<Path> paths, Path path, Waypoint waypoint)
         {
-            GameFiber AssignStopFlagForVehiclesFiber = new GameFiber(() => AssignStopForVehiclesFlag(paths, path, waypoint));
-            AssignStopFlagForVehiclesFiber.Start();
-
             while (paths.Contains(path) && path.Waypoints.Contains(waypoint))
             {
                 if (path.IsEnabled && waypoint.IsCollector)
@@ -57,7 +34,7 @@ namespace SceneManager
                     break;
                 }
 
-                Game.LogTrivial($"Vehicle: {vehicle.Model.Name}, Distance to waypoint: {vehicle.DistanceTo2D(waypoint.Position)}");
+                Game.LogTrivial($"Vehicle: {vehicle.Model.Name}, Waypoint collector radius: {waypoint.CollectorRadius}, Distance to waypoint: {vehicle.DistanceTo2D(waypoint.Position)}");
 
                 var collectedVehicle = collectedVehicles.Where(cv => cv.Vehicle == vehicle) as CollectedVehicle;
                 // If the vehicle is not in the collection yet
@@ -82,35 +59,9 @@ namespace SceneManager
             }
         }
 
-        private static Vehicle[] GetNearbyVehiclesForCollection(Vector3 collectorPosition, float collectorRadius)
+        private static Vehicle[] GetNearbyVehiclesForCollection(Vector3 collectorWaypointPosition, float collectorRadius)
         {
-            return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorPosition) <= collectorRadius && v.IsValidForCollection() select v).ToArray();
-        }
-
-        private static Vehicle[] GetNearbyVehiclesForStopFlag(Vector3 collectorPosition)
-        {
-            return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorPosition) <= 50f select v).ToArray();
-        }
-
-        private static void AssignStopForVehiclesFlag(List<Path> paths, Path path, Waypoint waypoint)
-        {
-            while (paths.Contains(path) && path.Waypoints.Contains(waypoint))
-            {
-                if (path.IsEnabled)
-                {
-                    foreach (Vehicle v in GetNearbyVehiclesForStopFlag(waypoint.Position).Where(v => v && v.HasDriver && v.Driver))
-                    {
-                        SetDriveTaskDrivingFlags(v.Driver, EDrivingFlags.StopForVehicles);
-                    }
-                }
-                GameFiber.Sleep(500);
-            }
-        }
-
-        private static void SetDriveTaskDrivingFlags(this Ped ped, EDrivingFlags flags)
-        {
-            ulong SetDriveTaskDrivingFlagsHash = 0xDACE1BE37D88AF67;
-            Rage.Native.NativeFunction.CallByHash<int>(SetDriveTaskDrivingFlagsHash, ped, (int)flags);
+            return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorWaypointPosition) <= collectorRadius - 0.5f && v.IsValidForCollection() select v).ToArray();
         }
 
         private static CollectedVehicle AddVehicleToCollection(Path path, Waypoint waypoint, Vehicle v)
