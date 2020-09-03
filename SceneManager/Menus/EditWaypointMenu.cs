@@ -128,7 +128,11 @@ namespace SceneManager
             {
                 var pathIndex = PathMainMenu.GetPaths().IndexOf(currentPath);
                 var drivingFlag = drivingFlags[changeWaypointType.Index];
-                var blip = PathCreationMenu.CreateWaypointBlip(pathIndex);
+                var blip = PathCreationMenu.CreateWaypointBlip(pathIndex, drivingFlag);
+                if (!currentPath.IsEnabled)
+                {
+                    blip.Alpha = 0.5f;
+                }
 
                 if (collectorWaypoint.Checked)
                 {
