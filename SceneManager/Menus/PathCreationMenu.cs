@@ -92,13 +92,13 @@ namespace SceneManager
                 var currentPath = firstNonNullPath.PathNum;
                 var currentWaypoint = PathMainMenu.GetPaths()[pathIndex].Waypoints.Count + 1;
                 var drivingFlag = drivingFlags[waypointType.Index];
-                var blip = CreateWaypointBlip(pathIndex);
+                var blip = CreateWaypointBlip(pathIndex, drivingFlag);
 
                 if (collectorWaypoint.Checked)
                 {
                     var yieldZone = SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH
-                        ? World.AddSpeedZone(Game.LocalPlayer.Character.Position, speedZoneRadius.Value, MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeed.Value))
-                        : World.AddSpeedZone(Game.LocalPlayer.Character.Position, speedZoneRadius.Value, MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeed.Value));
+                        ? World.AddSpeedZone(Game.LocalPlayer.Character.Position, speedZoneRadius.Value * 0.5f, MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeed.Value))
+                        : World.AddSpeedZone(Game.LocalPlayer.Character.Position, speedZoneRadius.Value * 0.5f, MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeed.Value));
                     PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, collectorRadius.Value, speedZoneRadius.Value, yieldZone));
                 }
                 else
@@ -151,11 +151,11 @@ namespace SceneManager
                     {
                         Game.LogTrivial($"[Path Creation] Path {currentPath.PathNum} finished with {currentPath.Waypoints.Count} waypoints.");
                         Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Path {i + 1} complete.");
-                        currentPath.Waypoints.Last().Blip.Color = Color.OrangeRed;
-                        if (currentPath.Waypoints.Last().CollectorRadiusBlip)
-                        {
-                            currentPath.Waypoints.Last().CollectorRadiusBlip.Color = Color.OrangeRed;
-                        }
+                        //currentPath.Waypoints.Last().Blip.Color = Color.OrangeRed;
+                        //if (currentPath.Waypoints.Last().CollectorRadiusBlip)
+                        //{
+                        //    currentPath.Waypoints.Last().CollectorRadiusBlip.Color = Color.OrangeRed;
+                        //}
                         currentPath.State = State.Finished;
                         //currentPath.FinishPath();
                         currentPath.EnablePath();
@@ -176,6 +176,7 @@ namespace SceneManager
                         PathMainMenu.BuildPathMenu();
                         trafficEndPath.Enabled = false;
                         PathMainMenu.pathMainMenu.Visible = true;
+
                         break;
                     }
                 }
@@ -213,7 +214,7 @@ namespace SceneManager
             return convertedSpeed;
         }
 
-        public static Blip CreateWaypointBlip(int pathIndex)
+        public static Blip CreateWaypointBlip(int pathIndex, VehicleDrivingFlags drivingFlag)
         {
             var spriteNumericalEnum = pathIndex + 17; // 17 because the numerical value of these sprites are always 17 more than the path index
             var blip = new Blip(Game.LocalPlayer.Character.Position)
@@ -222,14 +223,27 @@ namespace SceneManager
                 Sprite = (BlipSprite)spriteNumericalEnum
             };
 
-            if (PathMainMenu.GetPaths()[pathIndex].Waypoints.Count == 0)
+            if (collectorWaypoint.Checked)
             {
-                blip.Color = Color.Orange;
+                blip.Color = Color.Blue;
+            }
+            else if (drivingFlag == VehicleDrivingFlags.StopAtDestination)
+            {
+                blip.Color = Color.Red;
             }
             else
             {
-                blip.Color = Color.Yellow;
+                blip.Color = Color.Green;
             }
+
+            //if (PathMainMenu.GetPaths()[pathIndex].Waypoints.Count == 0)
+            //{
+            //    blip.Color = Color.Orange;
+            //}
+            //else
+            //{
+            //    blip.Color = Color.Yellow;
+            //}
 
             return blip;
         }
