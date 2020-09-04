@@ -40,7 +40,7 @@ namespace SceneManager
             CollectorRadius = collectorRadius;
             SpeedZoneRadius = speedZoneRadius;
             YieldZone = yieldZone;
-            CollectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius * 0.5f)
+            CollectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius)
             {
                 Color = waypointBlip.Color,
                 Alpha = 0.5f
@@ -64,7 +64,7 @@ namespace SceneManager
             {
                 IsCollector = true;
                 World.RemoveSpeedZone(YieldZone);
-                YieldZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, SpeedZoneRadius * 0.5f, drivingSpeed);
+                YieldZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, SpeedZoneRadius, drivingSpeed);
                 Blip.Color = Color.Blue;
                 if (CollectorRadiusBlip)
                 {
@@ -74,7 +74,7 @@ namespace SceneManager
                 }
                 else
                 {
-                    CollectorRadiusBlip = new Blip(Blip.Position, collectorRadius * 0.5f)
+                    CollectorRadiusBlip = new Blip(Blip.Position)
                     {
                         Color = Blip.Color,
                         Alpha = 0.5f
