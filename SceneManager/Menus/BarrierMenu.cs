@@ -157,7 +157,7 @@ namespace SceneManager
 
             if(selectedItem == resetBarriers)
             {
-                foreach(Barrier barrier in barriers.Where(b => b.GetBarrier()))
+                foreach(Barrier barrier in barriers.Where(b => b.GetBarrier() && !b.GetBarrier().Model.Name.Contains("flare")))
                 {
                     barrier.GetBarrier().Position = barrier.GetPosition();
                     barrier.GetBarrier().Heading = barrier.GetRotation();
