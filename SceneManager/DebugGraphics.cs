@@ -1,22 +1,20 @@
 ﻿using Rage;
-using RAGENativeUI.Elements;
 using System.Drawing;
 
 namespace SceneManager
 {
     class DebugGraphics
     {
-        public static void LoopToDrawDebugGraphics(UIMenuCheckboxItem debugGraphics, Path path)
+        public static void LoopToDrawDebugGraphics(Path path)
         {
             GameFiber.StartNew(() =>
             {
-                while (debugGraphics.Checked)
+                while (SettingsMenu.debugGraphics.Checked)
                 {
                     if (MenuManager.menuPool.IsAnyMenuOpen() && path != null)
                     {
                         for (int i = 0; i < path.Waypoints.Count; i++)
                         {
-                            //Draw3DMarkersAtWaypoints(path, i);
                             path.Waypoints[i].DrawWaypointMarker();
 
                             if (i != path.Waypoints.Count - 1)
