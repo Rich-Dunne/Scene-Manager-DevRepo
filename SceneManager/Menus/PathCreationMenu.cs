@@ -49,6 +49,7 @@ namespace SceneManager
             pathCreationMenu.RefreshIndex();
             pathCreationMenu.OnItemSelect += PathCreation_OnItemSelected;
             pathCreationMenu.OnCheckboxChange += PathCreation_OnCheckboxChanged;
+            pathCreationMenu.OnScrollerChange += PathCreation_OnScrollerChanged;
         }
 
         private static void PathCreation_OnCheckboxChanged(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
@@ -179,6 +180,25 @@ namespace SceneManager
 
                         break;
                     }
+                }
+            }
+        }
+
+        private static void PathCreation_OnScrollerChanged(UIMenu sender, UIMenuScrollerItem scrollerItem, int first, int last)
+        {
+            if (scrollerItem == collectorRadius)
+            {
+                if (collectorRadius.Value > speedZoneRadius.Value)
+                {
+                    speedZoneRadius.ScrollToNextOption();
+                }
+            }
+
+            if(scrollerItem == speedZoneRadius)
+            {
+                if(speedZoneRadius.Value < collectorRadius.Value)
+                {
+                    collectorRadius.Value = speedZoneRadius.Value;
                 }
             }
         }

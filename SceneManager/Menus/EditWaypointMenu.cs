@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Rage;
@@ -93,6 +92,22 @@ namespace SceneManager
                 collectorWaypoint.Checked = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index].Waypoints[editWaypoint.Index].IsCollector;
                 changeCollectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
                 changeSpeedZoneRadius.Enabled = collectorWaypoint.Checked ? true : false;
+            }
+
+            if (scrollerItem == changeCollectorRadius)
+            {
+                if (changeCollectorRadius.Value > changeSpeedZoneRadius.Value)
+                {
+                    changeSpeedZoneRadius.ScrollToNextOption();
+                }
+            }
+
+            if (scrollerItem == changeSpeedZoneRadius)
+            {
+                if (changeSpeedZoneRadius.Value < changeCollectorRadius.Value)
+                {
+                    changeCollectorRadius.Value = changeSpeedZoneRadius.Value;
+                }
             }
         }
 
