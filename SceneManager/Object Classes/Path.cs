@@ -11,7 +11,7 @@ namespace SceneManager
 
     public class Path
     { 
-        public int PathNum { get; private set; }
+        public int Number { get; private set; }
         public bool IsEnabled { get; private set; }
         public State State { get; set; }
 
@@ -19,20 +19,20 @@ namespace SceneManager
 
         public Path(int pathNum, bool pathFinished, bool pathDisabled, List<Waypoint> waypoints)
         {
-            PathNum = pathNum;
+            Number = pathNum;
             IsEnabled = pathDisabled;
             Waypoints = waypoints;
         }
 
         public Path(int pathNum, State pathState)
         {
-            PathNum = pathNum;
+            Number = pathNum;
             State = pathState;
         }
 
         public void SetPathNumber(int pathNum)
         {
-            PathNum = pathNum;
+            Number = pathNum;
         }
 
         private void LowerWaypointBlipsOpacity()
