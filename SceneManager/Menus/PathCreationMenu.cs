@@ -75,7 +75,7 @@ namespace SceneManager
 
                     if (SettingsMenu.debugGraphics.Checked)
                     {
-                        DebugGraphics.LoopToDrawDebugGraphics(SettingsMenu.debugGraphics, PathMainMenu.GetPaths()[0]);
+                        DebugGraphics.LoopToDrawDebugGraphics(PathMainMenu.GetPaths()[0]);
                     }
                 }
                 else if(anyPathsExist && !PathMainMenu.GetPaths().Any(p => p != null && p.State == State.Creating))
@@ -84,13 +84,13 @@ namespace SceneManager
 
                     if (SettingsMenu.debugGraphics.Checked)
                     {
-                        DebugGraphics.LoopToDrawDebugGraphics(SettingsMenu.debugGraphics, PathMainMenu.GetPaths().Where(p => p != null && p.State == State.Creating).First());
+                        DebugGraphics.LoopToDrawDebugGraphics(PathMainMenu.GetPaths().Where(p => p != null && p.State == State.Creating).First());
                     }
                 }
 
                 var firstNonNullPath = PathMainMenu.GetPaths().Where(p => p != null && p.State == State.Creating).First();
                 var pathIndex = PathMainMenu.GetPaths().IndexOf(firstNonNullPath);
-                var currentPath = firstNonNullPath.PathNum;
+                var currentPath = firstNonNullPath.Number;
                 var currentWaypoint = PathMainMenu.GetPaths()[pathIndex].Waypoints.Count + 1;
                 var drivingFlag = drivingFlags[waypointType.Index];
                 var blip = CreateWaypointBlip(pathIndex, drivingFlag);
@@ -150,18 +150,12 @@ namespace SceneManager
                     var currentPath = PathMainMenu.GetPaths()[i];
                     if (PathMainMenu.GetPaths().ElementAtOrDefault(i) != null && currentPath.State == State.Creating)
                     {
-                        Game.LogTrivial($"[Path Creation] Path {currentPath.PathNum} finished with {currentPath.Waypoints.Count} waypoints.");
+                        Game.LogTrivial($"[Path Creation] Path {currentPath.Number} finished with {currentPath.Waypoints.Count} waypoints.");
                         Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Path {i + 1} complete.");
-                        //currentPath.Waypoints.Last().Blip.Color = Color.OrangeRed;
-                        //if (currentPath.Waypoints.Last().CollectorRadiusBlip)
-                        //{
-                        //    currentPath.Waypoints.Last().CollectorRadiusBlip.Color = Color.OrangeRed;
-                        //}
                         currentPath.State = State.Finished;
-                        //currentPath.FinishPath();
                         currentPath.EnablePath();
                         currentPath.SetPathNumber(i + 1);
-                        PathMainMenu.AddPathToPathCountList(i, currentPath.PathNum);
+                        //PathMainMenu.AddPathToPathCountList(i, currentPath.PathNum);
 
                         // For each waypoint in the path's WaypointData, start a collector game fiber and loop while the path and waypoint exist, and while the path is enabled
                         foreach (Waypoint waypoint in PathMainMenu.GetPaths()[i].Waypoints)

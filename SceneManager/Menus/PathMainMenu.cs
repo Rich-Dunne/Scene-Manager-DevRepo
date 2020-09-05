@@ -9,17 +9,20 @@ namespace SceneManager
 {
     static class PathMainMenu
     {
+        private static List<Path> paths = new List<Path>() { };
+
         public static UIMenu pathMainMenu { get; private set; }
         public static UIMenuItem createNewPath { get; private set; }
         public static UIMenuItem deleteAllPaths;
-        public static UIMenuListScrollerItem<int> editPath { get; private set; }
+        public static UIMenuNumericScrollerItem<int> editPath = new UIMenuNumericScrollerItem<int>("Edit Path", "", 1, paths.Count, 1);
+        //public static UIMenuListScrollerItem<int> editPath { get; private set; }
         public static UIMenuListScrollerItem<string> directOptions { get; private set; }
-        public static UIMenuListScrollerItem<int> directDriver { get; private set; }
+        public static UIMenuNumericScrollerItem<int> directDriver = new UIMenuNumericScrollerItem<int>("Direct nearest driver to path", "", 1, paths.Count, 1);
+        //public static UIMenuListScrollerItem<int> directDriver { get; private set; }
         public static UIMenuListScrollerItem<string> dismissDriver { get; private set; }
         public static UIMenuCheckboxItem disableAllPaths { get; private set; }
 
-        private static List<int> pathsNum = new List<int>();
-        private static List<Path> paths = new List<Path>() { };
+        //private static List<int> pathsNum = new List<int>();
         private static List<string> dismissOptions = new List<string>() { "From path", "From waypoint", "From position" };
         public enum Delete
         {
@@ -44,13 +47,15 @@ namespace SceneManager
 
             pathMainMenu.AddItem(createNewPath = new UIMenuItem("Create New Path"));
             createNewPath.ForeColor = Color.Gold;
-            pathMainMenu.AddItem(editPath = new UIMenuListScrollerItem<int>("Edit Path", "", pathsNum));
+            pathMainMenu.AddItem(editPath = new UIMenuNumericScrollerItem<int>("Edit Path", "", 1, paths.Count, 1));
+            //pathMainMenu.AddItem(editPath = new UIMenuListScrollerItem<int>("Edit Path", "", pathsNum));
             editPath.ForeColor = Color.Gold;
             pathMainMenu.AddItem(disableAllPaths = new UIMenuCheckboxItem("Disable All Paths", false));
             pathMainMenu.AddItem(deleteAllPaths = new UIMenuItem("Delete All Paths"));
             deleteAllPaths.ForeColor = Color.Gold;
             pathMainMenu.AddItem(directOptions = new UIMenuListScrollerItem<string>("Direct driver to path's", "", new[] { "First waypoint", "Nearest waypoint" }));
-            pathMainMenu.AddItem(directDriver = new UIMenuListScrollerItem<int>("Direct nearest driver to path", "", pathsNum));
+            pathMainMenu.AddItem(directDriver = new UIMenuNumericScrollerItem<int>("Direct nearest driver to path", "", 1, paths.Count, 1));
+            //pathMainMenu.AddItem(directDriver = new UIMenuListScrollerItem<int>("Direct nearest driver to path", "", pathsNum));
             directDriver.ForeColor = Color.Gold;
             pathMainMenu.AddItem(dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", "", dismissOptions));
             dismissDriver.ForeColor = Color.Gold;
@@ -80,10 +85,10 @@ namespace SceneManager
             return ref paths;
         }
 
-        public static void AddPathToPathCountList(int indexToInsertAt, int pathNum)
-        {
-            pathsNum.Insert(indexToInsertAt, pathNum);
-        }
+        //public static void AddPathToPathCountList(int indexToInsertAt, int pathNum)
+        //{
+        //    pathsNum.Insert(indexToInsertAt, pathNum);
+        //}
 
         private static bool VehicleAndDriverValid(this Vehicle v)
         {
@@ -115,8 +120,8 @@ namespace SceneManager
         {
             // Before deleting a path, we need to dismiss any vehicles controlled by that path and remove the vehicles from ControlledVehicles
             //Game.LogTrivial($"Deleting path {index+1}");
-            Game.LogTrivial($"Deleting path {path.PathNum}");
-            var pathVehicles = VehicleCollector.collectedVehicles.Where(cv => cv.Path == path.PathNum).ToList();
+            Game.LogTrivial($"Deleting path {path.Number}");
+            var pathVehicles = VehicleCollector.collectedVehicles.Where(cv => cv.Path == path.Number).ToList();
 
             Game.LogTrivial($"Removing all vehicles on the path");
             foreach (CollectedVehicle cv in pathVehicles.Where(cv => cv.Vehicle && cv.Vehicle.Driver))
@@ -158,11 +163,11 @@ namespace SceneManager
                 paths.RemoveAt(index);
                 //Game.LogTrivial("pathsNum count: " + pathsNum.Count);
                 //Game.LogTrivial("index: " + index);
-                pathsNum.RemoveAt(index);
+                //pathsNum.RemoveAt(index);
                 BuildPathMenu();
                 pathMainMenu.Visible = true;
-                Game.LogTrivial($"Path {path.PathNum} deleted.");
-                Game.DisplayNotification($"~o~Scene Manager\n~w~Path {path.PathNum} deleted.");
+                Game.LogTrivial($"Path {path.Number} deleted.");
+                Game.DisplayNotification($"~o~Scene Manager\n~w~Path {path.Number} deleted.");
             }
 
             EditPathMenu.editPathMenu.Reset(true, true);
@@ -182,8 +187,8 @@ namespace SceneManager
                     if (paths.ElementAtOrDefault(i) != null && paths[i].State == State.Creating)
                     {
                         //Game.LogTrivial($"pathFinished: {paths[i].PathFinished}");
-                        Game.LogTrivial($"Resuming path {paths[i].PathNum}");
-                        Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Resuming path {paths[i].PathNum}");
+                        Game.LogTrivial($"Resuming path {paths[i].Number}");
+                        Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Resuming path {paths[i].Number}");
                         break;
                     }
                 }
@@ -211,7 +216,7 @@ namespace SceneManager
                     path.Waypoints.Clear();
                 }
                 paths.Clear();
-                pathsNum.Clear();
+                //pathsNum.Clear();
                 BuildPathMenu();
                 pathMainMenu.Visible = true;
                 Game.LogTrivial($"All paths deleted");
@@ -256,7 +261,7 @@ namespace SceneManager
                     {
                         VehicleCollector.collectedVehicles.Add(new CollectedVehicle(nearbyVehicle, nearbyVehicle.LicensePlate, paths[directDriver.Index].Waypoints[0].Path, paths[directDriver.Index].Waypoints.Count, 1, false, false));
                         var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle) as CollectedVehicle;
-                        Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not in collection, adding to collection for path {paths[directDriver.Index].PathNum} with {paths[directDriver.Index].Waypoints.Count} waypoints");
+                        Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not in collection, adding to collection for path {paths[directDriver.Index].Number} with {paths[directDriver.Index].Waypoints.Count} waypoints");
 
                         if (directOptions.SelectedItem == "First waypoint")
                         {
