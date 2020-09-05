@@ -47,7 +47,7 @@ namespace SceneManager
                     {
                         GameFiber.StartNew(() =>
                         {
-                            DebugGraphics.LoopToDrawDebugGraphics(debugGraphics, path);
+                            DebugGraphics.LoopToDrawDebugGraphics(path);
                         });
                     }
 
