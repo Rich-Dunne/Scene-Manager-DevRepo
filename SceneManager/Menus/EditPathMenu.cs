@@ -42,7 +42,7 @@ namespace SceneManager
 
             if (selectedItem == deletePath)
             {
-                PathMainMenu.DeletePath(currentPath, currentPath.PathNum - 1, PathMainMenu.Delete.Single);
+                PathMainMenu.DeletePath(currentPath, currentPath.Number - 1, PathMainMenu.Delete.Single);
             }
         }
 
@@ -54,12 +54,12 @@ namespace SceneManager
                 if (togglePath.Checked)
                 {
                     currentPath.DisablePath();
-                    Game.LogTrivial($"Path {currentPath.PathNum} disabled.");
+                    Game.LogTrivial($"Path {currentPath.Number} disabled.");
                 }
                 else
                 {
                     currentPath.EnablePath();
-                    Game.LogTrivial($"Path {currentPath.PathNum} enabled.");
+                    Game.LogTrivial($"Path {currentPath.Number} enabled.");
                 }
             }
         }
