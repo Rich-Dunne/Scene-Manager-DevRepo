@@ -15,10 +15,8 @@ namespace SceneManager
         public static UIMenuItem createNewPath { get; private set; }
         public static UIMenuItem deleteAllPaths;
         public static UIMenuNumericScrollerItem<int> editPath = new UIMenuNumericScrollerItem<int>("Edit Path", "", 1, paths.Count, 1);
-        //public static UIMenuListScrollerItem<int> editPath { get; private set; }
         public static UIMenuListScrollerItem<string> directOptions { get; private set; }
         public static UIMenuNumericScrollerItem<int> directDriver = new UIMenuNumericScrollerItem<int>("Direct nearest driver to path", "", 1, paths.Count, 1);
-        //public static UIMenuListScrollerItem<int> directDriver { get; private set; }
         public static UIMenuListScrollerItem<string> dismissDriver { get; private set; }
         public static UIMenuCheckboxItem disableAllPaths { get; private set; }
 
@@ -85,11 +83,6 @@ namespace SceneManager
             return ref paths;
         }
 
-        //public static void AddPathToPathCountList(int indexToInsertAt, int pathNum)
-        //{
-        //    pathsNum.Insert(indexToInsertAt, pathNum);
-        //}
-
         private static bool VehicleAndDriverValid(this Vehicle v)
         {
             if (v && v.HasDriver && v.Driver && v.Driver.IsAlive)
@@ -141,9 +134,9 @@ namespace SceneManager
             Game.LogTrivial($"Removing yield zone and waypoint blips");
             foreach (Waypoint waypoint in path.Waypoints)
             {
-                if (waypoint.YieldZone != 0)
+                if (waypoint.SpeedZone != 0)
                 {
-                    World.RemoveSpeedZone(waypoint.YieldZone);
+                    waypoint.RemoveSpeedZone();
                 }
                 if (waypoint.Blip)
                 {
@@ -161,9 +154,6 @@ namespace SceneManager
             if (pathsToDelete == Delete.Single)
             {
                 paths.RemoveAt(index);
-                //Game.LogTrivial("pathsNum count: " + pathsNum.Count);
-                //Game.LogTrivial("index: " + index);
-                //pathsNum.RemoveAt(index);
                 BuildPathMenu();
                 pathMainMenu.Visible = true;
                 Game.LogTrivial($"Path {path.Number} deleted.");
@@ -209,14 +199,13 @@ namespace SceneManager
                 }
                 foreach (Path path in paths)
                 {
-                    foreach(Waypoint waypoint in path.Waypoints.Where(wp => wp.YieldZone != 0))
+                    foreach(Waypoint waypoint in path.Waypoints.Where(wp => wp.SpeedZone != 0))
                     {
-                        World.RemoveSpeedZone(waypoint.YieldZone);
+                        waypoint.RemoveSpeedZone();
                     }
                     path.Waypoints.Clear();
                 }
                 paths.Clear();
-                //pathsNum.Clear();
                 BuildPathMenu();
                 pathMainMenu.Visible = true;
                 Game.LogTrivial($"All paths deleted");
@@ -340,12 +329,14 @@ namespace SceneManager
                             Game.LogTrivial($"Dismiss from path");
                             if (nearbyVehicle.IsInCollectedVehicles())
                             {
-                                var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle) as CollectedVehicle;
+                                var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).First();
                                 if (collectedVehicle != null)
                                 {
                                     collectedVehicle.SetDismissNow(true);
+                                    collectedVehicle.SetStoppedAtWaypoint(false);
                                     collectedVehicle.Vehicle.Driver.Tasks.Clear();
                                     collectedVehicle.Vehicle.Driver.Dismiss();
+                                    collectedVehicle.Vehicle.IsSirenOn = false;
                                     Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from path {collectedVehicle.Path}");
                                 }
                             }
@@ -359,12 +350,13 @@ namespace SceneManager
                             Game.LogTrivial($"Dismiss from waypoint");
                             if (nearbyVehicle.IsInCollectedVehicles())
                             {
-                                var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle) as CollectedVehicle;
-                                if(collectedVehicle != null)
+                                var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).First();
+                                if (collectedVehicle != null)
                                 {
                                     collectedVehicle.SetStoppedAtWaypoint(false);
                                     collectedVehicle.Vehicle.Driver.Tasks.Clear();
                                     collectedVehicle.Vehicle.Driver.Dismiss();
+                                    collectedVehicle.Vehicle.IsSirenOn = false;
 
                                     if (collectedVehicle.CurrentWaypoint == collectedVehicle.TotalWaypoints && !collectedVehicle.StoppedAtWaypoint)
                                     {
@@ -389,12 +381,14 @@ namespace SceneManager
                             {
                                 nearbyVehicle.Driver.Tasks.Clear();
                                 nearbyVehicle.Driver.Dismiss();
+                                nearbyVehicle.IsSirenOn = false;
                                 Game.LogTrivial($"Dismissed driver of {nearbyVehicle.Model.Name} (in collection)");
                             }
                             else
                             {
                                 nearbyVehicle.Driver.Tasks.Clear();
                                 nearbyVehicle.Driver.Dismiss();
+                                nearbyVehicle.IsSirenOn = false;
                                 Game.LogTrivial($"Dismissed driver of {nearbyVehicle.Model.Name} (was not in collection)");
                             }
                             break;
@@ -420,14 +414,6 @@ namespace SceneManager
                     foreach (Path path in paths)
                     {
                         path.DisablePath();
-                        foreach (Waypoint waypoint in path.Waypoints)
-                        {
-                            waypoint.Blip.Alpha = 0.5f;
-                            if (waypoint.CollectorRadiusBlip)
-                            {
-                                waypoint.CollectorRadiusBlip.Alpha = 0.25f;
-                            }
-                        }
                     }
                     Game.LogTrivial($"All paths disabled.");
                 }
@@ -436,14 +422,6 @@ namespace SceneManager
                     foreach (Path path in paths)
                     {
                         path.EnablePath();
-                        foreach (Waypoint waypoint in path.Waypoints)
-                        {
-                            waypoint.Blip.Alpha = 1f;
-                            if (waypoint.CollectorRadiusBlip)
-                            {
-                                waypoint.CollectorRadiusBlip.Alpha = 0.5f;
-                            }
-                        }
                     }
                     Game.LogTrivial($"All paths enabled.");
                 }
