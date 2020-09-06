@@ -105,34 +105,34 @@ namespace SceneManager
             }
         }
 
-        private static void VehicleDismissed(CollectedVehicle cv, List<Waypoint> waypointData)
-        {
-            while (!cv.DismissNow)
-            {
-                GameFiber.Sleep(500);
-            }
-            Game.LogTrivial($"{cv.Vehicle.Model.Name} was dismissed (dismissal check loop).");
+        //private static void VehicleDismissed(CollectedVehicle cv, List<Waypoint> waypointData)
+        //{
+        //    while (!cv.DismissNow)
+        //    {
+        //        GameFiber.Sleep(500);
+        //    }
+        //    Game.LogTrivial($"{cv.Vehicle.Model.Name} was dismissed (dismissal check loop).");
 
 
-            Game.LogTrivial($"Looping to ensure the vehicle is far enough away from all attractor waypoints so it can be removed from the collection.");
-            while (true)
-            {
-                var collectorWaypoints = waypointData.Where(wp => wp.IsCollector);
-                var vehicleFarEnoughAwayFromCollectors = collectorWaypoints.All(wp => cv.Vehicle.DistanceTo(wp.Position) > wp.CollectorRadius);
+        //    Game.LogTrivial($"Looping to ensure the vehicle is far enough away from all attractor waypoints so it can be removed from the collection.");
+        //    while (true)
+        //    {
+        //        var collectorWaypoints = waypointData.Where(wp => wp.IsCollector);
+        //        var vehicleFarEnoughAwayFromCollectors = collectorWaypoints.All(wp => cv.Vehicle.DistanceTo(wp.Position) > wp.CollectorRadius);
 
-                if (collectedVehicles.Contains(cv) && vehicleFarEnoughAwayFromCollectors)
-                {
-                    Game.LogTrivial($"{cv.Vehicle.Model.Name} is far enough away from all attractor waypoints and has been removed from the collection.");
-                    cv.SetTasksAssigned(false);
-                    cv.Vehicle.Driver.BlockPermanentEvents = false;
-                    cv.Vehicle.Driver.IsPersistent = false;
-                    cv.Vehicle.IsPersistent = false;
-                    collectedVehicles.Remove(cv);
+        //        if (collectedVehicles.Contains(cv) && vehicleFarEnoughAwayFromCollectors)
+        //        {
+        //            Game.LogTrivial($"{cv.Vehicle.Model.Name} is far enough away from all attractor waypoints and has been removed from the collection.");
+        //            cv.SetTasksAssigned(false);
+        //            cv.Vehicle.Driver.BlockPermanentEvents = false;
+        //            cv.Vehicle.Driver.IsPersistent = false;
+        //            cv.Vehicle.IsPersistent = false;
+        //            collectedVehicles.Remove(cv);
 
-                    break;
-                }
-                GameFiber.Sleep(1000);
-            }
-        }
+        //            break;
+        //        }
+        //        GameFiber.Sleep(1000);
+        //    }
+        //}
     }
 }
