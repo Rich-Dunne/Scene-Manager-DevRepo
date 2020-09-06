@@ -90,27 +90,22 @@ namespace SceneManager
 
                 var firstNonNullPath = PathMainMenu.GetPaths().Where(p => p != null && p.State == State.Creating).First();
                 var pathIndex = PathMainMenu.GetPaths().IndexOf(firstNonNullPath);
-                var currentPath = firstNonNullPath.Number;
-                var currentWaypoint = PathMainMenu.GetPaths()[pathIndex].Waypoints.Count + 1;
-                var drivingFlag = drivingFlags[waypointType.Index];
-                var blip = CreateWaypointBlip(pathIndex, drivingFlag);
+                var pathNumber = firstNonNullPath.Number;
+                var waypointNumber = PathMainMenu.GetPaths()[pathIndex].Waypoints.Count + 1;
 
                 if (collectorWaypoint.Checked)
                 {
-                    var yieldZone = SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH
-                        ? World.AddSpeedZone(Game.LocalPlayer.Character.Position, speedZoneRadius.Value * 0.5f, MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeed.Value))
-                        : World.AddSpeedZone(Game.LocalPlayer.Character.Position, speedZoneRadius.Value * 0.5f, MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeed.Value));
-                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, collectorRadius.Value, speedZoneRadius.Value, yieldZone));
+                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(pathNumber, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index]), true, collectorRadius.Value, speedZoneRadius.Value));
                 }
                 else
                 {
-                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(currentPath, currentWaypoint, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip));
+                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(pathNumber, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index])));
                 }
-                Game.LogTrivial($"[Path {currentPath}] Waypoint {currentWaypoint} ({drivingFlag.ToString()}) added");
+                Game.LogTrivial($"[Path {pathNumber}] Waypoint {waypointNumber} ({drivingFlags[waypointType.Index].ToString()}) added");
 
                 ToggleTrafficEndPathMenuItem(pathIndex);
                 trafficRemoveWaypoint.Enabled = true;
-                PathMainMenu.createNewPath.Text = $"Continue Creating Path {currentPath}";
+                PathMainMenu.createNewPath.Text = $"Continue Creating Path {pathNumber}";
             }
 
             if (selectedItem == trafficRemoveWaypoint)
@@ -122,7 +117,7 @@ namespace SceneManager
                     {
                         Game.LogTrivial($"[Path {i + 1}] {PathMainMenu.GetPaths()[i].Waypoints.Last().DrivingFlag.ToString()} waypoint removed");
                         PathMainMenu.GetPaths()[i].Waypoints.Last().Blip.Delete();
-                        World.RemoveSpeedZone(PathMainMenu.GetPaths()[i].Waypoints.Last().YieldZone);
+                        PathMainMenu.GetPaths()[i].Waypoints.Last().RemoveSpeedZone();
 
                         if (PathMainMenu.GetPaths()[i].Waypoints.Last().CollectorRadiusBlip)
                         {
@@ -153,9 +148,8 @@ namespace SceneManager
                         Game.LogTrivial($"[Path Creation] Path {currentPath.Number} finished with {currentPath.Waypoints.Count} waypoints.");
                         Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Path {i + 1} complete.");
                         currentPath.State = State.Finished;
-                        currentPath.EnablePath();
+                        currentPath.IsEnabled = true;
                         currentPath.SetPathNumber(i + 1);
-                        //PathMainMenu.AddPathToPathCountList(i, currentPath.PathNum);
 
                         // For each waypoint in the path's WaypointData, start a collector game fiber and loop while the path and waypoint exist, and while the path is enabled
                         foreach (Waypoint waypoint in PathMainMenu.GetPaths()[i].Waypoints)
