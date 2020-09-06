@@ -73,7 +73,7 @@ namespace SceneManager
                 {
                     AddNewPathToPathsCollection(PathMainMenu.GetPaths(), 0);
 
-                    if (SettingsMenu.debugGraphics.Checked)
+                    if (SettingsMenu.threeDWaypoints.Checked)
                     {
                         DebugGraphics.LoopToDrawDebugGraphics(PathMainMenu.GetPaths()[0]);
                     }
@@ -82,7 +82,7 @@ namespace SceneManager
                 {
                     AddNewPathToPathsCollection(PathMainMenu.GetPaths(), PathMainMenu.GetPaths().IndexOf(PathMainMenu.GetPaths().Where(p => p.State == State.Finished).First()) + 1);
 
-                    if (SettingsMenu.debugGraphics.Checked)
+                    if (SettingsMenu.threeDWaypoints.Checked)
                     {
                         DebugGraphics.LoopToDrawDebugGraphics(PathMainMenu.GetPaths().Where(p => p != null && p.State == State.Creating).First());
                     }
@@ -206,7 +206,7 @@ namespace SceneManager
         private static float SetDriveSpeedForWaypoint()
         {
             float convertedSpeed;
-            if (SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH)
+            if (SettingsMenu.speedUnits.SelectedItem == SpeedUnits.MPH)
             {
                 //Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
                 convertedSpeed = MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeed.Value);
@@ -244,14 +244,10 @@ namespace SceneManager
                 blip.Color = Color.Green;
             }
 
-            //if (PathMainMenu.GetPaths()[pathIndex].Waypoints.Count == 0)
-            //{
-            //    blip.Color = Color.Orange;
-            //}
-            //else
-            //{
-            //    blip.Color = Color.Yellow;
-            //}
+            if (!SettingsMenu.mapBlips.Checked)
+            {
+                blip.Alpha = 0f;
+            }
 
             return blip;
         }
