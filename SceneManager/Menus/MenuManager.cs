@@ -1,5 +1,4 @@
-﻿using System;
-using RAGENativeUI;
+﻿using RAGENativeUI;
 
 namespace SceneManager
 {
