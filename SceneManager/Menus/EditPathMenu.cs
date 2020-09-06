@@ -9,7 +9,7 @@ namespace SceneManager
     {
         public static UIMenu editPathMenu { get; private set; }
         private static UIMenuItem editPathWaypoints, deletePath;
-        public static UIMenuCheckboxItem togglePath;
+        public static UIMenuCheckboxItem disablePath;
 
         internal static void InstantiateMenu()
         {
@@ -20,7 +20,7 @@ namespace SceneManager
 
         public static void BuildEditPathMenu()
         {
-            editPathMenu.AddItem(togglePath = new UIMenuCheckboxItem("Disable Path", false));
+            editPathMenu.AddItem(disablePath = new UIMenuCheckboxItem("Disable Path", false));
             editPathMenu.AddItem(editPathWaypoints = new UIMenuItem("Edit Waypoints"));
             editPathWaypoints.ForeColor = Color.Gold;
             editPathMenu.AddItem(deletePath = new UIMenuItem("Delete Path"));
@@ -48,10 +48,10 @@ namespace SceneManager
 
         private static void EditPath_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
         {
-            if (checkboxItem == togglePath)
+            if (checkboxItem == disablePath)
             {
                 var currentPath = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index];
-                if (togglePath.Checked)
+                if (disablePath.Checked)
                 {
                     currentPath.DisablePath();
                     Game.LogTrivial($"Path {currentPath.Number} disabled.");
