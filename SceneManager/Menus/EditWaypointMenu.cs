@@ -89,7 +89,7 @@ namespace SceneManager
             editWaypointMenu.OnItemSelect += EditWaypoint_OnItemSelected;
             editWaypoint.IndexChanged += EditWaypoint_OnIndexChanged;
 
-            currentWaypoint.DrawMarkerForEditWaypoint();
+            currentWaypoint.DrawMarkerForWaypointBeingEdited();
         }
 
         private static void EditWaypoint_OnIndexChanged(UIMenuScrollerItem scrollerItem, int oldIndex, int newIndex)
@@ -99,7 +99,7 @@ namespace SceneManager
 
             if (scrollerItem == editWaypoint)
             {
-                currentPath.Waypoints[oldIndex].EnableWaypointMarker(true);
+                currentPath.Waypoints[oldIndex].EnableWaypointMarker = true;
             }
         }
 
@@ -116,7 +116,7 @@ namespace SceneManager
                 changeCollectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
                 changeSpeedZoneRadius.Enabled = collectorWaypoint.Checked ? true : false;
                 updateWaypointPosition.Checked = false;
-                currentWaypoint.DrawMarkerForEditWaypoint();
+                currentWaypoint.DrawMarkerForWaypointBeingEdited();
             }
 
             if (scrollerItem == changeCollectorRadius)
@@ -169,7 +169,7 @@ namespace SceneManager
 
             if (selectedItem == addAsNewWaypoint)
             {
-                currentWaypoint.EnableWaypointMarker(true);
+                currentWaypoint.EnableWaypointMarker = true;
                 var pathIndex = PathMainMenu.GetPaths().IndexOf(currentPath);
                 var drivingFlag = drivingFlags[changeWaypointType.Index];
                 var blip = PathCreationMenu.CreateWaypointBlip(pathIndex, drivingFlag);
@@ -180,10 +180,7 @@ namespace SceneManager
 
                 if (collectorWaypoint.Checked)
                 {
-                    var yieldZone = SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH
-                        ? World.AddSpeedZone(Game.LocalPlayer.Character.Position, changeSpeedZoneRadius.Value, SetDriveSpeedForWaypoint())
-                        : World.AddSpeedZone(Game.LocalPlayer.Character.Position, changeSpeedZoneRadius.Value, SetDriveSpeedForWaypoint());
-                    currentPath.Waypoints.Add(new Waypoint(currentPath.Number, currentWaypoint.Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, changeCollectorRadius.Value, changeSpeedZoneRadius.Value, yieldZone));
+                    currentPath.Waypoints.Add(new Waypoint(currentPath.Number, currentWaypoint.Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, changeCollectorRadius.Value, changeSpeedZoneRadius.Value));
                 }
                 else
                 {
@@ -220,7 +217,7 @@ namespace SceneManager
 
                     foreach (Waypoint wp in currentPath.Waypoints)
                     {
-                        wp.UpdateWaypointNumber(currentPath.Waypoints.IndexOf(wp) + 1);
+                        wp.Number = currentPath.Waypoints.IndexOf(wp) + 1;
                         Game.LogTrivial($"Waypoint at index {currentPath.Waypoints.IndexOf(wp)} is now waypoint #{wp.Number}");
                     }
 
