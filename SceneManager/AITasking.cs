@@ -118,6 +118,7 @@ namespace SceneManager
 
                 cv.Vehicle.Dismiss();
                 cv.Vehicle.IsSirenOn = false;
+                cv.Vehicle.IsSirenSilent = true;
                 cv.Vehicle.IsPersistent = false;
 
                 Game.LogTrivial($"{cv.Vehicle.Model.Name} dismissed successfully.");
