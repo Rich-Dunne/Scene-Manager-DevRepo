@@ -3,12 +3,7 @@ using System.Collections.Generic;
 
 namespace SceneManager
 {
-    public enum State
-    {
-        Uninitialized,
-        Creating,
-        Finished
-    }
+
 
     public class Path
     { 
@@ -66,7 +61,10 @@ namespace SceneManager
             {
                 wp.RemoveSpeedZone();
             }
-            LowerWaypointBlipsOpacity();
+            if (SettingsMenu.mapBlips.Checked)
+            {
+                LowerWaypointBlipsOpacity();
+            }
         }
 
         public void EnablePath()
@@ -79,7 +77,10 @@ namespace SceneManager
                     wp.AddSpeedZone();
                 }
             }
-            RestoreWaypointBlipsOpacity();
+            if (SettingsMenu.mapBlips.Checked)
+            {
+                RestoreWaypointBlipsOpacity();
+            }
         }
 
 
