@@ -1,5 +1,6 @@
 ﻿using Rage;
 using System.Drawing;
+using System.Linq;
 
 namespace SceneManager
 {
@@ -46,8 +47,15 @@ namespace SceneManager
             _collectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius)
             {
                 Color = waypointBlip.Color,
-                Alpha = 0.5f
             };
+            if (SettingsMenu.mapBlips.Checked)
+            {
+                _collectorRadiusBlip.Alpha = 0.5f;
+            }
+            else
+            {
+                _collectorRadiusBlip.Alpha = 0f;
+            }
             _enableWaypointMarker = true;
         }
 
@@ -167,7 +175,7 @@ namespace SceneManager
             _enableWaypointMarker = false;
             GameFiber.StartNew(() =>
             {
-                while (SettingsMenu.debugGraphics.Checked && !_enableWaypointMarker)
+                while (SettingsMenu.threeDWaypoints.Checked && !_enableWaypointMarker)
                 {
                     if (EditWaypointMenu.editWaypointMenu.Visible)
                     {
@@ -220,6 +228,27 @@ namespace SceneManager
                     GameFiber.Yield();
                 }
             });
+        }
+
+        public void EnableBlip()
+        {
+            if(!PathMainMenu.GetPaths().Where(p => p.Number == _path).First().IsEnabled)
+            {
+                _blip.Alpha = 0.5f;
+                _collectorRadiusBlip.Alpha = 0.25f;
+            }
+            else
+            {
+                _blip.Alpha = 1.0f;
+                _collectorRadiusBlip.Alpha = 0.5f;
+            }
+
+        }
+
+        public void DisableBlip()
+        {
+            _blip.Alpha = 0;
+            _collectorRadiusBlip.Alpha = 0;
         }
 
         public void RemoveWaypoint()
