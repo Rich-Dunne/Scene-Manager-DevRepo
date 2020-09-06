@@ -161,7 +161,7 @@ namespace SceneManager
             }
 
             EditPathMenu.editPathMenu.Reset(true, true);
-            EditPathMenu.togglePath.Enabled = true;
+            EditPathMenu.disablePath.Enabled = true;
         }
 
         private static void PathMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
@@ -170,6 +170,7 @@ namespace SceneManager
             {
                 pathMainMenu.Visible = false;
                 PathCreationMenu.pathCreationMenu.Visible = true;
+                DebugGraphics.Draw3DWaypointOnPlayer();
 
                 // For each element in paths, determine if the element exists but is not finished yet, or if it doesn't exist, create it.
                 for (int i = 0; i <= paths.Count; i++)

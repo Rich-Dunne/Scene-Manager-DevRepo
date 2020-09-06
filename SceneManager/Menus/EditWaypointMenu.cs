@@ -161,7 +161,7 @@ namespace SceneManager
                 if (currentPath.Waypoints.Count < 2 && currentPath.Waypoints[0].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
                 {
                     Game.LogTrivial($"The remaining waypoint was updated to be a stop waypoint.  Enabling/disabling the path is no longer locked.");
-                    EditPathMenu.togglePath.Enabled = true;
+                    EditPathMenu.disablePath.Enabled = true;
                 }
                 updateWaypointPosition.Checked = false;
                 Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Waypoint {currentWaypoint.Number} updated.");
@@ -227,8 +227,8 @@ namespace SceneManager
                     {
                         Game.LogTrivial($"The path only has 1 waypoint left, and the waypoint is not a stop waypoint.  Disabling the path.");
                         currentPath.DisablePath();
-                        EditPathMenu.togglePath.Checked = true;
-                        EditPathMenu.togglePath.Enabled = false;
+                        EditPathMenu.disablePath.Checked = true;
+                        EditPathMenu.disablePath.Enabled = false;
                     }
                 }
             }
@@ -237,7 +237,7 @@ namespace SceneManager
         private static float SetDriveSpeedForWaypoint()
         {
             float convertedSpeed;
-            if (SettingsMenu.speedUnits.SelectedItem == SettingsMenu.SpeedUnitsOfMeasure.MPH)
+            if (SettingsMenu.speedUnits.SelectedItem == SpeedUnits.MPH)
             {
                 //Game.LogTrivial($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
                 convertedSpeed = MathHelper.ConvertMilesPerHourToMetersPerSecond(changeWaypointSpeed.Value);
