@@ -9,7 +9,7 @@ namespace SceneManager
         {
             GameFiber.StartNew(() =>
             {
-                while (SettingsMenu.debugGraphics.Checked)
+                while (SettingsMenu.threeDWaypoints.Checked)
                 {
                     if (MenuManager.menuPool.IsAnyMenuOpen() && path != null)
                     {
@@ -44,7 +44,7 @@ namespace SceneManager
         {
             GameFiber.StartNew(() =>
             {
-                while (SettingsMenu.debugGraphics.Checked)
+                while (SettingsMenu.threeDWaypoints.Checked)
                 {
                     if (PathCreationMenu.pathCreationMenu.Visible)
                     {
@@ -55,12 +55,16 @@ namespace SceneManager
                         }
                         else if (PathCreationMenu.waypointType.SelectedItem == "Drive To")
                         {
-                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z-1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 80, false, false, 2, false, 0, 0, false);
+                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 80, false, false, 2, false, 0, 0, false);
                         }
                         else
                         {
-                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z-1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 80, false, false, 2, false, 0, 0, false);
+                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 80, false, false, 2, false, 0, 0, false);
                         }
+                    }
+                    else
+                    {
+                        break;
                     }
                     GameFiber.Yield();
                 }
