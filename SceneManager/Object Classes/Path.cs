@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using Rage;
+using System.Collections.Generic;
 
 namespace SceneManager
 {
@@ -11,28 +12,24 @@ namespace SceneManager
 
     public class Path
     { 
-        public int Number { get; private set; }
-        public bool IsEnabled { get; private set; }
-        public State State { get; set; }
+        private int _number { get; set; }
+        private bool _isEnabled { get; set; }
+        private State _state { get; set; }
 
+        public int Number { get { return _number; } set { _number = value; } }
+        public bool IsEnabled { get { return _isEnabled; } set { _isEnabled = value; } }
+        public State State { get { return _state; } set { _state = value; } }
         public List<Waypoint> Waypoints = new List<Waypoint>();
-
-        public Path(int pathNum, bool pathFinished, bool pathDisabled, List<Waypoint> waypoints)
-        {
-            Number = pathNum;
-            IsEnabled = pathDisabled;
-            Waypoints = waypoints;
-        }
 
         public Path(int pathNum, State pathState)
         {
-            Number = pathNum;
-            State = pathState;
+            _number = pathNum;
+            _state = pathState;
         }
 
         public void SetPathNumber(int pathNum)
         {
-            Number = pathNum;
+            _number = pathNum;
         }
 
         private void LowerWaypointBlipsOpacity()
@@ -64,13 +61,24 @@ namespace SceneManager
 
         public void DisablePath()
         {
-            IsEnabled = false;
+            _isEnabled = false;
+            foreach(Waypoint wp in Waypoints)
+            {
+                wp.RemoveSpeedZone();
+            }
             LowerWaypointBlipsOpacity();
         }
 
         public void EnablePath()
         {
-            IsEnabled = true;
+            _isEnabled = true;
+            foreach (Waypoint wp in Waypoints)
+            {
+                if (wp.IsCollector)
+                {
+                    wp.AddSpeedZone();
+                }
+            }
             RestoreWaypointBlipsOpacity();
         }
 
