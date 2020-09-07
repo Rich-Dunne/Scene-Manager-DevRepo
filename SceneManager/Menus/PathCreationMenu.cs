@@ -10,8 +10,8 @@ namespace SceneManager
     class PathCreationMenu
     {
 
-        private static VehicleDrivingFlags[] drivingFlags = new VehicleDrivingFlags[] { VehicleDrivingFlags.Normal, VehicleDrivingFlags.StopAtDestination }; // Implement custom driving flag for normal
-        private static string[] waypointTypes = new string[] { "Drive To", "Stop" };
+        private static VehicleDrivingFlags[] drivingFlags = new VehicleDrivingFlags[] { VehicleDrivingFlags.Normal, VehicleDrivingFlags.IgnorePathFinding, VehicleDrivingFlags.StopAtDestination }; // Implement custom driving flag for normal
+        private static string[] waypointTypes = new string[] { "Drive To (Normal)", "Drive To (Direct)", "Stop" };
         public static UIMenu pathCreationMenu { get; private set; }
         private static UIMenuItem trafficAddWaypoint, trafficRemoveWaypoint, trafficEndPath;
         public static UIMenuListScrollerItem<string> waypointType = new UIMenuListScrollerItem<string>("Waypoint Type", "", waypointTypes);

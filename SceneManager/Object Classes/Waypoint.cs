@@ -71,6 +71,14 @@ namespace SceneManager
 
             void UpdateDrivingFlag(VehicleDrivingFlags newDrivingFlag)
             {
+                if(_drivingFlag == VehicleDrivingFlags.StopAtDestination && newDrivingFlag != VehicleDrivingFlags.StopAtDestination)
+                {
+                    foreach(CollectedVehicle cv in VehicleCollector.collectedVehicles.Where(cv => cv.Path == _path && cv.CurrentWaypoint == _number && cv.StoppedAtWaypoint))
+                    {
+                        Game.LogTrivial($"Setting StoppedAtWaypoint to false for {cv.Vehicle.Model.Name}");
+                        cv.SetStoppedAtWaypoint(false);
+                    }
+                }
                 _drivingFlag = newDrivingFlag;
                 if (newDrivingFlag == VehicleDrivingFlags.StopAtDestination)
                 {

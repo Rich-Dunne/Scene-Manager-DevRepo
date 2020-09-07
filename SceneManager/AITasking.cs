@@ -65,7 +65,15 @@ namespace SceneManager
                 Game.LogTrivial($"{vehicle.Model.Name} is driving to waypoint {waypoints[nextWaypoint].Number}");
                 if (waypoints.ElementAtOrDefault(nextWaypoint) != null && !collectedVehicle.StoppedAtWaypoint)
                 {
-                    collectedVehicle.Vehicle.Driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263083, 2f).WaitForCompletion();
+                    if(waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.Normal)
+                    {
+                        collectedVehicle.Vehicle.Driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263083, 2f).WaitForCompletion();
+                    }
+                    else if (waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.IgnorePathFinding)
+                    {
+                        collectedVehicle.Vehicle.Driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)17040299, 2f).WaitForCompletion();
+                    }
+
                     collectedVehicle.Vehicle.Driver.Tasks.PerformDrivingManeuver(collectedVehicle.Vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3);
                 }
 

@@ -9,8 +9,8 @@ namespace SceneManager
 {
     class EditWaypointMenu
     {
-        private static VehicleDrivingFlags[] drivingFlags = new VehicleDrivingFlags[] { VehicleDrivingFlags.Normal, VehicleDrivingFlags.StopAtDestination };
-        private static string[] waypointTypes = new string[] { "Drive To", "Stop" };
+        private static VehicleDrivingFlags[] drivingFlags = new VehicleDrivingFlags[] { VehicleDrivingFlags.Normal, VehicleDrivingFlags.IgnorePathFinding, VehicleDrivingFlags.StopAtDestination };
+        private static string[] waypointTypes = new string[] { "Drive To (Normal)", "Drive To (Direct)", "Stop" };
         public static UIMenu editWaypointMenu { get; private set; }
         public static UIMenuItem updateWaypoint { get; private set; }
         public static UIMenuItem removeWaypoint { get; private set; }
