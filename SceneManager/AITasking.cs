@@ -32,6 +32,10 @@ namespace SceneManager
 
         private static void DriveVehicleToNextWaypoint(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint)
         {
+            if (collectedVehicle == null)
+            {
+                return;
+            }
             if (!collectedVehicle.Vehicle)
             {
                 return;
