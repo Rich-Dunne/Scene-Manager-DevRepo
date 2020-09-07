@@ -60,7 +60,7 @@ namespace SceneManager
 
         private static Vehicle[] GetNearbyVehiclesForCollection(Vector3 collectorWaypointPosition, float collectorRadius)
         {
-            return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorWaypointPosition) <= collectorRadius - 0.5f && v.IsValidForCollection() select v).ToArray();
+            return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorWaypointPosition) < collectorRadius && v.IsValidForCollection() select v).ToArray();
         }
 
         private static CollectedVehicle AddVehicleToCollection(Path path, Waypoint waypoint, Vehicle v)
@@ -104,35 +104,5 @@ namespace SceneManager
                 return false;
             }
         }
-
-        //private static void VehicleDismissed(CollectedVehicle cv, List<Waypoint> waypointData)
-        //{
-        //    while (!cv.DismissNow)
-        //    {
-        //        GameFiber.Sleep(500);
-        //    }
-        //    Game.LogTrivial($"{cv.Vehicle.Model.Name} was dismissed (dismissal check loop).");
-
-
-        //    Game.LogTrivial($"Looping to ensure the vehicle is far enough away from all attractor waypoints so it can be removed from the collection.");
-        //    while (true)
-        //    {
-        //        var collectorWaypoints = waypointData.Where(wp => wp.IsCollector);
-        //        var vehicleFarEnoughAwayFromCollectors = collectorWaypoints.All(wp => cv.Vehicle.DistanceTo(wp.Position) > wp.CollectorRadius);
-
-        //        if (collectedVehicles.Contains(cv) && vehicleFarEnoughAwayFromCollectors)
-        //        {
-        //            Game.LogTrivial($"{cv.Vehicle.Model.Name} is far enough away from all attractor waypoints and has been removed from the collection.");
-        //            cv.SetTasksAssigned(false);
-        //            cv.Vehicle.Driver.BlockPermanentEvents = false;
-        //            cv.Vehicle.Driver.IsPersistent = false;
-        //            cv.Vehicle.IsPersistent = false;
-        //            collectedVehicles.Remove(cv);
-
-        //            break;
-        //        }
-        //        GameFiber.Sleep(1000);
-        //    }
-        //}
     }
 }
