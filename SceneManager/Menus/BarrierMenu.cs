@@ -155,9 +155,9 @@ namespace SceneManager
                 RemoveBarrier();
             }
 
-            if(selectedItem == resetBarriers)
+            if (selectedItem == resetBarriers)
             {
-                foreach(Barrier barrier in barriers.Where(b => b.GetBarrier() && !b.GetBarrier().Model.Name.Contains("flare")))
+                foreach(Barrier barrier in barriers.Where(b => b.GetBarrier()?.Model.Name != "0xa2c44e80")) // 0xa2c44e80 is the model name of the spawned flare
                 {
                     barrier.GetBarrier().Position = barrier.GetPosition();
                     barrier.GetBarrier().Heading = barrier.GetRotation();
