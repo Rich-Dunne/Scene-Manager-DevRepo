@@ -1,4 +1,5 @@
 ﻿using Rage;
+using System.Collections.Generic;
 using System.Windows.Forms;
 
 namespace SceneManager
@@ -29,12 +30,12 @@ namespace SceneManager
         internal static bool EnableHints = true;
         internal static SpeedUnits SpeedUnit = SpeedUnits.MPH;
         internal static float BarrierPlacementDistance = 30f;
-        internal static Object[] barriers;
+        internal static List<string> barrierKeys = new List<string>();
+        internal static List<string> barrierValues = new List<string>();
 
         internal static void LoadSettings()
         {
             Game.LogTrivial("Loading SceneManager.ini settings");
-            //InitializationFile ini = new InitializationFile("Plugins/SceneManager.ini");
             ini.Create();
 
             ToggleKey = ini.ReadEnum("Keybindings", "ToggleKey", Keys.T);
@@ -46,6 +47,17 @@ namespace SceneManager
             EnableHints = ini.ReadBoolean("Other Settings", "EnableHints", true);
             SpeedUnit = ini.ReadEnum("Other Settings", "SpeedUnits", SpeedUnits.MPH);
             BarrierPlacementDistance = ini.ReadInt32("Other Settings", "BarrierPlacementDistance", 30);
+
+            foreach(string key in ini.GetKeyNames("Barriers"))
+            {
+                //Game.LogTrivial($"Key: {key.Trim()}");
+                //Game.LogTrivial($"Value: {ini.ReadString("Barriers",key)}");
+                barrierKeys.Add(key.Trim());
+                var m = new Model(ini.ReadString("Barriers", key));
+                if (m.IsValid)
+                    barrierValues.Add(m.Name);
+                //barrierValues.Add(ini.ReadString("Barriers", key));
+            }
         }
 
         internal static void UpdateSettings(bool threeDWaypointsEnabled, bool mapBlipsEnabled, bool hintsEnabled, SpeedUnits unit, float distance)

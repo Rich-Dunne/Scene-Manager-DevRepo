@@ -2,8 +2,6 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
@@ -14,10 +12,9 @@ namespace SceneManager
     {
         public static UIMenu barrierMenu { get; private set; }
         public static List<Barrier> barriers = new List<Barrier>();
-        //public static List<Rage.Object> barriers = new List<Rage.Object>() { };
-
-        private static UIMenuListScrollerItem<string> barrierList = new UIMenuListScrollerItem<string>("Select Barrier", "", new[] { "Large Striped Cone", "Large Cone", "Medium Striped Cone", "Medium Cone", "Roadpole A", "Roadpole B", "Police Barrier", "Road Barrier", "Flare" });
-        private static string[] barrierObjectNames = new string[] { "prop_mp_cone_01", "prop_roadcone01c", "prop_mp_cone_02", "prop_mp_cone_03", "prop_roadpole_01a", "prop_roadpole_01b", "prop_barrier_work05", "prop_barrier_work06a", "prop_flare_01b" };
+        private static UIMenuListScrollerItem<string> barrierList = new UIMenuListScrollerItem<string>("Select Barrier", "", Settings.barrierKeys);
+        //private static UIMenuListScrollerItem<string> barrierList = new UIMenuListScrollerItem<string>("Select Barrier", "", new[] { "Large Striped Cone", "Large Cone", "Medium Striped Cone", "Medium Cone", "Roadpole A", "Roadpole B", "Police Barrier", "Road Barrier", "Flare" });
+        //private static string[] barrierObjectNames = new string[] { "prop_mp_cone_01", "prop_roadcone01c", "prop_mp_cone_02", "prop_mp_cone_03", "prop_roadpole_01a", "prop_roadpole_01b", "prop_barrier_work05", "prop_barrier_work06a", "prop_flare_01b" };
         private static UIMenuNumericScrollerItem<int> rotateBarrier = new UIMenuNumericScrollerItem<int>("Rotate Barrier", "", 0, 350, 10);
         private static UIMenuListScrollerItem<string> removeBarrierOptions = new UIMenuListScrollerItem<string>("Remove Barrier", "", new[] { "Last Barrier", "Nearest Barrier", "All Barriers" });
         private static UIMenuItem resetBarriers = new UIMenuItem("Reset Barriers", "Reset all spawned barriers to their original position and rotation");
@@ -62,7 +59,8 @@ namespace SceneManager
             if (shadowBarrier)
                 shadowBarrier.Delete();
 
-            shadowBarrier = new Rage.Object(barrierObjectNames[barrierList.Index], TracePlayerView(15, TraceFlags.IntersectEverything).HitPosition, rotateBarrier.Index);
+            shadowBarrier = new Rage.Object(Settings.barrierValues[barrierList.Index], TracePlayerView(15, TraceFlags.IntersectEverything).HitPosition, rotateBarrier.Index);
+            //shadowBarrier = new Rage.Object(barrierObjectNames[barrierList.Index], TracePlayerView(15, TraceFlags.IntersectEverything).HitPosition, rotateBarrier.Index);
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
             shadowBarrier.IsGravityDisabled = true;
             shadowBarrier.IsCollisionEnabled = false;
