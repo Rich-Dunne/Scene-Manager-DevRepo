@@ -4,55 +4,35 @@ namespace SceneManager
 {
     public class CollectedVehicle
     {
-        public Ped Driver { get; private set; }
-        public Vehicle Vehicle { get; private set; }
-        public string LicensePlate { get; private set; }
-        public int Path { get; private set; }
-        public int TotalWaypoints { get; private set; }
-        public int CurrentWaypoint { get; private set; }
-        public bool TasksAssigned { get; private set; }
-        public bool DismissNow { get; private set; }
-        public bool StoppedAtWaypoint { get; private set; }
+        private Ped _driver { get; set; }
+        private Vehicle _vehicle { get; set; }
+        private Path _path { get; set; }
+        //private int _path { get; set; } // Should change this to a Path object
+        private int _currentWaypoint { get; set; }
+        private bool _tasksAssigned { get; set; }
+        private bool _stoppedAtWaypoint { get; set; }
 
-        public CollectedVehicle(Vehicle vehicle, string licensePlate, int path, int totalWaypoints, int currentWaypoint, bool tasksAssigned, bool dismissNow)
+        public Ped Driver { get { return _driver; } set { _driver = value; } }
+        public Vehicle Vehicle { get { return _vehicle; } set { _vehicle = value; } }
+        public Path Path { get { return _path; } set { _path = value; } }
+        public int CurrentWaypoint { get { return _currentWaypoint; } set { _currentWaypoint = value; } }
+        public bool TasksAssigned { get { return _tasksAssigned; } set { _tasksAssigned = value; } }
+        public bool StoppedAtWaypoint { get { return _stoppedAtWaypoint; } set { _stoppedAtWaypoint = value; } }
+
+        public CollectedVehicle(Vehicle vehicle, Path path, int totalWaypoints, int currentWaypoint, bool tasksAssigned)
         {
             Vehicle = vehicle;
             Driver = vehicle.Driver;
-            LicensePlate = licensePlate;
             Path = path;
-            TotalWaypoints = totalWaypoints;
             CurrentWaypoint = currentWaypoint;
             TasksAssigned = tasksAssigned;
-            DismissNow = dismissNow;
         }
 
-        public void AssignPropertiesFromDirectedTask(int pathNum, int totalPathWaypoints, int currentWaypoint, bool tasksAssigned, bool dismiss, bool stoppedAtWaypoint)
+        public void AssignPropertiesFromDirectedTask(Path path, int totalPathWaypoints, int currentWaypoint, bool tasksAssigned, bool stoppedAtWaypoint)
         {
-            Path = pathNum;
-            TotalWaypoints = totalPathWaypoints;
+            Path = path;
             CurrentWaypoint = currentWaypoint;
             TasksAssigned = tasksAssigned;
-            DismissNow = dismiss;
-            StoppedAtWaypoint = stoppedAtWaypoint;
-        }
-
-        public void SetCurrentWaypoint(int currentWaypoint)
-        {
-            CurrentWaypoint = currentWaypoint;
-        }
-
-        public void SetTasksAssigned(bool tasksAssigned)
-        {
-            TasksAssigned = tasksAssigned;
-        }
-
-        public void SetDismissNow(bool dismissNow)
-        {
-            DismissNow = dismissNow;
-        }
-
-        public void SetStoppedAtWaypoint(bool stoppedAtWaypoint)
-        {
             StoppedAtWaypoint = stoppedAtWaypoint;
         }
     }
