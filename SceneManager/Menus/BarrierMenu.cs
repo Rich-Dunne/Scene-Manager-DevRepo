@@ -59,8 +59,8 @@ namespace SceneManager
             if (shadowBarrier)
                 shadowBarrier.Delete();
 
-            shadowBarrier = new Rage.Object(Settings.barrierValues[barrierList.Index], TracePlayerView(15, TraceFlags.IntersectEverything).HitPosition, rotateBarrier.Index);
-            //shadowBarrier = new Rage.Object(barrierObjectNames[barrierList.Index], TracePlayerView(15, TraceFlags.IntersectEverything).HitPosition, rotateBarrier.Index);
+            //shadowBarrier = new Rage.Object(Settings.barrierValues[barrierList.Index], TracePlayerView(15, TraceFlags.IntersectEverything).HitPosition, Game.LocalPlayer.Character.Heading);
+            shadowBarrier = new Rage.Object(Settings.barrierValues[barrierList.Index], TracePlayerView(15, TraceFlags.IntersectEverything).HitPosition, rotateBarrier.Value);
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
             shadowBarrier.IsGravityDisabled = true;
             shadowBarrier.IsCollisionEnabled = false;
@@ -85,9 +85,9 @@ namespace SceneManager
         private static void UpdateShadowBarrierPosition()
         {
             DisableBarrierMenuOptionsIfShadowConeTooFar();
-            shadowBarrier.Position = TracePlayerView(SettingsMenu.barrierPlacementDistance.Value, TraceFlags.IntersectEverything).HitPosition;
-            Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
-            shadowBarrier.Heading = rotateBarrier.Value;
+            //shadowBarrier.Position = TracePlayerView(SettingsMenu.barrierPlacementDistance.Value, TraceFlags.IntersectWorld).HitPosition;
+            //Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
+            shadowBarrier.SetPositionWithSnap(TracePlayerView(SettingsMenu.barrierPlacementDistance.Value, TraceFlags.IntersectEverything).HitPosition);
 
             void DisableBarrierMenuOptionsIfShadowConeTooFar()
             {
@@ -127,7 +127,7 @@ namespace SceneManager
 
             if (scrollerItem == rotateBarrier)
             {
-                shadowBarrier.Heading = rotateBarrier.Index;
+                shadowBarrier.Heading = rotateBarrier.Value;
             }
         }
 
@@ -155,11 +155,15 @@ namespace SceneManager
 
             if (selectedItem == resetBarriers)
             {
-                foreach(Barrier barrier in barriers.Where(b => b.GetBarrier()?.Model.Name != "0xa2c44e80")) // 0xa2c44e80 is the model name of the spawned flare
+                var currentBarriers = barriers.Where(b => b.Object?.Model.Name != "0xa2c44e80").ToList();
+                foreach(Barrier barrier in currentBarriers)
                 {
-                    barrier.GetBarrier().Position = barrier.GetPosition();
-                    barrier.GetBarrier().Heading = barrier.GetRotation();
+                    var newBarrier = new Rage.Object(barrier.Object.Model, barrier.Position, barrier.Rotation);
+                    barriers.Add(new Barrier(newBarrier, newBarrier.Position, newBarrier.Heading));
+                    barrier.Object.Delete();
+                    barriers.Remove(barrier);
                 }
+                currentBarriers.Clear();
             }
         }
 
@@ -180,18 +184,18 @@ namespace SceneManager
             switch (removeBarrierOptions.Index)
             {
                 case 0:
-                    barriers[barriers.Count - 1].GetBarrier().Delete();
+                    barriers[barriers.Count - 1].Object.Delete();
                     barriers.RemoveAt(barriers.Count - 1);
                     break;
                 case 1:
-                    barriers = barriers.OrderBy(c => c.DistanceTo(Game.LocalPlayer.Character)).ToList();
-                    barriers[0].GetBarrier().Delete();
+                    barriers = barriers.OrderBy(b => b.Object.DistanceTo2D(Game.LocalPlayer.Character)).ToList();
+                    barriers[0].Object.Delete();
                     barriers.RemoveAt(0);
                     break;
                 case 2:
-                    foreach (Barrier b in barriers.Where(b => b.GetBarrier()))
+                    foreach (Barrier b in barriers.Where(b => b.Object))
                     {
-                        b.GetBarrier().Delete();
+                        b.Object.Delete();
                     }
                     if (barriers.Count > 0)
                     {
@@ -251,7 +255,8 @@ namespace SceneManager
         {
             Vector3 direction = GetPlayerLookingDirection(out start);
             end = start + (maxTraceDistance * direction);
-            return World.TraceLine(start, end, flags);
+            var barrierObjects = barriers.Where(b => b.Object).Select(b => b.Object).ToArray();
+            return World.TraceLine(start, end, flags, barrierObjects);
         }
 
         internal static HitResult TracePlayerView(float maxTraceDistance = 30f, TraceFlags flags = TraceFlags.IntersectEverything) => TracePlayerView(out Vector3 v1, out Vector3 v2, maxTraceDistance, flags);
