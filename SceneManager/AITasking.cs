@@ -8,22 +8,20 @@ namespace SceneManager
     {
         public static void AssignWaypointTasks(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint)
         {
-            if(!collectedVehicle.Vehicle || !collectedVehicle.Vehicle.Driver)
+            if (!VehicleAndDriverNullChecks(collectedVehicle))
             {
-                Game.LogTrivial($"Collected vehicle or driver is null");
                 return;
             }
 
             if (currentWaypoint != null && currentWaypoint.DrivingFlag == VehicleDrivingFlags.StopAtDestination)
             {
-                StopVehicleAtWaypoint(collectedVehicle);
+                StopVehicleAtWaypoint(currentWaypoint, collectedVehicle);
             }
 
             DriveVehicleToNextWaypoint(collectedVehicle, waypoints, currentWaypoint);
 
-            if (!collectedVehicle.Vehicle || !collectedVehicle.Vehicle.Driver)
+            if (!VehicleAndDriverNullChecks(collectedVehicle))
             {
-                Game.LogTrivial($"Collected vehicle or driver is null");
                 return;
             }
             Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} all tasks complete.");
@@ -32,15 +30,7 @@ namespace SceneManager
 
         private static void DriveVehicleToNextWaypoint(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint)
         {
-            if (collectedVehicle == null)
-            {
-                return;
-            }
-            if (!collectedVehicle.Vehicle)
-            {
-                return;
-            }
-            if (!collectedVehicle.Driver)
+            if (!VehicleAndDriverNullChecks(collectedVehicle))
             {
                 return;
             }
@@ -50,7 +40,10 @@ namespace SceneManager
 
             for (int nextWaypoint = currentWaypoint.Number; nextWaypoint < waypoints.Count; nextWaypoint++)
             {
-                VehicleAndDriverNullChecks(waypoints, nextWaypoint, collectedVehicle);
+                if (!VehicleAndDriverNullChecks(waypoints, nextWaypoint, collectedVehicle))
+                {
+                    return;
+                }
 
                 Game.LogTrivial($"{vehicle.Model.Name} is driving to waypoint {waypoints[nextWaypoint].Number}");
                 if (waypoints.ElementAtOrDefault(nextWaypoint) != null && !collectedVehicle.StoppedAtWaypoint)
@@ -71,67 +64,73 @@ namespace SceneManager
                 {
                     Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} stopping at waypoint.");
                     collectedVehicle.Vehicle.Driver.Tasks.PerformDrivingManeuver(VehicleManeuver.GoForwardStraightBraking);
-                    collectedVehicle.SetStoppedAtWaypoint(true);
+                    collectedVehicle.StoppedAtWaypoint = true;
                 }
             }
         }
 
-        private static void VehicleAndDriverNullChecks(CollectedVehicle collectedVehicle)
+        private static bool VehicleAndDriverNullChecks(CollectedVehicle collectedVehicle)
         {
             if (collectedVehicle == null)
             {
                 Game.LogTrivial($"CollectedVehicle is null");
-                return;
+                return false;
             }
             if (!collectedVehicle.Vehicle)
             {
                 Game.LogTrivial($"Vehicle is null");
-                return;
+                return false;
             }
             if (!collectedVehicle.Driver)
             {
                 Game.LogTrivial($"Driver is null");
-                return;
+                return false;
             }
+            return true;
         }
 
-        private static void VehicleAndDriverNullChecks(List<Waypoint> waypoints, int nextWaypoint, CollectedVehicle collectedVehicle)
+        private static bool VehicleAndDriverNullChecks(List<Waypoint> waypoints, int nextWaypoint, CollectedVehicle collectedVehicle)
         {
             if (waypoints.ElementAtOrDefault(nextWaypoint) == null)
             {
                 Game.LogTrivial($"Waypoint is null");
-                return;
+                return false;
             }
             if(collectedVehicle == null)
             {
                 Game.LogTrivial($"CollectedVehicle is null");
-                return;
+                return false;
             }
             if (!collectedVehicle.Vehicle)
             {
                 Game.LogTrivial($"Vehicle is null");
-                return;
+                return false;
             }
             if (!collectedVehicle.Driver)
             {
                 Game.LogTrivial($"Driver is null");
-                return;
+                return false;
             }
+            return true;
         }
 
-        private static void StopVehicleAtWaypoint(CollectedVehicle collectedVehicle)
+        private static void StopVehicleAtWaypoint(Waypoint currentWaypoint, CollectedVehicle collectedVehicle)
         {
-            VehicleAndDriverNullChecks(collectedVehicle);
+            if (!VehicleAndDriverNullChecks(collectedVehicle))
+            {
+                return;
+            }
 
             Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} stopping at waypoint.");
-            //collectedVehicle.Driver.Tasks.PerformDrivingManeuver(VehicleManeuver.GoForwardStraightBraking);
-            collectedVehicle.Driver.Tasks.DriveToPosition(collectedVehicle.Vehicle.FrontPosition, 10f, (VehicleDrivingFlags)2147483648); // This causes FPS loss
-            collectedVehicle.SetStoppedAtWaypoint(true);
+            //collectedVehicle.Driver.Tasks.DriveToPosition(collectedVehicle.Vehicle.FrontPosition, 10f, (VehicleDrivingFlags)2147483648); // This causes FPS loss
+            Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, 3f, -1, true);
+            collectedVehicle.StoppedAtWaypoint = true;
 
-            while (collectedVehicle.Vehicle && collectedVehicle.StoppedAtWaypoint)
+            while (currentWaypoint != null && collectedVehicle.Vehicle && collectedVehicle.StoppedAtWaypoint)
             {
                 GameFiber.Yield();
             }
+            Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, 3f, 1, true);
         }
 
         public static void DismissDriver(CollectedVehicle cv)
@@ -147,8 +146,7 @@ namespace SceneManager
                 return;
             }
 
-            cv.SetDismissNow(true);
-            cv.SetStoppedAtWaypoint(false);
+            cv.StoppedAtWaypoint = false;
             if (cv.Vehicle && cv.Vehicle.Driver)
             {
                 cv.Vehicle.Driver.Dismiss();
