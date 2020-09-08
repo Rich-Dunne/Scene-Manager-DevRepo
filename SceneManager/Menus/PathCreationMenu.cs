@@ -95,11 +95,11 @@ namespace SceneManager
 
                 if (collectorWaypoint.Checked)
                 {
-                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(pathNumber, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index]), true, collectorRadius.Value, speedZoneRadius.Value));
+                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index]), true, collectorRadius.Value, speedZoneRadius.Value));
                 }
                 else
                 {
-                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(pathNumber, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index])));
+                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index])));
                 }
                 Game.LogTrivial($"[Path {pathNumber}] Waypoint {waypointNumber} ({drivingFlags[waypointType.Index].ToString()}) added");
 

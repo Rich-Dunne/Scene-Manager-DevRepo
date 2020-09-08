@@ -180,11 +180,11 @@ namespace SceneManager
 
                 if (collectorWaypoint.Checked)
                 {
-                    currentPath.Waypoints.Add(new Waypoint(currentPath.Number, currentWaypoint.Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, changeCollectorRadius.Value, changeSpeedZoneRadius.Value));
+                    currentPath.Waypoints.Add(new Waypoint(currentPath, currentWaypoint.Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, changeCollectorRadius.Value, changeSpeedZoneRadius.Value));
                 }
                 else
                 {
-                    currentPath.Waypoints.Add(new Waypoint(currentPath.Number, currentPath.Waypoints.Last().Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip));
+                    currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip));
                 }
 
                 editWaypointMenu.RemoveItemAt(0);

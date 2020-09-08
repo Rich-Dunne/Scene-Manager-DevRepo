@@ -41,7 +41,7 @@ namespace SceneManager
                 {
                     SetVehicleAndDriverPersistence(vehicle);
                     CollectedVehicle newCollectedVehicle = AddVehicleToCollection(path, waypoint, vehicle);
-                    Game.LogTrivial($"[WaypointVehicleCollector] Added {vehicle.Model.Name} to collection.");
+                    newCollectedVehicle.TasksAssigned = true;
 
                     GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, path.Waypoints, waypoint));
                     AssignTasksFiber.Start();
@@ -50,7 +50,7 @@ namespace SceneManager
                 else if (!collectedVehicle.TasksAssigned)
                 {
                     Game.LogTrivial($"[WaypointVehicleCollector] {vehicle.Model.Name} already in collection, but with no tasks.  Assigning tasks.");
-                    collectedVehicle.SetTasksAssigned(true);
+                    collectedVehicle.TasksAssigned = true;
 
                     GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(collectedVehicle, path.Waypoints, waypoint));
                     AssignTasksFiber.Start();
@@ -65,18 +65,10 @@ namespace SceneManager
 
         private static CollectedVehicle AddVehicleToCollection(Path path, Waypoint waypoint, Vehicle v)
         {
-            var collectedVehicle = new CollectedVehicle(v, v.LicensePlate, path.Number, path.Waypoints.Count, waypoint.Number, true, false);
+            var collectedVehicle = new CollectedVehicle(v, path, path.Waypoints.Count, waypoint.Number, false);
             collectedVehicles.Add(collectedVehicle);
             Game.LogTrivial($"[WaypointVehicleCollector] Added {v.Model.Name} to collection from path {path.Number}, waypoint {waypoint.Number}.");
             return collectedVehicle;
-        }
-
-        public static void SetVehicleAndDriverPersistence(Vehicle v)
-        {
-            v.IsPersistent = true;
-            v.Driver.IsPersistent = true;
-            v.Driver.BlockPermanentEvents = true;
-            v.Driver.Tasks.Clear();
         }
 
         private static bool IsValidForCollection(this Vehicle v)
@@ -103,6 +95,14 @@ namespace SceneManager
             {
                 return false;
             }
+        }
+
+        public static void SetVehicleAndDriverPersistence(Vehicle v)
+        {
+            v.IsPersistent = true;
+            v.Driver.IsPersistent = true;
+            v.Driver.BlockPermanentEvents = true;
+            v.Driver.Tasks.Clear();
         }
     }
 }

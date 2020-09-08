@@ -6,7 +6,8 @@ namespace SceneManager
 {
     public class Waypoint
     {
-        private int _path { get; set; }
+        private Path _path { get; set; }
+        //private int _path { get; set; }
         private int _number { get; set; }
         private Vector3 _position { get; set; }
         private float _speed { get; set; }
@@ -19,7 +20,8 @@ namespace SceneManager
         private uint _speedZone { get; set; }
         private bool _enableWaypointMarker { get; set; }
 
-        public int Path { get {return _path; } }
+        public Path Path { get { return _path; } set { _path = value; } }
+        //public int Path { get {return _path; } }
         public int Number { get { return _number; } set { _number = value; } }
         public Vector3 Position { get { return _position; } }
         public float Speed { get { return _speed; } }
@@ -32,7 +34,7 @@ namespace SceneManager
         public uint SpeedZone { get { return _speedZone; } set { _speedZone = value; } }
         public bool EnableWaypointMarker { get { return _enableWaypointMarker; } set { _enableWaypointMarker = value; } }
 
-        public Waypoint(int path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector = false, float collectorRadius = 0, float speedZoneRadius = 0)
+        public Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector = false, float collectorRadius = 0, float speedZoneRadius = 0)
         {
             _path = path;
             _number = waypointNum;
@@ -76,7 +78,7 @@ namespace SceneManager
                     foreach(CollectedVehicle cv in VehicleCollector.collectedVehicles.Where(cv => cv.Path == _path && cv.CurrentWaypoint == _number && cv.StoppedAtWaypoint))
                     {
                         Game.LogTrivial($"Setting StoppedAtWaypoint to false for {cv.Vehicle.Model.Name}");
-                        cv.SetStoppedAtWaypoint(false);
+                        cv.StoppedAtWaypoint = false;
                     }
                 }
                 _drivingFlag = newDrivingFlag;
@@ -240,7 +242,7 @@ namespace SceneManager
 
         public void EnableBlip()
         {
-            if(!PathMainMenu.GetPaths().Where(p => p.Number == _path).First().IsEnabled)
+            if(!PathMainMenu.GetPaths().Where(p => p == _path).First().IsEnabled)
             {
                 _blip.Alpha = 0.5f;
                 _collectorRadiusBlip.Alpha = 0.25f;
@@ -261,7 +263,7 @@ namespace SceneManager
 
         public void RemoveWaypoint()
         {
-            _path = 0;
+            _path = null;
             _number = 0;
             _position = new Vector3(0,0,0);
             _speed = 0;
