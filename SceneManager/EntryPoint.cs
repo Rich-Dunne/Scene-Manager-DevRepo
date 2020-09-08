@@ -60,9 +60,9 @@ namespace SceneManager
             }
 
             // Clean up cones
-            foreach (Barrier barrier in BarrierMenu.barriers.Where(b => b.GetBarrier()))
+            foreach (Barrier barrier in BarrierMenu.barriers.Where(b => b.Object))
             {
-                barrier.GetBarrier().Delete();
+                barrier.Object.Delete();
             }
             if (BarrierMenu.shadowBarrier)
             {
