@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Rage;
@@ -29,7 +30,7 @@ namespace SceneManager
             foreach (Vehicle vehicle in GetNearbyVehiclesForCollection(waypoint.Position, waypoint.CollectorRadius))
             {
                 if (!vehicle)
-                { 
+                {
                     break;
                 }
 
@@ -60,12 +61,12 @@ namespace SceneManager
 
         private static Vehicle[] GetNearbyVehiclesForCollection(Vector3 collectorWaypointPosition, float collectorRadius)
         {
-            return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorWaypointPosition) < collectorRadius && v.IsValidForCollection() select v).ToArray();
+            return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorWaypointPosition) < collectorRadius && Math.Abs(collectorWaypointPosition.Z - v.Position.Z) < 3 && v.IsValidForCollection() select v).ToArray();
         }
 
         private static CollectedVehicle AddVehicleToCollection(Path path, Waypoint waypoint, Vehicle v)
         {
-            var collectedVehicle = new CollectedVehicle(v, path, path.Waypoints.Count, waypoint.Number, false);
+            var collectedVehicle = new CollectedVehicle(v, path, waypoint, false);
             collectedVehicles.Add(collectedVehicle);
             Game.LogTrivial($"[WaypointVehicleCollector] Added {v.Model.Name} to collection from path {path.Number}, waypoint {waypoint.Number}.");
             return collectedVehicle;
