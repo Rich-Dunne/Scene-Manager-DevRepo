@@ -1,10 +1,9 @@
 ﻿using Rage;
 using System.Collections.Generic;
+using System.Drawing;
 
 namespace SceneManager
 {
-
-
     public class Path
     { 
         private int _number { get; set; }
@@ -20,6 +19,7 @@ namespace SceneManager
         {
             _number = pathNum;
             _state = pathState;
+            DrawLinesBetweenWaypoints();
         }
 
         public void SetPathNumber(int pathNum)
@@ -83,7 +83,33 @@ namespace SceneManager
             }
         }
 
-
+        public void DrawLinesBetweenWaypoints()
+        {
+            GameFiber.StartNew(() =>
+            {
+                while (SettingsMenu.threeDWaypoints.Checked)
+                {
+                    if (MenuManager.menuPool.IsAnyMenuOpen())
+                    {
+                        for (int i = 0; i < Waypoints.Count; i++)
+                        {
+                            if (i != Waypoints.Count - 1)
+                            {
+                                if (Waypoints[i + 1].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
+                                {
+                                    Debug.DrawLine(Waypoints[i].Position, Waypoints[i + 1].Position, Color.Orange);
+                                }
+                                else
+                                {
+                                    Debug.DrawLine(Waypoints[i].Position, Waypoints[i + 1].Position, Color.Green);
+                                }
+                            }
+                        }
+                    }
+                    GameFiber.Yield();
+                }
+            });
+        }
 
 
     }
