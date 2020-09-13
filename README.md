@@ -37,5 +37,5 @@ Menu options with gold colored text are selectable, which means when you select 
 4.  You can add custom barrier objects to the barrier menu by adding them to the Barriers section of the .ini file.  A link is provided in the .ini file to find object model names.
 
 ## CREDITS
-*Author: Rich
-*Additional credit:  PNWParks fan for code assistance and extensive testing, Sereous, OJdoesIt, Vincentsgm, EchoWolf, FactionsBrutus
+* Author: Rich
+* Additional credit:  PNWParks fan for code assistance and extensive testing, Sereous, OJdoesIt, Vincentsgm, EchoWolf, FactionsBrutus
