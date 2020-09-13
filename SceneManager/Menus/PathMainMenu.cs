@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Rage;
@@ -45,16 +46,14 @@ namespace SceneManager
             pathMainMenu.AddItem(createNewPath = new UIMenuItem("Create New Path"));
             createNewPath.ForeColor = Color.Gold;
             pathMainMenu.AddItem(editPath = new UIMenuNumericScrollerItem<int>("Edit Path", "", 1, paths.Count, 1));
-            //pathMainMenu.AddItem(editPath = new UIMenuListScrollerItem<int>("Edit Path", "", pathsNum));
             editPath.ForeColor = Color.Gold;
             pathMainMenu.AddItem(disableAllPaths = new UIMenuCheckboxItem("Disable All Paths", false));
             pathMainMenu.AddItem(deleteAllPaths = new UIMenuItem("Delete All Paths"));
             deleteAllPaths.ForeColor = Color.Gold;
             pathMainMenu.AddItem(directOptions = new UIMenuListScrollerItem<string>("Direct driver to path's", "", new[] { "First waypoint", "Nearest waypoint" }));
             pathMainMenu.AddItem(directDriver = new UIMenuNumericScrollerItem<int>("Direct nearest driver to path", "", 1, paths.Count, 1));
-            //pathMainMenu.AddItem(directDriver = new UIMenuListScrollerItem<int>("Direct nearest driver to path", "", pathsNum));
             directDriver.ForeColor = Color.Gold;
-            pathMainMenu.AddItem(dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", "", dismissOptions));
+            pathMainMenu.AddItem(dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", $"~b~From path: ~w~AI will be released from the path{Environment.NewLine}~b~From waypoint: ~w~AI will skip their current waypoint task{Environment.NewLine}~b~From position: ~w~AI will be released from current position.  This can be used for stuck vehicles, and is the default behavior for vehicles not collected by a path.", dismissOptions));
             dismissDriver.ForeColor = Color.Gold;
 
             if (paths.Count == 8)
@@ -94,36 +93,25 @@ namespace SceneManager
             }
         }
 
-        private static bool IsInCollectedVehicles(this Vehicle vehicle)
-        {
-            if (vehicle && VehicleCollector.collectedVehicles.Any(cv => cv.Vehicle == vehicle))
-            {
-                Game.LogTrivial($"{vehicle.Model.Name} was found in the collection.");
-                return true;
-            }
-            else
-            {
-                Game.LogTrivial($"{vehicle.Model.Name} was not found in the collection.");
-                return false;
-            }
-        }
-
-        public static void DeletePath(Path path, int index, Delete pathsToDelete)
+        public static void DeletePath(Path path, Delete pathsToDelete)
         {
             // Before deleting a path, we need to dismiss any vehicles controlled by that path and remove the vehicles from ControlledVehicles
-            //Game.LogTrivial($"Deleting path {index+1}");
             Game.LogTrivial($"Deleting path {path.Number}");
             var pathVehicles = VehicleCollector.collectedVehicles.Where(cv => cv.Path.Number == path.Number).ToList();
 
             Game.LogTrivial($"Removing all vehicles on the path");
-            foreach (CollectedVehicle cv in pathVehicles.Where(cv => cv.Vehicle && cv.Vehicle.Driver))
+            foreach (CollectedVehicle cv in pathVehicles.Where(cv => cv != null && cv.Vehicle && cv.Driver))
             {
+                if (cv.StoppedAtWaypoint)
+                {
+                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(cv.Vehicle, 1f, 1, true);
+                }
                 cv.StoppedAtWaypoint = false;
                 cv.Driver.Tasks.Clear();
                 cv.Driver.Dismiss();
-                cv.Driver.IsPersistent = false;
+                cv.Vehicle.IsSirenOn = false;
+                cv.Vehicle.IsSirenSilent = true;
                 cv.Vehicle.Dismiss();
-                cv.Vehicle.IsPersistent = false;
 
                 //Game.LogTrivial($"{cv.vehicle.Model.Name} cleared from path {cv.path}");
                 VehicleCollector.collectedVehicles.Remove(cv);
@@ -149,10 +137,11 @@ namespace SceneManager
 
             Game.LogTrivial($"Clearing path.WaypointData");
             path.Waypoints.Clear();
+
             // Manipulating the menu to reflect specific paths being deleted
             if (pathsToDelete == Delete.Single)
             {
-                paths.RemoveAt(index);
+                paths.Remove(path);
                 BuildPathMenu();
                 pathMainMenu.Visible = true;
                 Game.LogTrivial($"Path {path.Number} deleted.");
@@ -176,7 +165,6 @@ namespace SceneManager
                 {
                     if (paths.ElementAtOrDefault(i) != null && paths[i].State == State.Creating)
                     {
-                        //Game.LogTrivial($"pathFinished: {paths[i].PathFinished}");
                         Game.LogTrivial($"Resuming path {paths[i].Number}");
                         Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Resuming path {paths[i].Number}");
                         break;
@@ -195,7 +183,7 @@ namespace SceneManager
                 // Iterate through each item in paths and delete it
                 for (int i = 0; i < paths.Count; i++)
                 {
-                    DeletePath(paths[i], i, Delete.All);
+                    DeletePath(paths[i], Delete.All);
                 }
                 foreach (Path path in paths)
                 {
@@ -212,132 +200,69 @@ namespace SceneManager
                 Game.DisplayNotification($"~o~Scene Manager\n~w~All paths deleted.");
             }
 
-            // This needs big refactor
             if (selectedItem == directDriver)
             {
                 var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(1).Where(v => v.VehicleAndDriverValid()).SingleOrDefault();
-                var firstWaypoint = paths[directDriver.Index].Waypoints.First();
-                var pathNum = paths[directDriver.Index].Waypoints[0].Path;
-                var totalPathWaypoints = paths[directDriver.Index].Waypoints.Count;
+                CollectedVehicle collectedVehicle;
 
                 if (nearbyVehicle)
                 {
-                    var nearestWaypoint = paths[directDriver.Index].Waypoints.Where(wp => wp.Position.DistanceTo2D(nearbyVehicle.FrontPosition) < wp.Position.DistanceTo2D(nearbyVehicle.RearPosition)).OrderBy(wp => wp.Position.DistanceTo2D(nearbyVehicle)).ToArray();
+                    collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
+                    var path = paths[directDriver.Index];
+                    var waypoints = path.Waypoints;
+                    var firstWaypoint = waypoints.First();
+                    var nearestWaypoint = waypoints.Where(wp => wp.Position.DistanceTo2D(nearbyVehicle.FrontPosition) < wp.Position.DistanceTo2D(nearbyVehicle.RearPosition)).OrderBy(wp => wp.Position.DistanceTo2D(nearbyVehicle)).FirstOrDefault();
 
                     VehicleCollector.SetVehicleAndDriverPersistence(nearbyVehicle);
-                    if (nearbyVehicle.IsInCollectedVehicles())
-                    {
-                        Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} already in collection.  Clearing tasks.");
-                        nearbyVehicle.Driver.Tasks.Clear();
 
-                        if (directOptions.SelectedItem == "First waypoint")
+                    // The vehicle should only be added to the collection when it's not null AND if the selected item is First Waypoint OR if the selected item is nearestWaypoint AND nearestWaypoint is not null
+                    if (collectedVehicle == null && (directOptions.SelectedItem == "First waypoint" || directOptions.SelectedItem == "Nearest waypoint" && nearestWaypoint != null))
+                    {
+                        Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not found in collection, adding now.");
+                        VehicleCollector.collectedVehicles.Add(new CollectedVehicle(nearbyVehicle, path, false));
+                        collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
+                    }
+
+                    if (collectedVehicle == null)
+                    {
+                        return;
+                    }
+
+                    collectedVehicle.Driver.Tasks.Clear();
+
+                    if (directOptions.SelectedItem == "First waypoint")
+                    {
+                        GameFiber.StartNew(() =>
                         {
-                            GameFiber.StartNew(() =>
-                            {
-                                nearbyVehicle.Driver.Tasks.DriveToPosition(firstWaypoint.Position, firstWaypoint.Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
-                            });
-                        }
-                        else
-                        {
-                            GameFiber.StartNew(() =>
-                            {
-                                nearbyVehicle.Driver.Tasks.DriveToPosition(nearestWaypoint[0].Position, nearestWaypoint[0].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
-                            });
-                        }
+                            AITasking.AssignWaypointTasks(collectedVehicle, waypoints, firstWaypoint);
+                        });
                     }
                     else
                     {
-                        VehicleCollector.collectedVehicles.Add(new CollectedVehicle(nearbyVehicle, paths[directDriver.Index], paths[directDriver.Index].Waypoints.Count, 1, false));
-                        var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle) as CollectedVehicle;
-                        Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not in collection, adding to collection for path {paths[directDriver.Index].Number} with {paths[directDriver.Index].Waypoints.Count} waypoints");
-
-                        if (directOptions.SelectedItem == "First waypoint")
+                        if (nearestWaypoint != null)
                         {
                             GameFiber.StartNew(() =>
                             {
-                                nearbyVehicle.Driver.Tasks.DriveToPosition(firstWaypoint.Position, firstWaypoint.Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
-
-                                for (int nextWaypoint = firstWaypoint.Number; nextWaypoint < paths[directDriver.Index].Waypoints.Count; nextWaypoint++)
-                                {
-                                    if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) == null)
-                                    {
-                                        Game.LogTrivial($"Waypoint is null");
-                                        break;
-                                    }
-
-                                    Game.LogTrivial($"{nearbyVehicle.Model.Name} is driving to waypoint {paths[directDriver.Index].Waypoints[nextWaypoint].Number}");
-                                    if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) != null && !collectedVehicle.StoppedAtWaypoint)
-                                    {
-                                        nearbyVehicle.Driver.Tasks.DriveToPosition(paths[directDriver.Index].Waypoints[nextWaypoint].Position, paths[directDriver.Index].Waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
-                                    }
-
-                                    if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) != null && paths[directDriver.Index].Waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
-                                    {
-                                        Game.LogTrivial($"{nearbyVehicle.Model.Name} stopping at waypoint.");
-                                        nearbyVehicle.Driver.Tasks.PerformDrivingManeuver(VehicleManeuver.GoForwardStraightBraking);
-                                        collectedVehicle.StoppedAtWaypoint = true;
-                                    }
-                                }
-                                Game.LogTrivial($"{nearbyVehicle.Model.Name} all tasks complete.");
-                                AITasking.DismissDriver(collectedVehicle);
-                            });
-                        }
-                        else
-                        {
-                            GameFiber.StartNew(() =>
-                            {
-                                nearbyVehicle.Driver.Tasks.DriveToPosition(nearestWaypoint[0].Position, nearestWaypoint[0].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
-
-                                for (int nextWaypoint = nearestWaypoint[0].Number; nextWaypoint < paths[directDriver.Index].Waypoints.Count; nextWaypoint++)
-                                {
-                                    if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) == null)
-                                    {
-                                        Game.LogTrivial($"Waypoint is null");
-                                        break;
-                                    }
-
-                                    Game.LogTrivial($"{nearbyVehicle.Model.Name} is driving to waypoint {paths[directDriver.Index].Waypoints[nextWaypoint].Number}");
-                                    if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) != null && !collectedVehicle.StoppedAtWaypoint)
-                                    {
-                                        nearbyVehicle.Driver.Tasks.DriveToPosition(paths[directDriver.Index].Waypoints[nextWaypoint].Position, paths[directDriver.Index].Waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263043, 2f).WaitForCompletion();
-                                    }
-
-                                    if (paths[directDriver.Index].Waypoints.ElementAtOrDefault(nextWaypoint) != null && paths[directDriver.Index].Waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
-                                    {
-                                        Game.LogTrivial($"{nearbyVehicle.Model.Name} stopping at waypoint.");
-                                        nearbyVehicle.Driver.Tasks.PerformDrivingManeuver(VehicleManeuver.GoForwardStraightBraking);
-                                        collectedVehicle.StoppedAtWaypoint = true;
-                                    }
-                                }
-                                Game.LogTrivial($"{nearbyVehicle.Model.Name} all tasks complete.");
-                                AITasking.DismissDriver(collectedVehicle);
+                                AITasking.AssignWaypointTasks(collectedVehicle, waypoints, nearestWaypoint);
                             });
                         }
                     }
                 }
             }
 
-            // Needs refactor
             if (selectedItem == dismissDriver)
             {
                 var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(1).Where(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid()).SingleOrDefault();
                 if (nearbyVehicle)
                 {
-                    var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).First();
+                    var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
                     switch (dismissDriver.Index)
                     {
                         case 0:
                             Game.LogTrivial($"Dismiss from path");
-                            if (nearbyVehicle.IsInCollectedVehicles())
+                            if (collectedVehicle != null)
                             {
-                                if (collectedVehicle != null)
-                                {
-                                    collectedVehicle.StoppedAtWaypoint = false;
-                                    collectedVehicle.Vehicle.Driver.Tasks.Clear();
-                                    collectedVehicle.Vehicle.Driver.Dismiss();
-                                    collectedVehicle.Vehicle.IsSirenOn = false;
-                                    Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from path {collectedVehicle.Path}");
-                                }
+                                collectedVehicle.Dismiss();
                             }
                             else
                             {
@@ -347,23 +272,25 @@ namespace SceneManager
 
                         case 1:
                             Game.LogTrivial($"Dismiss from waypoint");
-                            if (nearbyVehicle.IsInCollectedVehicles())
+                            if (collectedVehicle != null)
                             {
-                                if (collectedVehicle != null)
+                                if (collectedVehicle.StoppedAtWaypoint)
                                 {
                                     collectedVehicle.StoppedAtWaypoint = false;
-                                    collectedVehicle.Vehicle.Driver.Tasks.Clear();
-                                    collectedVehicle.Vehicle.Driver.Dismiss();
-                                    collectedVehicle.Vehicle.IsSirenOn = false;
+                                }
+                                else
+                                {
+                                    collectedVehicle.SkipWaypoint = true;
+                                    collectedVehicle.Driver.Tasks.Clear();
+                                }
 
-                                    if (collectedVehicle.CurrentWaypoint == collectedVehicle.Path.Waypoints.Count && !collectedVehicle.StoppedAtWaypoint)
-                                    {
-                                        Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from final waypoint and ultimately the path");
-                                    }
-                                    else
-                                    {
-                                        Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from waypoint {collectedVehicle.CurrentWaypoint}");
-                                    }
+                                if (collectedVehicle.CurrentWaypoint.Number == collectedVehicle.Path.Waypoints.Count && !collectedVehicle.StoppedAtWaypoint)
+                                {
+                                    Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from final waypoint and ultimately the path");
+                                }
+                                else
+                                {
+                                    Game.LogTrivial($"Dismissed driver of {collectedVehicle.Vehicle.Model.Name} from current waypoint task");
                                 }
                             }
                             else
@@ -374,30 +301,25 @@ namespace SceneManager
 
                         case 2:
                             Game.LogTrivial($"Dismiss from position");
-                            if (nearbyVehicle.IsInCollectedVehicles())
+                            if(collectedVehicle != null)
                             {
-                                if(collectedVehicle != null)
-                                {
-                                    collectedVehicle.StoppedAtWaypoint = false;
-                                    collectedVehicle.Driver.Tasks.Clear();
-                                    collectedVehicle.Driver.Dismiss();
-                                    collectedVehicle.Vehicle.IsSirenOn = false;
-                                    Game.LogTrivial($"Dismissed driver of {nearbyVehicle.Model.Name} from position (in collection)");
-                                }
+                                collectedVehicle.StoppedAtWaypoint = false;
+                                Game.LogTrivial($"Dismissed driver of {nearbyVehicle.Model.Name} from position (in collection)");
                             }
                             else
                             {
+                                if(nearbyVehicle.Speed < 1f)
+                                {
+                                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(nearbyVehicle, 3f, 1, true);
+                                }
                                 nearbyVehicle.Driver.Tasks.Clear();
-                                nearbyVehicle.Driver.Dismiss();
                                 nearbyVehicle.IsSirenOn = false;
+                                nearbyVehicle.IsSirenSilent = true;
+                                nearbyVehicle.Driver.Dismiss();
                                 Game.LogTrivial($"Dismissed driver of {nearbyVehicle.Model.Name} from position (was not in collection)");
                             }
                             break;
                     }
-                }
-                else
-                {
-                    Game.LogTrivial($"There are no vehicles nearby matching the requirements.");
                 }
             }
         }
