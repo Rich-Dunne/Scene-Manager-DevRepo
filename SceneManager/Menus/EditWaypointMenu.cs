@@ -21,7 +21,7 @@ namespace SceneManager
         public static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If this waypoint will collect vehicles to follow the path");
         public static UIMenuNumericScrollerItem<int> changeCollectorRadius = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint (in meters) vehicles will be collected", 1, 50, 1);
         public static UIMenuNumericScrollerItem<int> changeSpeedZoneRadius = new UIMenuNumericScrollerItem<int>("Speed Zone Radius", "The distance from this collector waypoint (in meters) non-collected vehicles will drive at this waypoint's speed", 5, 200, 5);
-        public static UIMenuCheckboxItem updateWaypointPosition = new UIMenuCheckboxItem("Update Waypoint Position", false, "Updates the waypoint's position to the player's current position");
+        public static UIMenuCheckboxItem updateWaypointPosition = new UIMenuCheckboxItem("Update Waypoint Position", false, "Updates the waypoint's position to the player's current position.  You should turn this on if you're planning on adding this waypoint as a new waypoint.");
 
         internal static void InstantiateMenu()
         {
@@ -88,19 +88,12 @@ namespace SceneManager
             editWaypointMenu.OnCheckboxChange += EditWaypoint_OnCheckboxChanged;
             editWaypointMenu.OnItemSelect += EditWaypoint_OnItemSelected;
             editWaypoint.IndexChanged += EditWaypoint_OnIndexChanged;
-
-            currentWaypoint.DrawMarkerForWaypointBeingEdited();
         }
 
         private static void EditWaypoint_OnIndexChanged(UIMenuScrollerItem scrollerItem, int oldIndex, int newIndex)
         {
             var currentPath = PathMainMenu.GetPaths()[PathMainMenu.editPath.Value - 1];
             var currentWaypoint = currentPath.Waypoints[editWaypoint.Value - 1];
-
-            if (scrollerItem == editWaypoint)
-            {
-                currentPath.Waypoints[oldIndex].EnableWaypointMarker = true;
-            }
         }
 
         private static void EditWaypoint_OnScrollerChanged(UIMenu sender, UIMenuScrollerItem scrollerItem, int first, int last)
@@ -116,7 +109,6 @@ namespace SceneManager
                 changeCollectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
                 changeSpeedZoneRadius.Enabled = collectorWaypoint.Checked ? true : false;
                 updateWaypointPosition.Checked = false;
-                currentWaypoint.DrawMarkerForWaypointBeingEdited();
             }
 
             if (scrollerItem == changeCollectorRadius)
@@ -138,9 +130,6 @@ namespace SceneManager
 
         private static void EditWaypoint_OnCheckboxChanged(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
         {
-            var currentPath = PathMainMenu.GetPaths()[PathMainMenu.editPath.Value - 1];
-            var currentWaypoint = currentPath.Waypoints[editWaypoint.Value - 1];
-
             if (checkboxItem == collectorWaypoint)
             {
                 changeCollectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
@@ -155,21 +144,25 @@ namespace SceneManager
 
             if (selectedItem == updateWaypoint)
             {
-                currentWaypoint.UpdateWaypoint(currentWaypoint, drivingFlags[changeWaypointType.Index], SetDriveSpeedForWaypoint(), collectorWaypoint.Checked, changeCollectorRadius.Value, changeSpeedZoneRadius.Value, updateWaypointPosition.Checked);
+                if(currentPath.Waypoints.Count == 1)
+                {
+                    currentWaypoint.UpdateWaypoint(currentWaypoint, drivingFlags[changeWaypointType.Index], SetDriveSpeedForWaypoint(), true, changeCollectorRadius.Value, changeSpeedZoneRadius.Value, updateWaypointPosition.Checked);
+                }
+                else
+                {
+                    currentWaypoint.UpdateWaypoint(currentWaypoint, drivingFlags[changeWaypointType.Index], SetDriveSpeedForWaypoint(), collectorWaypoint.Checked, changeCollectorRadius.Value, changeSpeedZoneRadius.Value, updateWaypointPosition.Checked);
+                }
+                
                 Game.LogTrivial($"Updated path {currentPath.Number} waypoint {currentWaypoint.Number}: Driving flag is {drivingFlags[changeWaypointType.Index].ToString()}, speed is {changeWaypointSpeed.Value}, collector is {currentWaypoint.IsCollector}");
 
-                if (currentPath.Waypoints.Count < 2 && currentPath.Waypoints[0].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
-                {
-                    Game.LogTrivial($"The remaining waypoint was updated to be a stop waypoint.  Enabling/disabling the path is no longer locked.");
-                    EditPathMenu.disablePath.Enabled = true;
-                }
                 updateWaypointPosition.Checked = false;
                 Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Waypoint {currentWaypoint.Number} updated.");
+
+                BuildEditWaypointMenu();
             }
 
             if (selectedItem == addAsNewWaypoint)
             {
-                currentWaypoint.EnableWaypointMarker = true;
                 var pathIndex = PathMainMenu.GetPaths().IndexOf(currentPath);
                 var drivingFlag = drivingFlags[changeWaypointType.Index];
                 var blip = PathCreationMenu.CreateWaypointBlip(pathIndex, drivingFlag);
@@ -197,11 +190,10 @@ namespace SceneManager
 
             if (selectedItem == removeWaypoint)
             {
-                Game.LogTrivial($"[Path {currentPath.Number}] Waypoint {currentWaypoint.Number} ({currentWaypoint.DrivingFlag}) removed");
                 if (currentPath.Waypoints.Count == 1)
                 {
                     Game.LogTrivial($"Deleting the last waypoint from the path.");
-                    PathMainMenu.DeletePath(currentPath, currentPath.Number - 1, PathMainMenu.Delete.Single);
+                    PathMainMenu.DeletePath(currentPath, PathMainMenu.Delete.Single);
 
                     editWaypointMenu.Visible = false;
                     PathMainMenu.pathMainMenu.Visible = true;
@@ -214,6 +206,7 @@ namespace SceneManager
                         currentWaypoint.CollectorRadiusBlip.Delete();
                     }
                     currentPath.Waypoints.Remove(currentWaypoint);
+                    Game.LogTrivial($"[Path {currentPath.Number}] Waypoint {currentWaypoint.Number} ({currentWaypoint.DrivingFlag}) removed");
 
                     foreach (Waypoint wp in currentPath.Waypoints)
                     {
@@ -221,14 +214,17 @@ namespace SceneManager
                         Game.LogTrivial($"Waypoint at index {currentPath.Waypoints.IndexOf(wp)} is now waypoint #{wp.Number}");
                     }
 
+                    editWaypointMenu.Clear();
                     BuildEditWaypointMenu();
 
-                    if (currentPath.Waypoints.Count == 1 && currentPath.Waypoints[0].DrivingFlag != VehicleDrivingFlags.StopAtDestination)
+                    if (currentPath.Waypoints.Count == 1)
                     {
-                        Game.LogTrivial($"The path only has 1 waypoint left, and the waypoint is not a stop waypoint.  Disabling the path.");
-                        currentPath.DisablePath();
-                        EditPathMenu.disablePath.Checked = true;
-                        EditPathMenu.disablePath.Enabled = false;
+                        Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ Your path's first waypoint ~b~must~w~ be a collector.  If it's not, it will automatically be made into one.");
+                        Game.LogTrivial($"The path only has 1 waypoint left, this waypoint must be a collector.");
+                        currentPath.Waypoints[0].UpdateWaypoint(currentWaypoint, drivingFlags[changeWaypointType.Index], SetDriveSpeedForWaypoint(), true, changeCollectorRadius.Value, changeSpeedZoneRadius.Value, updateWaypointPosition.Checked);
+                        collectorWaypoint.Checked = true;
+                        changeCollectorRadius.Enabled = true;
+                        changeSpeedZoneRadius.Enabled = true;
                     }
                 }
             }
