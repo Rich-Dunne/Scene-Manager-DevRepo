@@ -23,7 +23,7 @@ namespace SceneManager
 
         internal static void InstantiateMenu()
         {
-            pathCreationMenu = new UIMenu("Scene Menu", "~o~Path Creation");
+            pathCreationMenu = new UIMenu("Scene Manager", "~o~Path Creation Menu");
             pathCreationMenu.ParentMenu = PathMainMenu.pathMainMenu;
             MenuManager.menuPool.Add(pathCreationMenu);
         }
@@ -128,6 +128,8 @@ namespace SceneManager
                         {
                             collectorWaypoint.Checked = true;
                             collectorWaypoint.Enabled = false;
+                            speedZoneRadius.Enabled = true;
+                            collectorRadius.Enabled = true;
                             trafficRemoveWaypoint.Enabled = false;
                             trafficEndPath.Enabled = false;
                         }

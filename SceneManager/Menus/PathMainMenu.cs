@@ -30,7 +30,7 @@ namespace SceneManager
 
         internal static void InstantiateMenu()
         {
-            pathMainMenu = new UIMenu("Scene Menu", "~o~Path Manager Main Menu");
+            pathMainMenu = new UIMenu("Scene Manager", "~o~Path Manager Main Menu");
             pathMainMenu.ParentMenu = MainMenu.mainMenu;
             MenuManager.menuPool.Add(pathMainMenu);
         }

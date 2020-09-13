@@ -18,7 +18,7 @@ namespace SceneManager
 
         internal static void InstantiateMenu()
         {
-            settingsMenu = new UIMenu("Scene Menu", "~o~Plugin Settings");
+            settingsMenu = new UIMenu("Scene Manager", "~o~Plugin Settings");
             settingsMenu.ParentMenu = MainMenu.mainMenu;
             MenuManager.menuPool.Add(settingsMenu);
         }
