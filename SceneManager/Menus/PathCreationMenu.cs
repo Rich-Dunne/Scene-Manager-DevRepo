@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Rage;
@@ -14,9 +15,9 @@ namespace SceneManager
         private static string[] waypointTypes = new string[] { "Drive To (Normal)", "Drive To (Direct)", "Stop" };
         public static UIMenu pathCreationMenu { get; private set; }
         private static UIMenuItem trafficAddWaypoint, trafficRemoveWaypoint, trafficEndPath;
-        public static UIMenuListScrollerItem<string> waypointType = new UIMenuListScrollerItem<string>("Waypoint Type", "", waypointTypes);
+        public static UIMenuListScrollerItem<string> waypointType = new UIMenuListScrollerItem<string>("Waypoint Type", $"~b~Drive To (Normal): ~w~AI obeys traffic as much as possible{Environment.NewLine}~b~Drive To (Direct): ~w~AI ignores pathfinding rules{Environment.NewLine}~b~Stop: ~w~AI stops at the waypoint until dismissed", waypointTypes);
         private static UIMenuNumericScrollerItem<int> waypointSpeed;
-        public static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If this waypoint will collect vehicles to follow the path");
+        public static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If this waypoint will collect vehicles to follow the path.  Your path's first waypoint ~b~must~w~ be a collector.");
         public static UIMenuNumericScrollerItem<int> collectorRadius = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint (in meters) vehicles will be collected", 1, 50, 1);
         public static UIMenuNumericScrollerItem<int> speedZoneRadius = new UIMenuNumericScrollerItem<int>("Speed Zone Radius", "The distance from this collector waypoint (in meters) non-collected vehicles will drive at this waypoint's speed", 5, 200, 5);
 
@@ -33,10 +34,14 @@ namespace SceneManager
             pathCreationMenu.AddItem(waypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to the waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 80, 5));
             waypointSpeed.Index = 0;
             pathCreationMenu.AddItem(collectorWaypoint);
+            collectorWaypoint.Enabled = false;
+            collectorWaypoint.Checked = true;
             pathCreationMenu.AddItem(collectorRadius);
             collectorRadius.Index = 0;
+            collectorRadius.Enabled = true;
             pathCreationMenu.AddItem(speedZoneRadius);
             speedZoneRadius.Index = 0;
+            speedZoneRadius.Enabled = true;
             pathCreationMenu.AddItem(trafficAddWaypoint = new UIMenuItem("Add waypoint"));
             trafficAddWaypoint.ForeColor = Color.Gold;
             pathCreationMenu.AddItem(trafficRemoveWaypoint = new UIMenuItem("Remove last waypoint"));
@@ -72,20 +77,10 @@ namespace SceneManager
                 if (!anyPathsExist)
                 {
                     AddNewPathToPathsCollection(PathMainMenu.GetPaths(), 0);
-
-                    if (SettingsMenu.threeDWaypoints.Checked)
-                    {
-                        DebugGraphics.LoopToDrawDebugGraphics(PathMainMenu.GetPaths()[0]);
-                    }
                 }
                 else if(anyPathsExist && !PathMainMenu.GetPaths().Any(p => p != null && p.State == State.Creating))
                 {
                     AddNewPathToPathsCollection(PathMainMenu.GetPaths(), PathMainMenu.GetPaths().IndexOf(PathMainMenu.GetPaths().Where(p => p.State == State.Finished).First()) + 1);
-
-                    if (SettingsMenu.threeDWaypoints.Checked)
-                    {
-                        DebugGraphics.LoopToDrawDebugGraphics(PathMainMenu.GetPaths().Where(p => p != null && p.State == State.Creating).First());
-                    }
                 }
 
                 var firstNonNullPath = PathMainMenu.GetPaths().Where(p => p != null && p.State == State.Creating).First();
@@ -104,6 +99,7 @@ namespace SceneManager
                 Game.LogTrivial($"[Path {pathNumber}] Waypoint {waypointNumber} ({drivingFlags[waypointType.Index].ToString()}) added");
 
                 ToggleTrafficEndPathMenuItem(pathIndex);
+                collectorWaypoint.Enabled = true;
                 trafficRemoveWaypoint.Enabled = true;
                 PathMainMenu.createNewPath.Text = $"Continue Creating Path {pathNumber}";
             }
@@ -130,6 +126,8 @@ namespace SceneManager
                         // If the path has no waypoints, disable the menu option to remove a waypoint
                         if (PathMainMenu.GetPaths()[i].Waypoints.Count == 0)
                         {
+                            collectorWaypoint.Checked = true;
+                            collectorWaypoint.Enabled = false;
                             trafficRemoveWaypoint.Enabled = false;
                             trafficEndPath.Enabled = false;
                         }
@@ -163,6 +161,10 @@ namespace SceneManager
                         PathMainMenu.createNewPath.Text = "Create New Path";
                         PathMainMenu.pathMainMenu.Clear();
                         PathMainMenu.BuildPathMenu();
+                        collectorWaypoint.Enabled = false;
+                        collectorWaypoint.Checked = true;
+                        speedZoneRadius.Enabled = true;
+                        collectorRadius.Enabled = true;
                         trafficEndPath.Enabled = false;
                         PathMainMenu.pathMainMenu.Visible = true;
 
