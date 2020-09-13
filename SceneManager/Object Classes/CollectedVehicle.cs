@@ -60,6 +60,7 @@ namespace SceneManager
                 _stoppedAtWaypoint = false;
 
                 _driver.Tasks.Clear();
+                _driver.Tasks.PerformDrivingManeuver(_vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3);
 
                 if (_driver.GetAttachedBlip())
                 {
@@ -70,7 +71,7 @@ namespace SceneManager
                 var nearestCollectorWaypoint = _path.Waypoints.Where(wp => wp.IsCollector && _vehicle.DistanceTo2D(wp.Position) <= wp.CollectorRadius * 2).FirstOrDefault();
                 if (nearestCollectorWaypoint != null)
                 {
-                    while (nearestCollectorWaypoint != null && _vehicle && _driver && _vehicle.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius * 2.5)
+                    while (nearestCollectorWaypoint != null && _vehicle && _driver && _vehicle.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius * 2)
                     {
                         //Game.LogTrivial($"{_vehicle.Model.Name} is too close to the collector to be fully dismissed.");
                         GameFiber.Yield();
