@@ -56,18 +56,9 @@ namespace SceneManager
             {
                 if (threeDWaypoints.Checked)
                 {
-                    foreach (Path path in PathMainMenu.GetPaths())
-                    {
-                        //GameFiber.StartNew(() =>
-                        //{
-                            DebugGraphics.LoopToDrawDebugGraphics(path);
-                        //});
-                    }
-
                     DebugGraphics.Draw3DWaypointOnPlayer();
                 }
             }
-
 
             if (checkboxItem == mapBlips)
             {
