@@ -42,7 +42,7 @@ namespace SceneManager
 
             if (selectedItem == deletePath)
             {
-                PathMainMenu.DeletePath(currentPath, currentPath.Number - 1, PathMainMenu.Delete.Single);
+                PathMainMenu.DeletePath(currentPath, PathMainMenu.Delete.Single);
             }
         }
 
