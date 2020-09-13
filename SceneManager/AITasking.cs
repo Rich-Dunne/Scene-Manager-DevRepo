@@ -17,7 +17,7 @@ namespace SceneManager
             {
                 float acceptedDistance = GetAcceptedStoppingDistance(waypoints, waypoints.IndexOf(currentWaypoint));
                 Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} distance to collection waypoint: {collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}");
-                if(collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position) > (currentWaypoint.CollectorRadius))
+                if(collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position) > (currentWaypoint.CollectorRadius + 0.5))
                 {
                     Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} is driving to waypoint {currentWaypoint.Number}");
                     collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)263075, acceptedDistance);
