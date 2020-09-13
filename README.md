@@ -2,7 +2,7 @@
 
 ## INSTALLATION
 Drag and drop the included GTA V folder into where your GTA V is installed.
-![How to install](install.mp4)
+![How to install](install.gif)
 ## HOW-TO USE
 ### Creating Paths:
 1.  To create paths, open the Scene Manager menu by pressing Left Shift + T (default) while on foot.  Select "Traffic Menu," then "Create New Path."  
