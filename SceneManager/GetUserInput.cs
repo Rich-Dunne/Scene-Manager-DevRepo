@@ -15,10 +15,10 @@ namespace SceneManager
                 GetControllerInput();
 
                 // Display this message for test versions only
-                if (MainMenu.mainMenu.Visible)
-                {
-                    Game.DisplaySubtitle($"You are using a test build of Scene Manager.  Please report any bugs/crashes in the Discord server.");
-                }
+                //if (MainMenu.mainMenu.Visible)
+                //{
+                //    Game.DisplaySubtitle($"You are using a test build of Scene Manager.  Please report any bugs/crashes in the Discord server.");
+                //}
 
                 MenuManager.menuPool.ProcessMenus();
                 GameFiber.Yield();
