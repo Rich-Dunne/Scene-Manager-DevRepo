@@ -15,8 +15,6 @@ namespace SceneManager
                     {
                         for (int i = 0; i < path.Waypoints.Count; i++)
                         {
-                            path.Waypoints[i].DrawWaypointMarker();
-
                             if (i != path.Waypoints.Count - 1)
                             {
                                 DrawLinesBetweenWaypoints(path, i);
@@ -28,6 +26,7 @@ namespace SceneManager
             });
         }
 
+        // Can this be extracted to the Waypoint or Path object
         private static void DrawLinesBetweenWaypoints(Path path, int i)
         {
             if (path.Waypoints[i + 1].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
