@@ -38,4 +38,4 @@ Menu options with gold colored text are selectable, which means when you select 
 
 ## CREDITS
 * Author: Rich
-* Additional credit:  PNWParks fan for code assistance and extensive testing, Sereous, OJdoesIt, Vincentsgm, EchoWolf, FactionsBrutus
+* Additional credit:  PNWParksFan for code assistance and extensive testing, Sereous, OJdoesIt, Vincentsgm, EchoWolf, FactionsBrutus
