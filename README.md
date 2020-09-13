@@ -2,7 +2,7 @@
 
 ## INSTALLATION
 Drag and drop the included GTA V folder into where your GTA V is installed.
-
+![]
 ## HOW-TO USE
 ### Creating Paths:
 1.  To create paths, open the Scene Manager menu by pressing Left Shift + T (default) while on foot.  Select "Traffic Menu," then "Create New Path."  
@@ -21,11 +21,7 @@ Drag and drop the included GTA V folder into where your GTA V is installed.
 3.  For easier and more accurate cone placement, use the first persion view.
 4.  The AI will not drive around cones on their own.  Place cones around your custom paths for maximum immersion.
 
-## PATREON
-If you enjoy my plugins and would like to help with the development of new plugins, please consider supporting me on Patreon.  Patreon benefits include early access to plugin updates, being able to suggest and vote on new plugin ideas for me to create, early access to new plugins, and access to Patreon-exclusive plugins which will never be released publicly!
-https://www.patreon.com/richdevs
-
 
 ## CREDITS
 Author: Rich
-Additional credit:  OJdoesIt, Vincentsgm, EchoWolf, Factions, Sereous
+Additional credit:  PNWParks fan for code assistance and extensive testing, Sereous, OJdoesIt, Vincentsgm, EchoWolf, FactionsBrutus
