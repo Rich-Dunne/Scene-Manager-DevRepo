@@ -1,8 +1,8 @@
 # Scene Manager
 
 ## INSTALLATION
-Drag and drop the included GTA V folder into where your GTA V is installed.
-![How to install Scene Manager](install.gif)
+Drag and drop the included GTA V folder into where your GTA V is installed.  Everything is installed into the plugins folder.
+
 ## HOW-TO USE
 ### Using the Menus:
 Menu options with gold colored text are selectable, which means when you select these menu items, something will happen (opening a new menu, adding a waypoint, placing a barrier, etc).  Menu options with white colored text are interactable (can be scrolled through, for example), but nothing will happen if you try to select them.
@@ -14,14 +14,11 @@ Menu options with gold colored text are selectable, which means when you select 
 4.  As you add and remove waypoints, blips and world markers will appear and disappear if enabled in your settings.  Blips are numbered to correspond with their path.  Blips and markers are also colored to designate the following:  Blue are collector waypoints, green are Drive-To waypoints, and red are Stop waypoints.
 5.  The path will activate once you select "End path creation," and cars will automatically follow the path when they are close to the first waypoint.
 6.  After creating paths, you can delete them via the Path Menu.
-![How to create a path](creatingPath.gif)
 
 ### Other Path Menu Options
 1.  The "Direct nearest driver to path" option in the Path Manager Main Menu allows you to manually direct the nearest vehicle to a path of your choice.  You may either direct a driver to the nearest path's first waypoint or the nearest waypoint in front of the driver.
-![Directing drivers](directDriver.gif)
 
 2.  The "Dismiss nearest driver" option in the Path Manager Main Menu allows you to dismiss vehicles from their path, their current waypoint, or from their current position.  Dismissing from a path will clear all driver tasks and they will no longer be controlled by Scene Manager.  Dismissing from their current waypoint will either give the driver their next waypoint task, or dismiss them from the path if they were already going to the path's final waypoint.  Dismissing from current position should be used for vehicles which might be stuck, but are not controlled by Scene Manager
-![Dismissing drivers](dismissDriver.gif)
 
 ### Editing Paths and Waypoints
 1.  In the Edit Path menu, you can disable and delete individual paths.  When a path is disabled, it will not collect any new vehicles at collector waypoints.  However, vehicles can still be manually directed to disabled paths.
@@ -32,7 +29,6 @@ Menu options with gold colored text are selectable, which means when you select 
 1.  To place barriers, open the Scene Manager menu by pressing Left Shift + T (default).
 2.  In the Barrier Menu, you may scroll through different types of road barriers, as well as place and remove barriers.
 3.  The AI will not drive around barriers on their own.  Barrier placement should be in conjunction with your paths.
-![Barrier management](barrierManagement.gif)
 
 ### Other Notes
 1.  Paths and barriers will remain in the world after you die.  Be sure to delete them when you're done!
@@ -41,5 +37,5 @@ Menu options with gold colored text are selectable, which means when you select 
 4.  You can add custom barrier objects to the barrier menu by adding them to the Barriers section of the .ini file.  A link is provided in the .ini file to find object model names.
 
 ## CREDITS
-Author: Rich
+Author: Rich\n
 Additional credit:  PNWParks fan for code assistance and extensive testing, Sereous, OJdoesIt, Vincentsgm, EchoWolf, FactionsBrutus
