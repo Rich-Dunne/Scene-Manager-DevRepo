@@ -35,19 +35,19 @@ namespace SceneManager
         {
             if (Settings.ModifierKey == Keys.None && Settings.ModifierButton == ControllerButtons.None)
             {
-                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ToggleButton} button ~w~while on foot");
+                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ToggleButton} button");
             }
             else if (Settings.ModifierKey == Keys.None)
             {
-                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons ~w~while on foot");
+                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons");
             }
             else if (Settings.ModifierButton == ControllerButtons.None)
             {
-                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} ~w~or the ~b~{Settings.ToggleButton} button ~w~while on foot");
+                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} ~w~or the ~b~{Settings.ToggleButton} button");
             }
             else
             {
-                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} keys ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons ~w~while on foot");
+                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} keys ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons");
             }
         }
 
@@ -56,7 +56,7 @@ namespace SceneManager
             // Clean up paths
             for (int i = 0; i < PathMainMenu.GetPaths().Count; i++)
             {
-                PathMainMenu.DeletePath(PathMainMenu.GetPaths()[i], i, PathMainMenu.Delete.All);
+                PathMainMenu.DeletePath(PathMainMenu.GetPaths()[i], PathMainMenu.Delete.All);
             }
 
             // Clean up cones
