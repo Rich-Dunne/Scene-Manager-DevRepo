@@ -6,57 +6,43 @@ namespace SceneManager
 {
     public class Waypoint
     {
-        private Path _path { get; set; }
-        private int _number { get; set; }
-        private Vector3 _position { get; set; }
-        private float _speed { get; set; }
-        private VehicleDrivingFlags _drivingFlag { get; set; }
-        private Blip _blip { get; set; }
-        private bool _isCollector { get; set; }
-        private float _collectorRadius { get; set; }
-        private Blip _collectorRadiusBlip { get; set; }
-        private float _speedZoneRadius { get; set; }
-        private uint _speedZone { get; set; }
-        private bool _enableWaypointMarker { get; set; } = true;
-        private bool _enableEditMarker { get; set; } = false;
-
-        public Path Path { get { return _path; } set { _path = value; } }
-        public int Number { get { return _number; } set { _number = value; } }
-        public Vector3 Position { get { return _position; } }
-        public float Speed { get { return _speed; } }
-        public VehicleDrivingFlags DrivingFlag { get { return _drivingFlag; } }
-        public Blip Blip { get { return _blip; } }
-        public bool IsCollector { get { return _isCollector; } }
-        public float CollectorRadius { get { return _collectorRadius; } }
-        public Blip CollectorRadiusBlip { get { return _collectorRadiusBlip; } }
-        public float SpeedZoneRadius { get { return _speedZoneRadius; } }
-        public uint SpeedZone { get { return _speedZone; } set { _speedZone = value; } }
-        public bool EnableWaypointMarker { get { return _enableWaypointMarker; } set { _enableWaypointMarker = value; } }
-        public bool EnableEditMarker { get { return _enableEditMarker; } set { _enableEditMarker = value; } }
+        public Path Path { get; set; }
+        public int Number { get; set; }
+        public Vector3 Position { get; set; }
+        public float Speed { get; set; }
+        public VehicleDrivingFlags DrivingFlag { get; set; }
+        public Blip Blip { get; }
+        public bool IsCollector { get; set; }
+        public float CollectorRadius { get; set; }
+        public Blip CollectorRadiusBlip { get; set; }
+        public float SpeedZoneRadius { get; set; }
+        public uint SpeedZone { get; set; }
+        public bool EnableWaypointMarker { get; set; }
+        public bool EnableEditMarker { get; set; }
 
         public Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 0)
         {
-            _path = path;
-            _number = waypointNum;
-            _position = waypointPos;
-            _speed = speed;
-            _drivingFlag = drivingFlag;
-            _blip = waypointBlip;
-            _isCollector = collector;
-            _collectorRadius = collectorRadius;
-            _speedZoneRadius = speedZoneRadius;
+            Path = path;
+            Number = waypointNum;
+            Position = waypointPos;
+            Speed = speed;
+            DrivingFlag = drivingFlag;
+            Blip = waypointBlip;
+            IsCollector = collector;
+            CollectorRadius = collectorRadius;
+            SpeedZoneRadius = speedZoneRadius;
             AddSpeedZone();
-            _collectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius)
+            CollectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius)
             {
                 Color = waypointBlip.Color,
             };
             if (SettingsMenu.mapBlips.Checked)
             {
-                _collectorRadiusBlip.Alpha = 0.5f;
+                CollectorRadiusBlip.Alpha = 0.5f;
             }
             else
             {
-                _collectorRadiusBlip.Alpha = 0f;
+                CollectorRadiusBlip.Alpha = 0f;
             }
             DrawWaypointMarker();
         }
@@ -73,69 +59,69 @@ namespace SceneManager
 
             void UpdateDrivingFlag(VehicleDrivingFlags newDrivingFlag)
             {
-                if(_drivingFlag == VehicleDrivingFlags.StopAtDestination && newDrivingFlag != VehicleDrivingFlags.StopAtDestination)
+                if(DrivingFlag == VehicleDrivingFlags.StopAtDestination && newDrivingFlag != VehicleDrivingFlags.StopAtDestination)
                 {
-                    foreach(CollectedVehicle cv in VehicleCollector.collectedVehicles.Where(cv => cv.Path == _path && cv.CurrentWaypoint == this && cv.StoppedAtWaypoint))
+                    foreach(CollectedVehicle cv in VehicleCollector.collectedVehicles.Where(cv => cv.Path == Path && cv.CurrentWaypoint == this && cv.StoppedAtWaypoint))
                     {
-                        Game.LogTrivial($"Setting StoppedAtWaypoint to false for {cv.Vehicle.Model.Name}");
+                        Logger.Log($"Setting StoppedAtWaypoint to false for {cv.Vehicle.Model.Name}");
                         cv.StoppedAtWaypoint = false;
                     }
                 }
-                _drivingFlag = newDrivingFlag;
+                DrivingFlag = newDrivingFlag;
                 if (newDrivingFlag == VehicleDrivingFlags.StopAtDestination)
                 {
-                    _blip.Color = Color.Red;
+                    Blip.Color = Color.Red;
                 }
                 else
                 {
-                    _blip.Color = Color.Green;
+                    Blip.Color = Color.Green;
                 }
             }
 
             void UpdateWaypointSpeed(float newWaypointSpeed)
             {
-                _speed = newWaypointSpeed;
+                Speed = newWaypointSpeed;
             }
 
             void UpdateCollectorOptions()
             {
                 if (collectorWaypointChecked)
                 {
-                    _isCollector = true;
+                    IsCollector = true;
                     RemoveSpeedZone();
-                    _speedZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, SpeedZoneRadius, speed);
-                    _blip.Color = Color.Blue;
-                    if (_collectorRadiusBlip)
+                    SpeedZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, SpeedZoneRadius, speed);
+                    Blip.Color = Color.Blue;
+                    if (CollectorRadiusBlip)
                     {
-                        _collectorRadiusBlip.Position = Game.LocalPlayer.Character.Position;
-                        _collectorRadiusBlip.Alpha = 0.5f;
-                        _collectorRadiusBlip.Scale = collectorRadius * 0.5f;
+                        CollectorRadiusBlip.Position = Game.LocalPlayer.Character.Position;
+                        CollectorRadiusBlip.Alpha = 0.5f;
+                        CollectorRadiusBlip.Scale = collectorRadius * 0.5f;
                     }
                     else
                     {
-                        _collectorRadiusBlip = new Blip(Blip.Position)
+                        CollectorRadiusBlip = new Blip(Blip.Position)
                         {
                             Color = Blip.Color,
                             Alpha = 0.5f
                         };
                     }
-                    _collectorRadius = collectorRadius;
-                    _speedZoneRadius = speedZoneRadius;
+                    CollectorRadius = collectorRadius;
+                    SpeedZoneRadius = speedZoneRadius;
                 }
                 else
                 {
-                    _isCollector = false;
+                    IsCollector = false;
                     RemoveSpeedZone();
-                    if (_collectorRadiusBlip)
+                    if (CollectorRadiusBlip)
                     {
-                        _collectorRadiusBlip.Delete();
+                        CollectorRadiusBlip.Delete();
                     }
                 }
             }
 
             void UpdateWaypointPosition(Vector3 newWaypointPosition)
             {
-                _position = newWaypointPosition;
+                Position = newWaypointPosition;
                 RemoveSpeedZone();
                 AddSpeedZone();
                 UpdateWaypointBlipPosition();
@@ -143,26 +129,26 @@ namespace SceneManager
 
             void UpdateWaypointBlipPosition()
             {
-                _blip.Position = Game.LocalPlayer.Character.Position;
+                Blip.Position = Game.LocalPlayer.Character.Position;
             }
         }
 
         public void AddSpeedZone()
         {
-            _speedZone = World.AddSpeedZone(_position, _speedZoneRadius, _speed);
+            SpeedZone = World.AddSpeedZone(Position, SpeedZoneRadius, Speed);
         }
 
         public void RemoveSpeedZone()
         {
-            World.RemoveSpeedZone(_speedZone);
+            World.RemoveSpeedZone(SpeedZone);
         }
 
         public void DrawWaypointMarker()
         {
             // This is called once when the waypoint is created
-            GameFiber.StartNew(() =>
+            GameFiber.StartNew((System.Threading.ThreadStart)(() =>
             {
-                while (SettingsMenu.threeDWaypoints.Checked && _enableWaypointMarker && _path.Waypoints.Contains(this))
+                while (SettingsMenu.threeDWaypoints.Checked && EnableWaypointMarker && Path.Waypoints.Contains(this))
                 {
                     if (EditWaypointMenu.editWaypointMenu.Visible && EditWaypointMenu.editWaypoint.Value == Number)
                     {
@@ -205,7 +191,7 @@ namespace SceneManager
                             }
                         }
                     }
-                    else if ((_path.State == State.Finished && MenuManager.menuPool.IsAnyMenuOpen()) || (_path.State == State.Creating && PathCreationMenu.pathCreationMenu.Visible))
+                    else if ((Path.State == State.Finished && MenuManager.menuPool.IsAnyMenuOpen()) || (Path.State == State.Creating && PathCreationMenu.pathCreationMenu.Visible))
                     {
                         if (IsCollector && CollectorRadius > 0)
                         {
@@ -227,44 +213,28 @@ namespace SceneManager
 
                     GameFiber.Yield();
                 }
-            });
+            }));
         }
 
         public void EnableBlip()
         {
-            if(!PathMainMenu.GetPaths().Where(p => p == _path).First().IsEnabled)
+            if(!PathMainMenu.GetPaths().Where(p => p == Path).First().IsEnabled)
             {
-                _blip.Alpha = 0.5f;
-                _collectorRadiusBlip.Alpha = 0.25f;
+                Blip.Alpha = 0.5f;
+                CollectorRadiusBlip.Alpha = 0.25f;
             }
             else
             {
-                _blip.Alpha = 1.0f;
-                _collectorRadiusBlip.Alpha = 0.5f;
+                Blip.Alpha = 1.0f;
+                CollectorRadiusBlip.Alpha = 0.5f;
             }
 
         }
 
         public void DisableBlip()
         {
-            _blip.Alpha = 0;
-            _collectorRadiusBlip.Alpha = 0;
-        }
-
-        public void RemoveWaypoint()
-        {
-            _path = null;
-            _number = 0;
-            _position = new Vector3(0,0,0);
-            _speed = 0;
-            _drivingFlag = 0;
-            _blip.Delete();
-            _isCollector = false;
-            _collectorRadius = 0;
-            _speedZoneRadius = 0;
-            RemoveSpeedZone();
-            _collectorRadiusBlip.Delete();
-            _enableWaypointMarker = false;
+            Blip.Alpha = 0;
+            CollectorRadiusBlip.Alpha = 0;
         }
     }
 }
