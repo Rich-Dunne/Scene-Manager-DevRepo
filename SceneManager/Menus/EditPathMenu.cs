@@ -7,18 +7,17 @@ namespace SceneManager
 {
     class EditPathMenu
     {
-        public static UIMenu editPathMenu { get; private set; }
+        internal static UIMenu editPathMenu = new UIMenu("Scene Manager", "~o~Edit Path");
         private static UIMenuItem editPathWaypoints, deletePath;
-        public static UIMenuCheckboxItem disablePath;
+        internal static UIMenuCheckboxItem disablePath;
 
         internal static void InstantiateMenu()
         {
-            editPathMenu = new UIMenu("Scene Manager", "~o~Edit Path");
             editPathMenu.ParentMenu = PathMainMenu.pathMainMenu;
             MenuManager.menuPool.Add(editPathMenu);
         }
 
-        public static void BuildEditPathMenu()
+        internal static void BuildEditPathMenu()
         {
             editPathMenu.AddItem(disablePath = new UIMenuCheckboxItem("Disable Path", false));
             editPathMenu.AddItem(editPathWaypoints = new UIMenuItem("Edit Waypoints"));
@@ -54,12 +53,12 @@ namespace SceneManager
                 if (disablePath.Checked)
                 {
                     currentPath.DisablePath();
-                    Game.LogTrivial($"Path {currentPath.Number} disabled.");
+                    Logger.Log($"Path {currentPath.Number} disabled.");
                 }
                 else
                 {
                     currentPath.EnablePath();
-                    Game.LogTrivial($"Path {currentPath.Number} enabled.");
+                    Logger.Log($"Path {currentPath.Number} enabled.");
                 }
             }
         }
