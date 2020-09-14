@@ -6,21 +6,21 @@ namespace SceneManager
 {
     public class Waypoint
     {
-        public Path Path { get; set; }
-        public int Number { get; set; }
-        public Vector3 Position { get; set; }
-        public float Speed { get; set; }
-        public VehicleDrivingFlags DrivingFlag { get; set; }
-        public Blip Blip { get; }
-        public bool IsCollector { get; set; }
-        public float CollectorRadius { get; set; }
-        public Blip CollectorRadiusBlip { get; set; }
-        public float SpeedZoneRadius { get; set; }
-        public uint SpeedZone { get; set; }
-        public bool EnableWaypointMarker { get; set; }
-        public bool EnableEditMarker { get; set; }
+        internal Path Path { get; set; }
+        internal int Number { get; set; }
+        internal Vector3 Position { get; set; }
+        internal float Speed { get; set; }
+        internal VehicleDrivingFlags DrivingFlag { get; set; }
+        internal Blip Blip { get; }
+        internal bool IsCollector { get; set; }
+        internal float CollectorRadius { get; set; }
+        internal Blip CollectorRadiusBlip { get; set; }
+        internal float SpeedZoneRadius { get; set; }
+        internal uint SpeedZone { get; set; }
+        internal bool EnableWaypointMarker { get; set; }
+        internal bool EnableEditMarker { get; set; }
 
-        public Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 0)
+        internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 0)
         {
             Path = path;
             Number = waypointNum;
@@ -47,7 +47,7 @@ namespace SceneManager
             DrawWaypointMarker();
         }
 
-        public void UpdateWaypoint(Waypoint currentWaypoint, VehicleDrivingFlags drivingFlag, float speed, bool collectorWaypointChecked, float collectorRadius, float speedZoneRadius, bool updateWaypointPositionChecked)
+        internal void UpdateWaypoint(Waypoint currentWaypoint, VehicleDrivingFlags drivingFlag, float speed, bool collectorWaypointChecked, float collectorRadius, float speedZoneRadius, bool updateWaypointPositionChecked)
         {
             UpdateDrivingFlag(drivingFlag);
             UpdateWaypointSpeed(speed);
@@ -133,17 +133,17 @@ namespace SceneManager
             }
         }
 
-        public void AddSpeedZone()
+        internal void AddSpeedZone()
         {
             SpeedZone = World.AddSpeedZone(Position, SpeedZoneRadius, Speed);
         }
 
-        public void RemoveSpeedZone()
+        internal void RemoveSpeedZone()
         {
             World.RemoveSpeedZone(SpeedZone);
         }
 
-        public void DrawWaypointMarker()
+        internal void DrawWaypointMarker()
         {
             // This is called once when the waypoint is created
             GameFiber.StartNew((System.Threading.ThreadStart)(() =>
@@ -216,7 +216,7 @@ namespace SceneManager
             }));
         }
 
-        public void EnableBlip()
+        internal void EnableBlip()
         {
             if(!PathMainMenu.GetPaths().Where(p => p == Path).First().IsEnabled)
             {
@@ -231,7 +231,7 @@ namespace SceneManager
 
         }
 
-        public void DisableBlip()
+        internal void DisableBlip()
         {
             Blip.Alpha = 0;
             CollectorRadiusBlip.Alpha = 0;

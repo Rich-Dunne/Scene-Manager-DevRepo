@@ -5,16 +5,16 @@ namespace SceneManager
 {
     public class CollectedVehicle
     {
-        public Ped Driver { get; set; }
-        public Vehicle Vehicle { get; set; }
-        public Path Path { get; set; }
-        public Waypoint CurrentWaypoint { get; set; }
-        public Waypoint NextWaypoint { get; private set; }
-        public bool StoppedAtWaypoint { get; set; }
-        public bool Dismissed { get; set; }
-        public bool SkipWaypoint { get; set; }
+        internal Ped Driver { get; set; }
+        internal Vehicle Vehicle { get; set; }
+        internal Path Path { get; set; }
+        internal Waypoint CurrentWaypoint { get; set; }
+        internal Waypoint NextWaypoint { get; private set; }
+        internal bool StoppedAtWaypoint { get; set; }
+        internal bool Dismissed { get; set; }
+        internal bool SkipWaypoint { get; set; }
 
-        public CollectedVehicle(Vehicle vehicle, Path path, Waypoint currentWaypoint)
+        internal CollectedVehicle(Vehicle vehicle, Path path, Waypoint currentWaypoint)
         {
             Vehicle = vehicle;
             Driver = vehicle.Driver;
@@ -22,14 +22,14 @@ namespace SceneManager
             CurrentWaypoint = currentWaypoint;
         }
 
-        public CollectedVehicle(Vehicle vehicle, Path path)
+        internal CollectedVehicle(Vehicle vehicle, Path path)
         {
             Vehicle = vehicle;
             Driver = vehicle.Driver;
             Path = path;
         }
 
-        public void Dismiss()
+        internal void Dismiss()
         {
             GameFiber.StartNew(() =>
             {

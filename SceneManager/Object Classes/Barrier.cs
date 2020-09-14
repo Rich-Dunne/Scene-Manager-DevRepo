@@ -5,11 +5,11 @@ namespace SceneManager
 {
     class Barrier
     {
-        public Rage.Object Object { get; set; }
-        public Vector3 Position { get; set; }
-        public float Rotation { get; set; }
+        internal Rage.Object Object { get; set; }
+        internal Vector3 Position { get; set; }
+        internal float Rotation { get; set; }
 
-        public Barrier(Rage.Object barrier, Vector3 barrierPosition, float barrierRotation)
+        internal Barrier(Rage.Object barrier, Vector3 barrierPosition, float barrierRotation)
         {
             Object = barrier;
             Position = barrierPosition;
