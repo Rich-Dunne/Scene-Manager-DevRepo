@@ -8,18 +8,15 @@ namespace SceneManager
         {
             while (true)
             {
-                // Keyboard
                 GetKeyboardInput();
-
-                // Controller
                 GetControllerInput();
 
-                // Display this message for test versions only
-                //if (MainMenu.mainMenu.Visible)
-                //{
-                //    Game.DisplaySubtitle($"You are using a test build of Scene Manager.  Please report any bugs/crashes in the Discord server.");
-                //}
-
+#if DEBUG
+                if (MenuManager.menuPool.IsAnyMenuOpen())
+                {
+                    Game.DisplaySubtitle($"You are using a test build of Scene Manager.  Please report any bugs/crashes in the Discord server.");
+                }
+#endif
                 MenuManager.menuPool.ProcessMenus();
                 GameFiber.Yield();
             }
