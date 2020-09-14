@@ -69,7 +69,6 @@
     <Compile Include="Menus\SettingsMenu.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="VehicleCollector.cs" />
-    <Compile Include="Verification.cs" />
     <Compile Include="Object Classes\Waypoint.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

@@ -79,15 +79,3 @@ namespace SceneManager
         }
     }
 }
-
-//// id is hardware ID and needs to match PatronKey, which is also hardware ID
-//if (Settings.id == Settings.PatronKey)
-//{
-//    Game.LogTrivial($"Patron status verified.");
-//    Game.DisplayNotification($"~o~Scene Manager\n~g~[Patreon]~w~ Thanks for the support, enjoy your session!");
-//}
-//else
-//{
-//    Game.LogTrivial($"Patron status not verified.");
-//    Game.DisplayNotification($"~o~Scene Manager\n~y~[Patreon]~w~ Thanks for using my plugin!  If you would like to gain access to benefits such as ~g~new features for this plugin~w~, ~g~early access to new plugins~w~, and ~g~custom plugins made just for you~w~, please consider supporting me on ~b~Patreon~w~. ~y~https://www.patreon.com/richdevs");
-//}
