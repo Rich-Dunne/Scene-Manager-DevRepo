@@ -17,10 +17,10 @@ namespace SceneManager
         internal Blip CollectorRadiusBlip { get; set; }
         internal float SpeedZoneRadius { get; set; }
         internal uint SpeedZone { get; set; }
-        internal bool EnableWaypointMarker { get; set; }
+        internal bool EnableWaypointMarker { get; set; } = true;
         internal bool EnableEditMarker { get; set; }
 
-        internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 0)
+        internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector = false, float collectorRadius = 0, float speedZoneRadius = 0)
         {
             Path = path;
             Number = waypointNum;
@@ -146,7 +146,7 @@ namespace SceneManager
         internal void DrawWaypointMarker()
         {
             // This is called once when the waypoint is created
-            GameFiber.StartNew((System.Threading.ThreadStart)(() =>
+            GameFiber.StartNew(() =>
             {
                 while (SettingsMenu.threeDWaypoints.Checked && EnableWaypointMarker && Path.Waypoints.Contains(this))
                 {
@@ -213,7 +213,7 @@ namespace SceneManager
 
                     GameFiber.Yield();
                 }
-            }));
+            });
         }
 
         internal void EnableBlip()
