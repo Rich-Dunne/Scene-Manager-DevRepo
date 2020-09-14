@@ -224,7 +224,7 @@ namespace SceneManager
                     if (collectedVehicle == null && (directOptions.SelectedItem == "First waypoint" || directOptions.SelectedItem == "Nearest waypoint" && nearestWaypoint != null))
                     {
                         Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not found in collection, adding now.");
-                        VehicleCollector.collectedVehicles.Add(new CollectedVehicle(nearbyVehicle, path, false));
+                        VehicleCollector.collectedVehicles.Add(new CollectedVehicle(nearbyVehicle, path));
                         collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
                     }
 

@@ -5,91 +5,72 @@ namespace SceneManager
 {
     public class CollectedVehicle
     {
-        private Ped _driver { get; set; }
-        private Vehicle _vehicle { get; set; }
-        private Path _path { get; set; }
-        private Waypoint _currentWaypoint {get; set;}
-        private bool _tasksAssigned { get; set; }
-        private bool _stoppedAtWaypoint { get; set; }
-        private bool _dismissed { get; set; } = false;
-        private bool _skipWaypoint { get; set; } = false;
+        public Ped Driver { get; set; }
+        public Vehicle Vehicle { get; set; }
+        public Path Path { get; set; }
+        public Waypoint CurrentWaypoint { get; set; }
+        public Waypoint NextWaypoint { get; private set; }
+        public bool StoppedAtWaypoint { get; set; }
+        public bool Dismissed { get; set; }
+        public bool SkipWaypoint { get; set; }
 
-        public Ped Driver { get { return _driver; } set { _driver = value; } }
-        public Vehicle Vehicle { get { return _vehicle; } set { _vehicle = value; } }
-        public Path Path { get { return _path; } set { _path = value; } }
-        public Waypoint CurrentWaypoint { get { return _currentWaypoint; } set { _currentWaypoint = value; } }
-        public bool TasksAssigned { get { return _tasksAssigned; } set { _tasksAssigned = value; } }
-        public bool StoppedAtWaypoint { get { return _stoppedAtWaypoint; } set { _stoppedAtWaypoint = value; } }
-        public bool Dismissed { get { return _dismissed; } set { _dismissed = value; } }
-        public bool SkipWaypoint { get { return _skipWaypoint; } set { _skipWaypoint = value; } }
-
-        public CollectedVehicle(Vehicle vehicle, Path path, Waypoint currentWaypoint, bool tasksAssigned)
+        public CollectedVehicle(Vehicle vehicle, Path path, Waypoint currentWaypoint)
         {
-            _vehicle = vehicle;
-            _driver = vehicle.Driver;
-            _path = path;
-            _currentWaypoint = currentWaypoint;
-            _tasksAssigned = tasksAssigned;
+            Vehicle = vehicle;
+            Driver = vehicle.Driver;
+            Path = path;
+            CurrentWaypoint = currentWaypoint;
         }
 
-        public CollectedVehicle(Vehicle vehicle, Path path, bool tasksAssigned)
+        public CollectedVehicle(Vehicle vehicle, Path path)
         {
-            _vehicle = vehicle;
-            _driver = vehicle.Driver;
-            _path = path;
-            _tasksAssigned = tasksAssigned;
-        }
-
-        public void AssignPropertiesFromDirectedTask(Path path, Waypoint currentWaypoint, bool tasksAssigned, bool stoppedAtWaypoint)
-        {
-            _path = path;
-            _currentWaypoint = currentWaypoint;
-            _tasksAssigned = tasksAssigned;
-            _stoppedAtWaypoint = stoppedAtWaypoint;
+            Vehicle = vehicle;
+            Driver = vehicle.Driver;
+            Path = path;
         }
 
         public void Dismiss()
         {
             GameFiber.StartNew(() =>
             {
-                if (!_vehicle || !_driver)
+                if (!Vehicle || !Driver)
                 {
                     return;
                 }
-                _dismissed = true;
-                _stoppedAtWaypoint = false;
+                Dismissed = true;
+                StoppedAtWaypoint = false;
 
-                _driver.Tasks.Clear();
-                _driver.Tasks.PerformDrivingManeuver(_vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3);
+                Driver.Tasks.Clear();
+                Driver.Tasks.PerformDrivingManeuver(Vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3);
 
-                if (_driver.GetAttachedBlip())
+                if (Driver.GetAttachedBlip())
                 {
-                    _driver.GetAttachedBlip().Delete();
+                    Driver.GetAttachedBlip().Delete();
                 }
 
                 // check if the vehicle is near any of the path's collector waypoints
-                var nearestCollectorWaypoint = _path.Waypoints.Where(wp => wp.IsCollector && _vehicle.DistanceTo2D(wp.Position) <= wp.CollectorRadius * 2).FirstOrDefault();
+                var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector && Vehicle.DistanceTo2D(wp.Position) <= wp.CollectorRadius * 2).FirstOrDefault();
                 if (nearestCollectorWaypoint != null)
                 {
-                    while (nearestCollectorWaypoint != null && _vehicle && _driver && _vehicle.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius * 2)
+                    while (nearestCollectorWaypoint != null && Vehicle && Driver && Vehicle.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius * 2)
                     {
                         //Game.LogTrivial($"{_vehicle.Model.Name} is too close to the collector to be fully dismissed.");
                         GameFiber.Yield();
                     }
                 }
 
-                if (!_vehicle || !_driver)
+                if (!Vehicle || !Driver)
                 {
                     return;
                 }
 
                 VehicleCollector.collectedVehicles.Remove(this);
-                Game.LogTrivial($"{_vehicle.Model.Name} dismissed successfully.");
-                _driver.BlockPermanentEvents = false;
-                _driver.Dismiss();
-                _vehicle.IsSirenOn = false;
-                _vehicle.IsSirenSilent = true;
-                _vehicle.Dismiss();
+                Game.LogTrivial($"{Vehicle.Model.Name} dismissed successfully.");
+                Driver.BlockPermanentEvents = false;
+                Driver.Dismiss();
+                Vehicle.IsSirenOn = false;
+                Vehicle.IsSirenSilent = true;
+                Vehicle.Dismiss();
             });
         }
     }
