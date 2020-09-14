@@ -65,7 +65,7 @@ namespace SceneManager
                 }
 
                 VehicleCollector.collectedVehicles.Remove(this);
-                Game.LogTrivial($"{Vehicle.Model.Name} dismissed successfully.");
+                Logger.Log($"{Vehicle.Model.Name} dismissed successfully.");
                 Driver.BlockPermanentEvents = false;
                 Driver.Dismiss();
                 Vehicle.IsSirenOn = false;
