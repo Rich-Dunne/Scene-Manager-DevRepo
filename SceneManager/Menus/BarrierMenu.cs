@@ -48,16 +48,12 @@ namespace SceneManager
 
         public static void CreateShadowBarrier(UIMenu barrierMenu)
         {
-            if (Settings.EnableHints)
-            {
-                Hints.Display($"~o~Scene Manager\n~y~[Hint]~y~ ~w~The shadow cone will disappear if you aim too far away.");
-            }
+            Hints.Display($"~o~Scene Manager\n~y~[Hint]~y~ ~w~The shadow cone will disappear if you aim too far away.");
 
-            //Game.LogTrivial("Creating shadow barrier");
             if (shadowBarrier)
                 shadowBarrier.Delete();
 
-            shadowBarrier = new Rage.Object(Settings.barrierValues[barrierList.Index], TracePlayerView(15, TraceFlags.IntersectWorld).HitPosition, rotateBarrier.Value);
+            shadowBarrier = new Rage.Object(Settings.barrierValues[barrierList.Index], TracePlayerView(Settings.BarrierPlacementDistance, TraceFlags.IntersectWorld).HitPosition, rotateBarrier.Value);
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
             shadowBarrier.IsGravityDisabled = true;
             shadowBarrier.IsCollisionEnabled = false;
@@ -90,16 +86,16 @@ namespace SceneManager
         private static void UpdateShadowBarrierPosition()
         {
             DisableBarrierMenuOptionsIfShadowConeTooFar();
-            shadowBarrier.SetPositionWithSnap(TracePlayerView(SettingsMenu.barrierPlacementDistance.Value, TraceFlags.IntersectWorld).HitPosition);
+            shadowBarrier.SetPositionWithSnap(TracePlayerView(Settings.BarrierPlacementDistance, TraceFlags.IntersectWorld).HitPosition);
 
             void DisableBarrierMenuOptionsIfShadowConeTooFar()
             {
-                if (shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) > SettingsMenu.barrierPlacementDistance.Value)
+                if (shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) > Settings.BarrierPlacementDistance)
                 {
                     barrierList.Enabled = false;
                     rotateBarrier.Enabled = false;
                 }
-                else if (shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) <= SettingsMenu.barrierPlacementDistance.Value && barrierList.SelectedItem == "Flare")
+                else if (shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) <= Settings.BarrierPlacementDistance && barrierList.SelectedItem == "Flare")
                 {
                     barrierList.Enabled = true;
                     rotateBarrier.Enabled = false;
