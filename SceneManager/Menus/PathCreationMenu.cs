@@ -149,7 +149,7 @@ namespace SceneManager
                         Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Path {i + 1} complete.");
                         currentPath.State = State.Finished;
                         currentPath.IsEnabled = true;
-                        currentPath.SetPathNumber(i + 1);
+                        currentPath.Number = i + 1;
 
                         // For each waypoint in the path's WaypointData, start a collector game fiber and loop while the path and waypoint exist, and while the path is enabled
                         foreach (Waypoint waypoint in PathMainMenu.GetPaths()[i].Waypoints)
