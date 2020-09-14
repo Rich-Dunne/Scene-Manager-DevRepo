@@ -16,7 +16,7 @@ namespace SceneManager
         internal static UIMenu pathCreationMenu = new UIMenu("Scene Manager", "~o~Path Creation Menu");
         private static UIMenuItem trafficAddWaypoint = new UIMenuItem("Add waypoint"), trafficRemoveWaypoint = new UIMenuItem("Remove last waypoint"), trafficEndPath = new UIMenuItem("End path creation");
         internal static UIMenuListScrollerItem<string> waypointType = new UIMenuListScrollerItem<string>("Waypoint Type", $"~b~Drive To (Normal): ~w~AI obeys traffic as much as possible{Environment.NewLine}~b~Drive To (Direct): ~w~AI ignores pathfinding rules{Environment.NewLine}~b~Stop: ~w~AI stops at the waypoint until dismissed", waypointTypes);
-        private static UIMenuNumericScrollerItem<int> waypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to the waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 80, 5);
+        private static UIMenuNumericScrollerItem<int> waypointSpeed;
         internal static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If this waypoint will collect vehicles to follow the path.  Your path's first waypoint ~b~must~w~ be a collector.");
         internal static UIMenuNumericScrollerItem<int> collectorRadius = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint (in meters) vehicles will be collected", 1, 50, 1);
         internal static UIMenuNumericScrollerItem<int> speedZoneRadius = new UIMenuNumericScrollerItem<int>("Speed Zone Radius", "The distance from this collector waypoint (in meters) non-collected vehicles will drive at this waypoint's speed", 5, 200, 5);
@@ -31,7 +31,7 @@ namespace SceneManager
         {
             pathCreationMenu.AddItem(waypointType);
 
-            pathCreationMenu.AddItem(waypointSpeed);
+            pathCreationMenu.AddItem(waypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to the waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 80, 5));
             waypointSpeed.Index = 0;
 
             pathCreationMenu.AddItem(collectorWaypoint);

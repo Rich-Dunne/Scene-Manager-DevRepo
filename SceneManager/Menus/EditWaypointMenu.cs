@@ -17,8 +17,8 @@ namespace SceneManager
         internal static UIMenuItem addAsNewWaypoint = new UIMenuItem("Add as New Waypoint", "Adds a new waypoint to the end of the path with these settings");
         internal static UIMenuNumericScrollerItem<int> editWaypoint;
         internal static UIMenuListScrollerItem<string> changeWaypointType = new UIMenuListScrollerItem<string>("Waypoint Type", "", waypointTypes);
-        private static UIMenuNumericScrollerItem<int> changeWaypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to the waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 80, 5);
-        internal static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If this waypoint will collect vehicles to follow the path");
+        private static UIMenuNumericScrollerItem<int> changeWaypointSpeed;
+        internal static UIMenuCheckboxItem collectorWaypoint;
         internal static UIMenuNumericScrollerItem<int> changeCollectorRadius = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint (in meters) vehicles will be collected", 1, 50, 1);
         internal static UIMenuNumericScrollerItem<int> changeSpeedZoneRadius = new UIMenuNumericScrollerItem<int>("Speed Zone Radius", "The distance from this collector waypoint (in meters) non-collected vehicles will drive at this waypoint's speed", 5, 200, 5);
         internal static UIMenuCheckboxItem updateWaypointPosition = new UIMenuCheckboxItem("Update Waypoint Position", false, "Updates the waypoint's position to the player's current position.  You should turn this on if you're planning on adding this waypoint as a new waypoint.");
@@ -49,11 +49,10 @@ namespace SceneManager
                 editWaypointMenu.AddItem(changeWaypointType);
                 changeWaypointType.Index = Array.IndexOf(drivingFlags, currentWaypoint.DrivingFlag);
 
-                editWaypointMenu.AddItem(changeWaypointSpeed);
+                editWaypointMenu.AddItem(changeWaypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to the waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 80, 5));
                 changeWaypointSpeed.Value = (int)MathHelper.ConvertMetersPerSecondToMilesPerHour(currentWaypoint.Speed);
 
-                editWaypointMenu.AddItem(collectorWaypoint);
-                collectorWaypoint.Checked = currentWaypoint.IsCollector;
+                editWaypointMenu.AddItem(collectorWaypoint = new UIMenuCheckboxItem("Collector", currentWaypoint.IsCollector, "If this waypoint will collect vehicles to follow the path"));
 
                 editWaypointMenu.AddItem(changeCollectorRadius);
                 changeCollectorRadius.Value = currentWaypoint.CollectorRadius != 0
