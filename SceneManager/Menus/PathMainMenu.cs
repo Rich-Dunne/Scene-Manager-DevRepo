@@ -11,18 +11,18 @@ namespace SceneManager
     static class PathMainMenu
     {
         private static List<Path> paths = new List<Path>() { };
-
-        public static UIMenu pathMainMenu { get; private set; }
-        public static UIMenuItem createNewPath { get; private set; }
-        public static UIMenuItem deleteAllPaths;
-        public static UIMenuNumericScrollerItem<int> editPath = new UIMenuNumericScrollerItem<int>("Edit Path", "", 1, paths.Count, 1);
-        public static UIMenuListScrollerItem<string> directOptions { get; private set; }
-        public static UIMenuNumericScrollerItem<int> directDriver = new UIMenuNumericScrollerItem<int>("Direct nearest driver to path", "", 1, paths.Count, 1);
-        public static UIMenuListScrollerItem<string> dismissDriver { get; private set; }
-        public static UIMenuCheckboxItem disableAllPaths { get; private set; }
-
         private static List<string> dismissOptions = new List<string>() { "From path", "From waypoint", "From position" };
-        public enum Delete
+
+        internal static UIMenu pathMainMenu = new UIMenu("Scene Manager", "~o~Path Manager Main Menu");
+        internal static UIMenuItem createNewPath;
+        internal static UIMenuItem deleteAllPaths = new UIMenuItem("Delete All Paths");
+        internal static UIMenuNumericScrollerItem<int> editPath;
+        internal static UIMenuListScrollerItem<string> directOptions = new UIMenuListScrollerItem<string>("Direct driver to path's", "", new[] { "First waypoint", "Nearest waypoint" });
+        internal static UIMenuNumericScrollerItem<int> directDriver;
+        internal static UIMenuListScrollerItem<string> dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", $"~b~From path: ~w~AI will be released from the path{Environment.NewLine}~b~From waypoint: ~w~AI will skip their current waypoint task{Environment.NewLine}~b~From position: ~w~AI will be released from current position.  This can be used for stuck vehicles, and is the default behavior for vehicles not collected by a path.", dismissOptions);
+        internal static UIMenuCheckboxItem disableAllPaths = new UIMenuCheckboxItem("Disable All Paths", false);
+
+        internal enum Delete
         {
             Single,
             All
@@ -30,12 +30,11 @@ namespace SceneManager
 
         internal static void InstantiateMenu()
         {
-            pathMainMenu = new UIMenu("Scene Manager", "~o~Path Manager Main Menu");
             pathMainMenu.ParentMenu = MainMenu.mainMenu;
             MenuManager.menuPool.Add(pathMainMenu);
         }
 
-        public static void BuildPathMenu()
+        internal static void BuildPathMenu()
         {
             // Need to unsubscribe from events, else there will be duplicate firings if the user left the menu and re-entered
             ResetEventHandlerSubscriptions();
@@ -47,13 +46,16 @@ namespace SceneManager
             createNewPath.ForeColor = Color.Gold;
             pathMainMenu.AddItem(editPath = new UIMenuNumericScrollerItem<int>("Edit Path", "", 1, paths.Count, 1));
             editPath.ForeColor = Color.Gold;
-            pathMainMenu.AddItem(disableAllPaths = new UIMenuCheckboxItem("Disable All Paths", false));
-            pathMainMenu.AddItem(deleteAllPaths = new UIMenuItem("Delete All Paths"));
+            pathMainMenu.AddItem(disableAllPaths);
+            disableAllPaths.Enabled = true;
+            pathMainMenu.AddItem(deleteAllPaths);
+            deleteAllPaths.Enabled = true;
             deleteAllPaths.ForeColor = Color.Gold;
-            pathMainMenu.AddItem(directOptions = new UIMenuListScrollerItem<string>("Direct driver to path's", "", new[] { "First waypoint", "Nearest waypoint" }));
+            pathMainMenu.AddItem(directOptions);
             pathMainMenu.AddItem(directDriver = new UIMenuNumericScrollerItem<int>("Direct nearest driver to path", "", 1, paths.Count, 1));
             directDriver.ForeColor = Color.Gold;
-            pathMainMenu.AddItem(dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", $"~b~From path: ~w~AI will be released from the path{Environment.NewLine}~b~From waypoint: ~w~AI will skip their current waypoint task{Environment.NewLine}~b~From position: ~w~AI will be released from current position.  This can be used for stuck vehicles, and is the default behavior for vehicles not collected by a path.", dismissOptions));
+            directDriver.Enabled = true;
+            pathMainMenu.AddItem(dismissDriver);
             dismissDriver.ForeColor = Color.Gold;
 
             if (paths.Count == 8)
@@ -68,20 +70,18 @@ namespace SceneManager
                 directDriver.Enabled = false;
             }
 
-            pathMainMenu.RefreshIndex();
-
             MenuManager.menuPool.RefreshIndex();
+
+            void ResetEventHandlerSubscriptions()
+            {
+                pathMainMenu.OnItemSelect -= PathMenu_OnItemSelected;
+                pathMainMenu.OnCheckboxChange -= PathMenu_OnCheckboxChange;
+                pathMainMenu.OnItemSelect += PathMenu_OnItemSelected;
+                pathMainMenu.OnCheckboxChange += PathMenu_OnCheckboxChange;
+            }
         }
 
-        private static void ResetEventHandlerSubscriptions()
-        {
-            pathMainMenu.OnItemSelect -= PathMenu_OnItemSelected;
-            pathMainMenu.OnCheckboxChange -= PathMenu_OnCheckboxChange;
-            pathMainMenu.OnItemSelect += PathMenu_OnItemSelected;
-            pathMainMenu.OnCheckboxChange += PathMenu_OnCheckboxChange;
-        }
-
-        public static ref List<Path> GetPaths()
+        internal static ref List<Path> GetPaths()
         {
             return ref paths;
         }
@@ -98,10 +98,9 @@ namespace SceneManager
             }
         }
 
-        public static void DeletePath(Path path, Delete pathsToDelete)
+        internal static void DeletePath(Path path, Delete pathsToDelete)
         {
-            // Before deleting a path, we need to dismiss any vehicles controlled by that path and remove the vehicles from ControlledVehicles
-            Game.LogTrivial($"Deleting path {path.Number}");
+            Game.LogTrivial($"Preparing to delete path {path.Number}");
             var pathVehicles = VehicleCollector.collectedVehicles.Where(cv => cv.Path.Number == path.Number).ToList();
 
             Game.LogTrivial($"Removing all vehicles on the path");
@@ -149,7 +148,7 @@ namespace SceneManager
                 paths.Remove(path);
                 BuildPathMenu();
                 pathMainMenu.Visible = true;
-                Game.LogTrivial($"Path {path.Number} deleted.");
+                Game.LogTrivial($"Path {path.Number} deleted successfully.");
                 Game.DisplayNotification($"~o~Scene Manager\n~w~Path {path.Number} deleted.");
             }
 
@@ -329,6 +328,29 @@ namespace SceneManager
             }
         }
 
+        private static void PathMenu_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
+        {
+            if (checkboxItem == disableAllPaths)
+            {
+                if (disableAllPaths.Checked)
+                {
+                    foreach (Path path in paths)
+                    {
+                        path.DisablePath();
+                    }
+                    Game.LogTrivial($"All paths disabled.");
+                }
+                else
+                {
+                    foreach (Path path in paths)
+                    {
+                        path.EnablePath();
+                    }
+                    Game.LogTrivial($"All paths enabled.");
+                }
+            }
+        }
+
         private static void Draw3DWaypointOnPlayer()
         {
             GameFiber.StartNew(() =>
@@ -358,30 +380,6 @@ namespace SceneManager
                     GameFiber.Yield();
                 }
             });
-        }
-
-        private static void PathMenu_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
-        {
-            if (checkboxItem == disableAllPaths)
-            {
-                if (disableAllPaths.Checked)
-                {
-                    foreach (Path path in paths)
-                    {
-                        path.DisablePath();
-                    }
-                    Game.LogTrivial($"All paths disabled.");
-                }
-                else
-                {
-                    foreach (Path path in paths)
-                    {
-                        path.EnablePath();
-                    }
-                    Game.LogTrivial($"All paths enabled.");
-                }
-
-            }
         }
     }
 }
