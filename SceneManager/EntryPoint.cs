@@ -28,7 +28,7 @@ namespace SceneManager
             Assembly assembly = Assembly.GetExecutingAssembly();
             System.Diagnostics.FileVersionInfo fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
             var version = fvi.FileVersion;
-            Game.LogTrivial($"Scene Manager V{version} is ready.");
+            Logger.Log($"Scene Manager V{version} is ready.");
         }
 
         private static void DisplayHintsToOpenMenu()
@@ -72,24 +72,13 @@ namespace SceneManager
             // Clear everything
             BarrierMenu.barriers.Clear();
             VehicleCollector.collectedVehicles.Clear();
+            PathMainMenu.GetPaths().Clear();
 
-            Game.LogTrivial($"Scene Manager has been terminated.");
+            Logger.Log($"Plugin has shut down.");
             Game.DisplayNotification($"~o~Scene Manager\n~r~[Notice]~w~ The plugin has shut down.");
         }
     }
 }
-
-//GameFiber.StartNew(delegate{
- 
-//});
-  
-//public static Vehicle[] GetNearbyVehicles2(Vector3 OriginPosition, int amount)
-//{
-//    return (Vehicle[])(from x in World.GetAllVehicles() orderby x.DistanceTo(OriginPosition) select x).Take(amount).ToArray();
-//}
-
-//Type t = typeof(int);
-//Game.LogTrivial($"Scene Manager V{Assembly.GetAssembly(t).GetName().Version} is ready.");*/
 
 //// id is hardware ID and needs to match PatronKey, which is also hardware ID
 //if (Settings.id == Settings.PatronKey)
