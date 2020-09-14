@@ -6,7 +6,7 @@ namespace SceneManager
 {
     class AITasking
     {
-        public static void AssignWaypointTasks(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint)
+        internal static void AssignWaypointTasks(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint)
         {
             if (!VehicleAndDriverNullChecks(collectedVehicle))
             {
@@ -114,25 +114,6 @@ namespace SceneManager
                 }
             }
         }
-
-        //public static void LoopWhileDrivingToWaypoint(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, int nextWaypoint, float acceptedDistance)
-        //{
-        //    while (VehicleAndDriverNullChecks(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && waypoints.ElementAtOrDefault(nextWaypoint) != null && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(waypoints[nextWaypoint].Position) > acceptedDistance)
-        //    {
-        //        //Logger.Log($"Looping while {collectedVehicle.Vehicle.Model.Name} drives to waypoint {waypoints[nextWaypoint].Number} ({collectedVehicle.Vehicle.DistanceTo2D(waypoints[nextWaypoint].Position)}m away from collector radius {waypoints[nextWaypoint].CollectorRadius})");
-        //        //Logger.Log($"Distance of front of vehicle to waypoint: {collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(waypoints[nextWaypoint].Position)}");
-        //        GameFiber.Yield();
-        //    }
-        //}
-
-        //public static void LoopWhileDrivingToWaypoint(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint, float acceptedDistance)
-        //{
-        //    while (VehicleAndDriverNullChecks(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(currentWaypoint.Position) > acceptedDistance)
-        //    {
-        //        //Logger.Log($"Looping while {collectedVehicle.Vehicle.Model.Name} drives to waypoint {currentWaypoint.Number} ({collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}m away)");
-        //        GameFiber.Yield();
-        //    }
-        //}
 
         private static float GetAcceptedStoppingDistance(List<Waypoint> waypoints, int nextWaypoint)
         {
