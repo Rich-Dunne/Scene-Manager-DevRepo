@@ -37,7 +37,6 @@ namespace SceneManager
                 Logger.Log($"Vehicle: {vehicle.Model.Name}, Waypoint collector radius: {waypoint.CollectorRadius}, Distance to waypoint: {vehicle.DistanceTo2D(waypoint.Position)}");
 
                 var collectedVehicle = collectedVehicles.Where(cv => cv.Vehicle == vehicle).FirstOrDefault();
-                // If the vehicle is not in the collection yet
                 if(collectedVehicle == null)
                 {
                     SetVehicleAndDriverPersistence(vehicle);
@@ -58,7 +57,7 @@ namespace SceneManager
         {
             var collectedVehicle = new CollectedVehicle(v, path, waypoint);
             collectedVehicles.Add(collectedVehicle);
-            Game.LogTrivial($"[WaypointVehicleCollector] Added {v.Model.Name} to collection from path {path.Number}, waypoint {waypoint.Number}.");
+            Logger.Log($"Added {v.Model.Name} to collection from path {path.Number}, waypoint {waypoint.Number}.");
             return collectedVehicle;
         }
 
@@ -78,7 +77,7 @@ namespace SceneManager
                     driverBlip.Scale = 0.25f;
                     v.Driver.IsPersistent = true;
                     v.Driver.BlockPermanentEvents = true;
-                    Game.LogTrivial($"A missing driver was created for {v.Model.Name}");
+                    Logger.Log($"A missing driver was created for {v.Model.Name}.");
                 }
                 return true;
             }
