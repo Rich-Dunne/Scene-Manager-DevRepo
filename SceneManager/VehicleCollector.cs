@@ -6,14 +6,14 @@ using Rage;
 
 namespace SceneManager
 {
-    public static class VehicleCollector
+    internal static class VehicleCollector
     {
         // Driving styles https://gtaforums.com/topic/822314-guide-driving-styles/
         // also https://vespura.com/fivem/drivingstyle/
 
-        public static List<CollectedVehicle> collectedVehicles = new List<CollectedVehicle>();
+        internal static List<CollectedVehicle> collectedVehicles = new List<CollectedVehicle>();
 
-        public static void StartCollectingAtWaypoint(List<Path> paths, Path path, Waypoint waypoint)
+        internal static void StartCollectingAtWaypoint(List<Path> paths, Path path, Waypoint waypoint)
         {
             while (paths.Contains(path) && path.Waypoints.Contains(waypoint))
             {
@@ -87,7 +87,7 @@ namespace SceneManager
             }
         }
 
-        public static void SetVehicleAndDriverPersistence(Vehicle v)
+        internal static void SetVehicleAndDriverPersistence(Vehicle v)
         {
             v.IsPersistent = true;
             v.Driver.IsPersistent = true;

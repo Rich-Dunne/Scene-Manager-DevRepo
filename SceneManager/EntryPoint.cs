@@ -10,7 +10,7 @@ namespace SceneManager
 {
     public class EntryPoint
     {
-        public static void Main()
+        internal static void Main()
         {
             AppDomain.CurrentDomain.DomainUnload += MyTerminationHandler;
             Settings.LoadSettings();

@@ -5,13 +5,13 @@ using System.Drawing;
 namespace SceneManager
 {
     public class Path
-    { 
-        public int Number { get; set; }
-        public bool IsEnabled { get; set; }
-        public State State { get; set; }
-        public List<Waypoint> Waypoints = new List<Waypoint>();
+    {
+        internal int Number { get; set; }
+        internal bool IsEnabled { get; set; }
+        internal State State { get; set; }
+        internal List<Waypoint> Waypoints = new List<Waypoint>();
 
-        public Path(int pathNum, State pathState)
+        internal Path(int pathNum, State pathState)
         {
             Number = pathNum;
             State = pathState;
@@ -45,7 +45,7 @@ namespace SceneManager
             }
         }
 
-        public void DisablePath()
+        internal void DisablePath()
         {
             IsEnabled = false;
             foreach(Waypoint wp in Waypoints)
@@ -58,7 +58,7 @@ namespace SceneManager
             }
         }
 
-        public void EnablePath()
+        internal void EnablePath()
         {
             IsEnabled = true;
             foreach (Waypoint wp in Waypoints)
@@ -74,7 +74,7 @@ namespace SceneManager
             }
         }
 
-        public void DrawLinesBetweenWaypoints()
+        internal void DrawLinesBetweenWaypoints()
         {
             GameFiber.StartNew(() =>
             {

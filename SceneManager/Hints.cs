@@ -4,9 +4,9 @@ namespace SceneManager
 {
     class Hints
     {
-        public static bool Enabled { get; set; } = SettingsMenu.hints.Checked;
+        internal static bool Enabled { get; set; } = SettingsMenu.hints.Checked;
 
-        public static void Display(string message)
+        internal static void Display(string message)
         {
             if (Enabled)
             {

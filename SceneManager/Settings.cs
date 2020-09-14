@@ -4,14 +4,14 @@ using System.Windows.Forms;
 
 namespace SceneManager
 {
-    public enum State
+    internal enum State
     {
         Uninitialized,
         Creating,
         Finished
     }
 
-    public enum SpeedUnits
+    internal enum SpeedUnits
     {
         MPH,
         KPH

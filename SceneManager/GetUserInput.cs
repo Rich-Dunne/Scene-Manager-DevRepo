@@ -4,7 +4,7 @@ namespace SceneManager
 {
     class GetUserInput
     {
-        public static void LoopForUserInput()
+        internal static void LoopForUserInput()
         {
             while (true)
             {
