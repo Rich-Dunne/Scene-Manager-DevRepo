@@ -37,9 +37,9 @@ namespace SceneManager
 
         public static void BuildPathMenu()
         {
-            // New stuff to mitigate Rebuild method
-            pathMainMenu.OnItemSelect -= PathMenu_OnItemSelected;
-            pathMainMenu.OnCheckboxChange -= PathMenu_OnCheckboxChange;
+            // Need to unsubscribe from events, else there will be duplicate firings if the user left the menu and re-entered
+            ResetEventHandlerSubscriptions();
+
             MenuManager.menuPool.CloseAllMenus();
             pathMainMenu.Clear();
 
@@ -69,11 +69,16 @@ namespace SceneManager
             }
 
             pathMainMenu.RefreshIndex();
+
+            MenuManager.menuPool.RefreshIndex();
+        }
+
+        private static void ResetEventHandlerSubscriptions()
+        {
+            pathMainMenu.OnItemSelect -= PathMenu_OnItemSelected;
+            pathMainMenu.OnCheckboxChange -= PathMenu_OnCheckboxChange;
             pathMainMenu.OnItemSelect += PathMenu_OnItemSelected;
             pathMainMenu.OnCheckboxChange += PathMenu_OnCheckboxChange;
-
-            // New stuff to mitigate Rebuild method
-            MenuManager.menuPool.RefreshIndex();
         }
 
         public static ref List<Path> GetPaths()
@@ -158,7 +163,7 @@ namespace SceneManager
             {
                 pathMainMenu.Visible = false;
                 PathCreationMenu.pathCreationMenu.Visible = true;
-                DebugGraphics.Draw3DWaypointOnPlayer();
+                Draw3DWaypointOnPlayer();
 
                 // For each element in paths, determine if the element exists but is not finished yet, or if it doesn't exist, create it.
                 for (int i = 0; i <= paths.Count; i++)
@@ -322,6 +327,37 @@ namespace SceneManager
                     }
                 }
             }
+        }
+
+        private static void Draw3DWaypointOnPlayer()
+        {
+            GameFiber.StartNew(() =>
+            {
+                while (SettingsMenu.threeDWaypoints.Checked)
+                {
+                    if (PathCreationMenu.pathCreationMenu.Visible)
+                    {
+                        if (PathCreationMenu.collectorWaypoint.Checked)
+                        {
+                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.collectorRadius.Value * 2, (float)PathCreationMenu.collectorRadius.Value * 2, 1f, 80, 130, 255, 80, false, false, 2, false, 0, 0, false);
+                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.speedZoneRadius.Value * 2, (float)PathCreationMenu.speedZoneRadius.Value * 2, 1f, 255, 185, 80, 80, false, false, 2, false, 0, 0, false);
+                        }
+                        else if (PathCreationMenu.waypointType.SelectedItem.Contains("Drive To"))
+                        {
+                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 80, false, false, 2, false, 0, 0, false);
+                        }
+                        else
+                        {
+                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 80, false, false, 2, false, 0, 0, false);
+                        }
+                    }
+                    else
+                    {
+                        break;
+                    }
+                    GameFiber.Yield();
+                }
+            });
         }
 
         private static void PathMenu_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)

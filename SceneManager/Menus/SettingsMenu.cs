@@ -44,7 +44,6 @@ namespace SceneManager
         {
             if(selectedItem == saveSettings)
             {
-                // Write to .ini
                 Settings.UpdateSettings(threeDWaypoints.Checked, mapBlips.Checked, hints.Checked, speedUnits.SelectedItem, barrierPlacementDistance.Value);
                 Game.DisplayHelp($"Settings saved");
             }
@@ -52,14 +51,6 @@ namespace SceneManager
 
         private static void SettingsMenu_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
         {
-            if (checkboxItem == threeDWaypoints)
-            {
-                if (threeDWaypoints.Checked)
-                {
-                    DebugGraphics.Draw3DWaypointOnPlayer();
-                }
-            }
-
             if (checkboxItem == mapBlips)
             {
                 if (mapBlips.Checked)
