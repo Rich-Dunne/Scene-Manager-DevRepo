@@ -34,39 +34,29 @@ namespace SceneManager
                     break;
                 }
 
-                Game.LogTrivial($"Vehicle: {vehicle.Model.Name}, Waypoint collector radius: {waypoint.CollectorRadius}, Distance to waypoint: {vehicle.DistanceTo2D(waypoint.Position)}");
+                Logger.Log($"Vehicle: {vehicle.Model.Name}, Waypoint collector radius: {waypoint.CollectorRadius}, Distance to waypoint: {vehicle.DistanceTo2D(waypoint.Position)}");
 
-                var collectedVehicle = collectedVehicles.Where(cv => cv.Vehicle == vehicle) as CollectedVehicle;
+                var collectedVehicle = collectedVehicles.Where(cv => cv.Vehicle == vehicle).FirstOrDefault();
                 // If the vehicle is not in the collection yet
                 if(collectedVehicle == null)
                 {
                     SetVehicleAndDriverPersistence(vehicle);
                     CollectedVehicle newCollectedVehicle = AddVehicleToCollection(path, waypoint, vehicle);
-                    newCollectedVehicle.TasksAssigned = true;
 
                     GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, path.Waypoints, waypoint));
                     AssignTasksFiber.Start();
                 }
-                // If the vehicle is in the collection, but has no tasks
-                else if (!collectedVehicle.TasksAssigned)
-                {
-                    Game.LogTrivial($"[WaypointVehicleCollector] {vehicle.Model.Name} already in collection, but with no tasks.  Assigning tasks.");
-                    collectedVehicle.TasksAssigned = true;
-
-                    GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(collectedVehicle, path.Waypoints, waypoint));
-                    AssignTasksFiber.Start();
-                }
             }
-        }
 
-        private static Vehicle[] GetNearbyVehiclesForCollection(Vector3 collectorWaypointPosition, float collectorRadius)
-        {
-            return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorWaypointPosition) <= collectorRadius && Math.Abs(collectorWaypointPosition.Z - v.Position.Z) < 3 && v.IsValidForCollection() select v).ToArray();
+            Vehicle[] GetNearbyVehiclesForCollection(Vector3 collectorWaypointPosition, float collectorRadius)
+            {
+                return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorWaypointPosition) <= collectorRadius && Math.Abs(collectorWaypointPosition.Z - v.Position.Z) < 3 && v.IsValidForCollection() select v).ToArray();
+            }
         }
 
         private static CollectedVehicle AddVehicleToCollection(Path path, Waypoint waypoint, Vehicle v)
         {
-            var collectedVehicle = new CollectedVehicle(v, path, waypoint, false);
+            var collectedVehicle = new CollectedVehicle(v, path, waypoint);
             collectedVehicles.Add(collectedVehicle);
             Game.LogTrivial($"[WaypointVehicleCollector] Added {v.Model.Name} to collection from path {path.Number}, waypoint {waypoint.Number}.");
             return collectedVehicle;
