@@ -50,17 +50,14 @@ namespace SceneManager
 
             foreach(string key in ini.GetKeyNames("Barriers"))
             {
-                //Game.LogTrivial($"Key: {key.Trim()}");
-                //Game.LogTrivial($"Value: {ini.ReadString("Barriers",key)}");
                 barrierKeys.Add(key.Trim());
                 var m = new Model(ini.ReadString("Barriers", key));
                 if (m.IsValid)
                     barrierValues.Add(m.Name);
-                //barrierValues.Add(ini.ReadString("Barriers", key));
             }
         }
 
-        internal static void UpdateSettings(bool threeDWaypointsEnabled, bool mapBlipsEnabled, bool hintsEnabled, SpeedUnits unit, float distance)
+        internal static void UpdateSettings(bool threeDWaypointsEnabled, bool mapBlipsEnabled, bool hintsEnabled, SpeedUnits unit)
         {
             ini.Write("Other Settings", "Enable3DWaypoints", threeDWaypointsEnabled);
             ini.Write("Other Settings", "EnableMapBlips", mapBlipsEnabled);

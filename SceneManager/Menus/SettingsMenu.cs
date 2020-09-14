@@ -13,7 +13,6 @@ namespace SceneManager
             hints = new UIMenuCheckboxItem("Enable Hints", Settings.EnableHints);
         private static SpeedUnits[] speedArray = {SpeedUnits.MPH, SpeedUnits.KPH };
         public static UIMenuListScrollerItem<SpeedUnits> speedUnits = new UIMenuListScrollerItem<SpeedUnits>("Speed Unit of Measure", "", new[] { SpeedUnits.MPH, SpeedUnits.KPH });
-        public static UIMenuNumericScrollerItem<int> barrierPlacementDistance = new UIMenuNumericScrollerItem<int>("Barrier Placement Distance", "How far away you can place a barrier (in meters)", 1, (int)Settings.BarrierPlacementDistance, 1);
         public static UIMenuItem saveSettings = new UIMenuItem("Save settings to .ini", "Updates the plugin's .ini file with the current settings so the next time the plugin is loaded, it will use these settings.");
 
         internal static void InstantiateMenu()
@@ -30,8 +29,6 @@ namespace SceneManager
             settingsMenu.AddItem(hints);
             settingsMenu.AddItem(speedUnits);
             speedUnits.Index = Array.IndexOf(speedArray, Settings.SpeedUnit);
-            settingsMenu.AddItem(barrierPlacementDistance);
-            barrierPlacementDistance.Index = barrierPlacementDistance.OptionCount - 1;
             settingsMenu.AddItem(saveSettings);
             saveSettings.ForeColor = System.Drawing.Color.Gold;
 
@@ -44,7 +41,7 @@ namespace SceneManager
         {
             if(selectedItem == saveSettings)
             {
-                Settings.UpdateSettings(threeDWaypoints.Checked, mapBlips.Checked, hints.Checked, speedUnits.SelectedItem, barrierPlacementDistance.Value);
+                Settings.UpdateSettings(threeDWaypoints.Checked, mapBlips.Checked, hints.Checked, speedUnits.SelectedItem);
                 Game.DisplayHelp($"Settings saved");
             }
         }
