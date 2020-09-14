@@ -16,12 +16,12 @@ namespace SceneManager
             if (currentWaypoint != null)
             {
                 float acceptedDistance = GetAcceptedStoppingDistance(waypoints, waypoints.IndexOf(currentWaypoint));
-                Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} distance to collection waypoint: {collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}");
+                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} distance to collection waypoint: {collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}");
                 if(collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position) > (currentWaypoint.CollectorRadius + 0.5))
                 {
-                    Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} is driving to waypoint {currentWaypoint.Number}");
+                    Logger.Log($"{collectedVehicle.Vehicle.Model.Name} is driving to waypoint {currentWaypoint.Number}");
                     collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)263075, acceptedDistance);
-                    LoopWhileDrivingToWaypoint(collectedVehicle, waypoints, currentWaypoint, acceptedDistance);
+                    LoopWhileDrivingToWaypoint(acceptedDistance);
                 }
                 if(currentWaypoint.DrivingFlag == VehicleDrivingFlags.StopAtDestination)
                 {
@@ -36,12 +36,20 @@ namespace SceneManager
             {
                 return;
             }
-            Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} all tasks complete.");
+            Logger.Log($"{collectedVehicle.Vehicle.Model.Name} all tasks complete.");
             if (!collectedVehicle.Dismissed)
             {
                 collectedVehicle.Dismiss();
             }
 
+            void LoopWhileDrivingToWaypoint(float acceptedDistance)
+            {
+                while (VehicleAndDriverNullChecks(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(currentWaypoint.Position) > acceptedDistance)
+                {
+                    //Logger.Log($"Looping while {collectedVehicle.Vehicle.Model.Name} drives to waypoint {currentWaypoint.Number} ({collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}m away)");
+                    GameFiber.Yield();
+                }
+            }
         }
 
         private static void DriveVehicleToNextWaypoint(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint)
@@ -54,7 +62,7 @@ namespace SceneManager
             var vehicle = collectedVehicle.Vehicle;
             var driver = vehicle.Driver;
 
-            for (int nextWaypoint = currentWaypoint.Number; nextWaypoint < waypoints.Count; nextWaypoint++) // Do we need to make this <= count?  Or nextWaypoint = currentWaypoint.Number - 1?  Is this dependent on direct vs. normal collection?
+            for (int nextWaypoint = currentWaypoint.Number; nextWaypoint < waypoints.Count; nextWaypoint++)
             {
                 if (!VehicleAndDriverNullChecks(waypoints, nextWaypoint, collectedVehicle))
                 {
@@ -66,7 +74,7 @@ namespace SceneManager
                     collectedVehicle.CurrentWaypoint = waypoints[nextWaypoint];
                     float acceptedDistance = GetAcceptedStoppingDistance(waypoints, nextWaypoint);
 
-                    Game.LogTrivial($"{vehicle.Model.Name} is driving to waypoint {waypoints[nextWaypoint].Number}");
+                    Logger.Log($"{vehicle.Model.Name} is driving to waypoint {waypoints[nextWaypoint].Number}");
                     if (waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.IgnorePathFinding)
                     {
                         collectedVehicle.Driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)17040299, acceptedDistance);
@@ -75,7 +83,7 @@ namespace SceneManager
                     {
                         collectedVehicle.Driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263075, acceptedDistance);
                     }
-                    LoopWhileDrivingToWaypoint(collectedVehicle, waypoints, nextWaypoint, acceptedDistance);
+                    LoopWhileDrivingToWaypoint(nextWaypoint, acceptedDistance);
 
                     if (collectedVehicle.SkipWaypoint)
                     {
@@ -95,26 +103,36 @@ namespace SceneManager
                     collectedVehicle.Driver.Tasks.PerformDrivingManeuver(collectedVehicle.Vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3);
                 }
             }
-        }
 
-        public static void LoopWhileDrivingToWaypoint(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, int nextWaypoint, float acceptedDistance)
-        {
-            while (VehicleAndDriverNullChecks(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && waypoints.ElementAtOrDefault(nextWaypoint) != null && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(waypoints[nextWaypoint].Position) > acceptedDistance)
+            void LoopWhileDrivingToWaypoint(int nextWaypoint, float acceptedDistance)
             {
-                //Game.LogTrivial($"Looping while {collectedVehicle.Vehicle.Model.Name} drives to waypoint {waypoints[nextWaypoint].Number} ({collectedVehicle.Vehicle.DistanceTo2D(waypoints[nextWaypoint].Position)}m away from collector radius {waypoints[nextWaypoint].CollectorRadius})");
-                //Game.LogTrivial($"Distance of front of vehicle to waypoint: {collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(waypoints[nextWaypoint].Position)}");
-                GameFiber.Yield();
+                while (VehicleAndDriverNullChecks(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && waypoints.ElementAtOrDefault(nextWaypoint) != null && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(waypoints[nextWaypoint].Position) > acceptedDistance)
+                {
+                    //Logger.Log($"Looping while {collectedVehicle.Vehicle.Model.Name} drives to waypoint {waypoints[nextWaypoint].Number} ({collectedVehicle.Vehicle.DistanceTo2D(waypoints[nextWaypoint].Position)}m away from collector radius {waypoints[nextWaypoint].CollectorRadius})");
+                    //Logger.Log($"Distance of front of vehicle to waypoint: {collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(waypoints[nextWaypoint].Position)}");
+                    GameFiber.Yield();
+                }
             }
         }
 
-        public static void LoopWhileDrivingToWaypoint(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint, float acceptedDistance)
-        {
-            while (VehicleAndDriverNullChecks(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(currentWaypoint.Position) > acceptedDistance)
-            {
-                //Game.LogTrivial($"Looping while {collectedVehicle.Vehicle.Model.Name} drives to waypoint {currentWaypoint.Number} ({collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}m away)");
-                GameFiber.Yield();
-            }
-        }
+        //public static void LoopWhileDrivingToWaypoint(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, int nextWaypoint, float acceptedDistance)
+        //{
+        //    while (VehicleAndDriverNullChecks(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && waypoints.ElementAtOrDefault(nextWaypoint) != null && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(waypoints[nextWaypoint].Position) > acceptedDistance)
+        //    {
+        //        //Logger.Log($"Looping while {collectedVehicle.Vehicle.Model.Name} drives to waypoint {waypoints[nextWaypoint].Number} ({collectedVehicle.Vehicle.DistanceTo2D(waypoints[nextWaypoint].Position)}m away from collector radius {waypoints[nextWaypoint].CollectorRadius})");
+        //        //Logger.Log($"Distance of front of vehicle to waypoint: {collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(waypoints[nextWaypoint].Position)}");
+        //        GameFiber.Yield();
+        //    }
+        //}
+
+        //public static void LoopWhileDrivingToWaypoint(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint, float acceptedDistance)
+        //{
+        //    while (VehicleAndDriverNullChecks(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(currentWaypoint.Position) > acceptedDistance)
+        //    {
+        //        //Logger.Log($"Looping while {collectedVehicle.Vehicle.Model.Name} drives to waypoint {currentWaypoint.Number} ({collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}m away)");
+        //        GameFiber.Yield();
+        //    }
+        //}
 
         private static float GetAcceptedStoppingDistance(List<Waypoint> waypoints, int nextWaypoint)
         {
@@ -128,7 +146,7 @@ namespace SceneManager
                 dist = (waypoints[nextWaypoint].Speed * waypoints[nextWaypoint].Speed) / (250 * 0.8f);
             }
             var acceptedDistance = MathHelper.Clamp(dist, 2, 10);
-            Game.LogTrivial($"Accepted distance: {acceptedDistance}");
+            Logger.Log($"Accepted distance: {acceptedDistance}");
             return acceptedDistance;
         }
 
@@ -136,17 +154,17 @@ namespace SceneManager
         {
             if (collectedVehicle == null)
             {
-                Game.LogTrivial($"CollectedVehicle is null");
+                Logger.Log($"CollectedVehicle is null");
                 return false;
             }
             if (!collectedVehicle.Vehicle)
             {
-                Game.LogTrivial($"Vehicle is null");
+                Logger.Log($"Vehicle is null");
                 return false;
             }
             if (!collectedVehicle.Driver)
             {
-                Game.LogTrivial($"Driver is null");
+                Logger.Log($"Driver is null");
                 return false;
             }
             return true;
@@ -156,22 +174,22 @@ namespace SceneManager
         {
             if (waypoints.ElementAtOrDefault(nextWaypoint) == null)
             {
-                Game.LogTrivial($"Waypoint is null");
+                Logger.Log($"Waypoint is null");
                 return false;
             }
             if(collectedVehicle == null)
             {
-                Game.LogTrivial($"CollectedVehicle is null");
+                Logger.Log($"CollectedVehicle is null");
                 return false;
             }
             if (!collectedVehicle.Vehicle)
             {
-                Game.LogTrivial($"Vehicle is null");
+                Logger.Log($"Vehicle is null");
                 return false;
             }
             if (!collectedVehicle.Driver)
             {
-                Game.LogTrivial($"Driver is null");
+                Logger.Log($"Driver is null");
                 return false;
             }
             return true;
@@ -183,8 +201,9 @@ namespace SceneManager
             {
                 return;
             }
+
             var stoppingDistance = GetAcceptedStoppingDistance(currentWaypoint.Path.Waypoints, currentWaypoint.Path.Waypoints.IndexOf(currentWaypoint));
-            Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} stopping at waypoint.");
+            Logger.Log($"{collectedVehicle.Vehicle.Model.Name} stopping at waypoint.");
             Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, stoppingDistance, -1, true);
             collectedVehicle.StoppedAtWaypoint = true;
             collectedVehicle.Driver.Tasks.Clear();
