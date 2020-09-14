@@ -7,22 +7,21 @@ namespace SceneManager
 {
     class SettingsMenu
     {
-        public static UIMenu settingsMenu { get; set; }
-        public static UIMenuCheckboxItem threeDWaypoints = new UIMenuCheckboxItem("Enable 3D Waypoints", Settings.Enable3DWaypoints),
+        internal static UIMenu settingsMenu = new UIMenu("Scene Manager", "~o~Plugin Settings");
+        internal static UIMenuCheckboxItem threeDWaypoints = new UIMenuCheckboxItem("Enable 3D Waypoints", Settings.Enable3DWaypoints),
             mapBlips = new UIMenuCheckboxItem("Enable Map Blips", Settings.EnableMapBlips),
             hints = new UIMenuCheckboxItem("Enable Hints", Settings.EnableHints);
         private static SpeedUnits[] speedArray = {SpeedUnits.MPH, SpeedUnits.KPH };
-        public static UIMenuListScrollerItem<SpeedUnits> speedUnits = new UIMenuListScrollerItem<SpeedUnits>("Speed Unit of Measure", "", new[] { SpeedUnits.MPH, SpeedUnits.KPH });
-        public static UIMenuItem saveSettings = new UIMenuItem("Save settings to .ini", "Updates the plugin's .ini file with the current settings so the next time the plugin is loaded, it will use these settings.");
+        internal static UIMenuListScrollerItem<SpeedUnits> speedUnits = new UIMenuListScrollerItem<SpeedUnits>("Speed Unit of Measure", "", new[] { SpeedUnits.MPH, SpeedUnits.KPH });
+        internal static UIMenuItem saveSettings = new UIMenuItem("Save settings to .ini", "Updates the plugin's .ini file with the current settings so the next time the plugin is loaded, it will use these settings.");
 
         internal static void InstantiateMenu()
         {
-            settingsMenu = new UIMenu("Scene Manager", "~o~Plugin Settings");
             settingsMenu.ParentMenu = MainMenu.mainMenu;
             MenuManager.menuPool.Add(settingsMenu);
         }
 
-        public static void BuildSettingsMenu()
+        internal static void BuildSettingsMenu()
         {
             settingsMenu.AddItem(threeDWaypoints);
             settingsMenu.AddItem(mapBlips);
