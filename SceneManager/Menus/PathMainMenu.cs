@@ -10,7 +10,7 @@ namespace SceneManager
 {
     static class PathMainMenu
     {
-        private static List<Path> paths = new List<Path>() { };
+        internal static List<Path> paths = new List<Path>() { };
         private static List<string> dismissOptions = new List<string>() { "From path", "From waypoint", "From position" };
 
         internal static UIMenu pathMainMenu = new UIMenu("Scene Manager", "~o~Path Manager Main Menu");
@@ -79,11 +79,6 @@ namespace SceneManager
                 pathMainMenu.OnItemSelect += PathMenu_OnItemSelected;
                 pathMainMenu.OnCheckboxChange += PathMenu_OnCheckboxChange;
             }
-        }
-
-        internal static ref List<Path> GetPaths()
-        {
-            return ref paths;
         }
 
         private static bool VehicleAndDriverValid(this Vehicle v)
@@ -233,6 +228,10 @@ namespace SceneManager
                     }
 
                     collectedVehicle.Driver.Tasks.Clear();
+                    if (collectedVehicle.StoppedAtWaypoint)
+                    {
+                        collectedVehicle.StoppedAtWaypoint = false;
+                    }
 
                     if (directOptions.SelectedItem == "First waypoint")
                     {

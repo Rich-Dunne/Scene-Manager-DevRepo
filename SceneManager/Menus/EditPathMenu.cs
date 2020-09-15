@@ -32,7 +32,7 @@ namespace SceneManager
 
         private static void EditPath_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            var currentPath = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index];
+            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
 
             if (selectedItem == editPathWaypoints)
             {
@@ -49,7 +49,7 @@ namespace SceneManager
         {
             if (checkboxItem == disablePath)
             {
-                var currentPath = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index];
+                var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
                 if (disablePath.Checked)
                 {
                     currentPath.DisablePath();

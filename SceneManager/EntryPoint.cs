@@ -54,9 +54,9 @@ namespace SceneManager
         private static void MyTerminationHandler(object sender, EventArgs e)
         {
             // Clean up paths
-            for (int i = 0; i < PathMainMenu.GetPaths().Count; i++)
+            for (int i = 0; i < PathMainMenu.paths.Count; i++)
             {
-                PathMainMenu.DeletePath(PathMainMenu.GetPaths()[i], PathMainMenu.Delete.All);
+                PathMainMenu.DeletePath(PathMainMenu.paths[i], PathMainMenu.Delete.All);
             }
 
             // Clean up cones
@@ -72,7 +72,7 @@ namespace SceneManager
             // Clear everything
             BarrierMenu.barriers.Clear();
             VehicleCollector.collectedVehicles.Clear();
-            PathMainMenu.GetPaths().Clear();
+            PathMainMenu.paths.Clear();
 
             Logger.Log($"Plugin has shut down.");
             Game.DisplayNotification($"~o~Scene Manager\n~r~[Notice]~w~ The plugin has shut down.");

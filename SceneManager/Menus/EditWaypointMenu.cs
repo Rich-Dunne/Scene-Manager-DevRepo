@@ -34,7 +34,7 @@ namespace SceneManager
             // Need to unsubscribe from these or else there will be duplicate firings if the user left the menu, then re-entered
             ResetEventHandlerSubscriptions();
 
-            var currentPath = PathMainMenu.GetPaths()[PathMainMenu.editPath.Value - 1];
+            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Value-1];
             //Logger.Log($"Current path: {currentPath.Number}");
 
             editWaypoint = new UIMenuNumericScrollerItem<int>("Edit Waypoint", "", currentPath.Waypoints.First().Number, currentPath.Waypoints.Last().Number, 1);
@@ -95,7 +95,7 @@ namespace SceneManager
 
         private static void EditWaypoint_OnScrollerChanged(UIMenu sender, UIMenuScrollerItem scrollerItem, int first, int last)
         {
-            var currentPath = PathMainMenu.GetPaths()[PathMainMenu.editPath.Value - 1];
+            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
             var currentWaypoint = currentPath.Waypoints[editWaypoint.Value - 1];
 
             if (scrollerItem == editWaypoint)
@@ -136,7 +136,7 @@ namespace SceneManager
 
         private static void EditWaypoint_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            var currentPath = PathMainMenu.GetPaths()[PathMainMenu.editPath.Index];
+            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
             var currentWaypoint = currentPath.Waypoints[editWaypoint.Index];
 
             if (selectedItem == updateWaypoint)
@@ -160,7 +160,7 @@ namespace SceneManager
 
             if (selectedItem == addAsNewWaypoint)
             {
-                var pathIndex = PathMainMenu.GetPaths().IndexOf(currentPath);
+                var pathIndex = PathMainMenu.paths.IndexOf(currentPath);
                 var drivingFlag = drivingFlags[changeWaypointType.Index];
                 var blip = PathCreationMenu.CreateWaypointBlip(pathIndex, drivingFlag);
                 if (!currentPath.IsEnabled)

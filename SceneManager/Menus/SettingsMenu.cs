@@ -51,7 +51,7 @@ namespace SceneManager
             {
                 if (mapBlips.Checked)
                 {
-                    foreach(Path path in PathMainMenu.GetPaths())
+                    foreach(Path path in PathMainMenu.paths)
                     {
                         foreach(Waypoint wp in path.Waypoints)
                         {
@@ -61,7 +61,7 @@ namespace SceneManager
                 }
                 else
                 {
-                    foreach (Path path in PathMainMenu.GetPaths())
+                    foreach (Path path in PathMainMenu.paths)
                     {
                         foreach (Waypoint wp in path.Waypoints)
                         {

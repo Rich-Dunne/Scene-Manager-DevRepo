@@ -76,29 +76,29 @@ namespace SceneManager
         { 
             if (selectedItem == trafficAddWaypoint)
             {
-                var anyPathsExist = PathMainMenu.GetPaths().Count > 0;
+                var anyPathsExist = PathMainMenu.paths.Count > 0;
 
                 if (!anyPathsExist)
                 {
-                    AddNewPathToPathsCollection(PathMainMenu.GetPaths(), 0);
+                    AddNewPathToPathsCollection(PathMainMenu.paths, 0);
                 }
-                else if(anyPathsExist && !PathMainMenu.GetPaths().Any(p => p != null && p.State == State.Creating))
+                else if(anyPathsExist && !PathMainMenu.paths.Any(p => p != null && p.State == State.Creating))
                 {
-                    AddNewPathToPathsCollection(PathMainMenu.GetPaths(), PathMainMenu.GetPaths().IndexOf(PathMainMenu.GetPaths().Where(p => p.State == State.Finished).First()) + 1);
+                    AddNewPathToPathsCollection(PathMainMenu.paths, PathMainMenu.paths.IndexOf(PathMainMenu.paths.Where(p => p.State == State.Finished).First()) + 1);
                 }
 
-                var firstNonNullPath = PathMainMenu.GetPaths().Where(p => p != null && p.State == State.Creating).First();
-                var pathIndex = PathMainMenu.GetPaths().IndexOf(firstNonNullPath);
+                var firstNonNullPath = PathMainMenu.paths.Where(p => p != null && p.State == State.Creating).First();
+                var pathIndex = PathMainMenu.paths.IndexOf(firstNonNullPath);
                 var pathNumber = firstNonNullPath.Number;
-                var waypointNumber = PathMainMenu.GetPaths()[pathIndex].Waypoints.Count + 1;
+                var waypointNumber = PathMainMenu.paths[pathIndex].Waypoints.Count + 1;
 
                 if (collectorWaypoint.Checked)
                 {
-                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index]), true, collectorRadius.Value, speedZoneRadius.Value));
+                    PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index]), true, collectorRadius.Value, speedZoneRadius.Value));
                 }
                 else
                 {
-                    PathMainMenu.GetPaths()[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index])));
+                    PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index])));
                 }
                 Logger.Log($"[Path {pathNumber}] Waypoint {waypointNumber} ({drivingFlags[waypointType.Index].ToString()}) added");
 
@@ -130,24 +130,24 @@ namespace SceneManager
             if (selectedItem == trafficRemoveWaypoint)
             {
                 // Loop through each path and find the first one which isn't finished, then delete the path's last waypoint and corresponding blip
-                for (int i = 0; i < PathMainMenu.GetPaths().Count; i++)
+                for (int i = 0; i < PathMainMenu.paths.Count; i++)
                 {
-                    if (PathMainMenu.GetPaths().ElementAtOrDefault(i) != null && PathMainMenu.GetPaths()[i].State == State.Creating)
+                    if (PathMainMenu.paths.ElementAtOrDefault(i) != null && PathMainMenu.paths[i].State == State.Creating)
                     {
-                        Logger.Log($"[Path {i + 1}] {PathMainMenu.GetPaths()[i].Waypoints.Last().DrivingFlag.ToString()} waypoint removed");
-                        PathMainMenu.GetPaths()[i].Waypoints.Last().Blip.Delete();
-                        PathMainMenu.GetPaths()[i].Waypoints.Last().RemoveSpeedZone();
+                        Logger.Log($"[Path {i + 1}] {PathMainMenu.paths[i].Waypoints.Last().DrivingFlag.ToString()} waypoint removed");
+                        PathMainMenu.paths[i].Waypoints.Last().Blip.Delete();
+                        PathMainMenu.paths[i].Waypoints.Last().RemoveSpeedZone();
 
-                        if (PathMainMenu.GetPaths()[i].Waypoints.Last().CollectorRadiusBlip)
+                        if (PathMainMenu.paths[i].Waypoints.Last().CollectorRadiusBlip)
                         {
-                            PathMainMenu.GetPaths()[i].Waypoints.Last().CollectorRadiusBlip.Delete();
+                            PathMainMenu.paths[i].Waypoints.Last().CollectorRadiusBlip.Delete();
                         }
-                        PathMainMenu.GetPaths()[i].Waypoints.RemoveAt(PathMainMenu.GetPaths()[i].Waypoints.IndexOf(PathMainMenu.GetPaths()[i].Waypoints.Last()));
+                        PathMainMenu.paths[i].Waypoints.RemoveAt(PathMainMenu.paths[i].Waypoints.IndexOf(PathMainMenu.paths[i].Waypoints.Last()));
 
                         ToggleTrafficEndPathMenuItem(i);
 
                         // If the path has no waypoints, disable the menu option to remove a waypoint
-                        if (PathMainMenu.GetPaths()[i].Waypoints.Count == 0)
+                        if (PathMainMenu.paths[i].Waypoints.Count == 0)
                         {
                             collectorWaypoint.Checked = true;
                             collectorWaypoint.Enabled = false;
@@ -163,10 +163,10 @@ namespace SceneManager
             if (selectedItem == trafficEndPath)
             {
                 // Loop through each path and find the first one which isn't finished
-                for (int i = 0; i < PathMainMenu.GetPaths().Count; i++)
+                for (int i = 0; i < PathMainMenu.paths.Count; i++)
                 {
-                    var currentPath = PathMainMenu.GetPaths()[i];
-                    if (PathMainMenu.GetPaths().ElementAtOrDefault(i) != null && currentPath.State == State.Creating)
+                    var currentPath = PathMainMenu.paths[i];
+                    if (PathMainMenu.paths.ElementAtOrDefault(i) != null && currentPath.State == State.Creating)
                     {
                         Logger.Log($"[Path Creation] Path {currentPath.Number} finished with {currentPath.Waypoints.Count} waypoints.");
                         Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Path {i + 1} complete.");
@@ -174,14 +174,16 @@ namespace SceneManager
                         currentPath.IsEnabled = true;
                         currentPath.Number = i + 1;
 
-                        foreach (Waypoint waypoint in PathMainMenu.GetPaths()[i].Waypoints)
+                        foreach (Waypoint waypoint in PathMainMenu.paths[i].Waypoints)
                         {
-                            GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => VehicleCollector.StartCollectingAtWaypoint(PathMainMenu.GetPaths(), PathMainMenu.GetPaths()[i], waypoint));
+                            GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => VehicleCollector.StartCollectingAtWaypoint(PathMainMenu.paths, PathMainMenu.paths[i], waypoint));
                             WaypointVehicleCollectorFiber.Start();
                         }
 
                         PathMainMenu.createNewPath.Text = "Create New Path";
                         PathMainMenu.BuildPathMenu();
+                        PathMainMenu.pathMainMenu.RefreshIndex();
+                        pathCreationMenu.RefreshIndex();
                         collectorWaypoint.Enabled = false;
                         collectorWaypoint.Checked = true;
                         speedZoneRadius.Enabled = true;
@@ -216,7 +218,7 @@ namespace SceneManager
 
         private static void ToggleTrafficEndPathMenuItem(int pathIndex)
         {
-            if (PathMainMenu.GetPaths()[pathIndex].Waypoints.Count > 0)
+            if (PathMainMenu.paths[pathIndex].Waypoints.Count > 0)
             {
                 trafficEndPath.Enabled = true;
             }
