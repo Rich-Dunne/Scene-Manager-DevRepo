@@ -77,11 +77,11 @@ namespace SceneManager
                     Logger.Log($"{vehicle.Model.Name} is driving to waypoint {waypoints[nextWaypoint].Number}");
                     if (waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.IgnorePathFinding)
                     {
-                        collectedVehicle.Driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)17040299, acceptedDistance);
+                        driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)17040299, acceptedDistance);
                     }
                     else
                     {
-                        collectedVehicle.Driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263075, acceptedDistance);
+                        driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263075, acceptedDistance);
                     }
                     LoopWhileDrivingToWaypoint(nextWaypoint, acceptedDistance);
 
