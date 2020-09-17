@@ -245,9 +245,12 @@ namespace SceneManager
                         barriers.RemoveAt(barriers.Count - 1);
                         break;
                     case 1:
-                        barriers = barriers.OrderBy(b => b.Object.DistanceTo2D(Game.LocalPlayer.Character)).ToList();
-                        barriers[0].Object.Delete();
-                        barriers.RemoveAt(0);
+                        var nearestBarrier = barriers.OrderBy(b => b.Object.DistanceTo2D(Game.LocalPlayer.Character)).FirstOrDefault();
+                        if(nearestBarrier != null)
+                        {
+                            nearestBarrier.Object.Delete();
+                            barriers.Remove(nearestBarrier);
+                        }
                         break;
                     case 2:
                         foreach (Barrier b in barriers.Where(b => b.Object))
