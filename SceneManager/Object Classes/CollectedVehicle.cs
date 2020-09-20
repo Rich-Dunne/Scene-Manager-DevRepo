@@ -10,9 +10,10 @@ namespace SceneManager
         internal Path Path { get; set; }
         internal Waypoint CurrentWaypoint { get; set; }
         internal Waypoint NextWaypoint { get; private set; }
-        internal bool StoppedAtWaypoint { get; set; }
-        internal bool Dismissed { get; set; }
-        internal bool SkipWaypoint { get; set; }
+        internal bool StoppedAtWaypoint { get; set; } = false;
+        internal bool Dismissed { get; set; } = false;
+        internal bool Directed { get; set; } = false;
+        internal bool SkipWaypoint { get; set; } = false;
 
         internal CollectedVehicle(Vehicle vehicle, Path path, Waypoint currentWaypoint)
         {
@@ -29,49 +30,76 @@ namespace SceneManager
             Path = path;
         }
 
-        internal void Dismiss()
+        internal void Dismiss(DismissOption dismissOption = DismissOption.FromPath)
         {
-            GameFiber.StartNew(() =>
+            if (!Vehicle || !Driver)
             {
-                if (!Vehicle || !Driver)
-                {
-                    return;
-                }
-                Dismissed = true;
-                StoppedAtWaypoint = false;
+                return;
+            }
 
-                Driver.Tasks.Clear();
-                Driver.Tasks.PerformDrivingManeuver(Vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3);
+            if (dismissOption == DismissOption.FromWorld)
+            {
+                Game.LogTrivial($"Dismissed {Vehicle.Model.Name} from the world");
+                Vehicle.Driver.Delete();
+                Vehicle.Delete();
+                return;
+            }
 
-                if (Driver.GetAttachedBlip())
+            Dismissed = true;
+            Dismissed = false;
+            Driver.Tasks.Clear();
+            if(StoppedAtWaypoint)
+            {
+                Logger.Log($"Unstucking stopped vehicle");
+                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
+                GameFiber.StartNew(() =>
                 {
-                    Driver.GetAttachedBlip().Delete();
-                }
-
-                // check if the vehicle is near any of the path's collector waypoints
-                var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector && Vehicle.DistanceTo2D(wp.Position) <= wp.CollectorRadius * 2).FirstOrDefault();
-                if (nearestCollectorWaypoint != null)
-                {
-                    while (nearestCollectorWaypoint != null && Vehicle && Driver && Vehicle.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius * 2)
+                    while(Vehicle.Speed < 1f)
                     {
-                        //Game.LogTrivial($"{_vehicle.Model.Name} is too close to the collector to be fully dismissed.");
                         GameFiber.Yield();
                     }
-                }
+                });
+                StoppedAtWaypoint = false;
+            }
 
-                if (!Vehicle || !Driver)
+            if(dismissOption == DismissOption.FromWaypoint && CurrentWaypoint.Number != Path.Waypoints.Count)
+            {
+                Logger.Log($"Dismissed from waypoint.");
+                SkipWaypoint = true;
+                SkipWaypoint = false;
+            }
+
+            if(dismissOption == DismissOption.FromWaypoint && CurrentWaypoint.Number == Path.Waypoints.Count || dismissOption == DismissOption.FromPath)
+            {
+                Logger.Log($"Dismissed from path.");
+                GameFiber.StartNew(() =>
                 {
-                    return;
-                }
+                    // check if the vehicle is near any of the path's collector waypoints
+                    var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector && Vehicle.DistanceTo2D(wp.Position) <= wp.CollectorRadius * 2).FirstOrDefault();
+                    while (nearestCollectorWaypoint != null && Vehicle && Driver && Vehicle.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius * 2)
+                    {
+                        //Game.LogTrivial($"{Vehicle.Model.Name} is too close to the collector to be fully dismissed.");
+                        GameFiber.Yield();
+                    }
 
-                VehicleCollector.collectedVehicles.Remove(this);
-                Logger.Log($"{Vehicle.Model.Name} dismissed successfully.");
-                Driver.BlockPermanentEvents = false;
-                Driver.Dismiss();
-                Vehicle.IsSirenOn = false;
-                Vehicle.IsSirenSilent = true;
-                Vehicle.Dismiss();
-            });
+                    if (!Vehicle || !Driver)
+                    {
+                        return;
+                    }
+
+                    VehicleCollector.collectedVehicles.Remove(this);
+                    Logger.Log($"{Vehicle.Model.Name} dismissed successfully.");
+                    if (Driver.GetAttachedBlip())
+                    {
+                        Driver.GetAttachedBlip().Delete();
+                    }
+                    Driver.BlockPermanentEvents = false;
+                    Driver.Dismiss();
+                    Vehicle.IsSirenOn = false;
+                    Vehicle.IsSirenSilent = true;
+                    Vehicle.Dismiss();
+                });
+            }
         }
     }
 }
