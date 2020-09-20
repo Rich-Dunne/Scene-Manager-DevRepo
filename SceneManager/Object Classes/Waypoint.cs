@@ -20,7 +20,7 @@ namespace SceneManager
         internal bool EnableWaypointMarker { get; set; } = true;
         internal bool EnableEditMarker { get; set; }
 
-        internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector = false, float collectorRadius = 0, float speedZoneRadius = 0)
+        internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 5)
         {
             Path = path;
             Number = waypointNum;
@@ -61,10 +61,10 @@ namespace SceneManager
             {
                 if(DrivingFlag == VehicleDrivingFlags.StopAtDestination && newDrivingFlag != VehicleDrivingFlags.StopAtDestination)
                 {
-                    foreach(CollectedVehicle cv in VehicleCollector.collectedVehicles.Where(cv => cv.Path == Path && cv.CurrentWaypoint == this && cv.StoppedAtWaypoint))
+                    foreach(CollectedVehicle cv in VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle && cv.Path == Path && cv.CurrentWaypoint == this && cv.StoppedAtWaypoint))
                     {
                         Logger.Log($"Setting StoppedAtWaypoint to false for {cv.Vehicle.Model.Name}");
-                        cv.StoppedAtWaypoint = false;
+                        cv.Dismiss(DismissOption.FromWaypoint);
                     }
                 }
                 DrivingFlag = newDrivingFlag;
