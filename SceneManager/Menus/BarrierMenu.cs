@@ -179,24 +179,25 @@ namespace SceneManager
             {
                 RemoveBarrier();
             }
-
+            
             if (selectedItem == resetBarriers)
             {
-                var currentBarriers = barriers.Where(b => b.Object && b.Object.Model.Name != "0xa2c44e80").ToList();
-                foreach (Barrier oldBarrier in currentBarriers)
+                var currentBarriers = barriers.Where(b => b.Model.Name != "0xa2c44e80").ToList(); // 0xa2c44e80 is the flare weapon hash
+                foreach (Barrier barrier in currentBarriers)
                 {
-                    if (oldBarrier.Object)
-                    {
-                        var newBarrier = new Rage.Object(oldBarrier.Object.Model, oldBarrier.Position, oldBarrier.Rotation);
-                        newBarrier.SetPositionWithSnap(oldBarrier.Position);
-                        Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(newBarrier, true);
-                        newBarrier.IsPositionFrozen = false;
-                        Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(newBarrier, true);
-                        barriers.Add(new Barrier(newBarrier, newBarrier.Position, newBarrier.Heading));
+                    var newBarrier = new Rage.Object(barrier.Model, barrier.Position, barrier.Rotation);
+                    newBarrier.SetPositionWithSnap(barrier.Position);
+                    Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(newBarrier, true);
+                    newBarrier.IsPositionFrozen = false;
+                    Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(newBarrier, true);
+                    barriers.Add(new Barrier(newBarrier, newBarrier.Position, newBarrier.Heading));
 
-                        oldBarrier.Object.Delete();
-                        barriers.Remove(oldBarrier);
+
+                    if (barrier.Object)
+                    {
+                        barrier.Object.Delete();
                     }
+                    barriers.Remove(barrier);
                 }
                 currentBarriers.Clear();
             }
