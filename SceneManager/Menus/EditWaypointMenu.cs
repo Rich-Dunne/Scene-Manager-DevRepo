@@ -104,7 +104,9 @@ namespace SceneManager
                 changeWaypointSpeed.Value = (int)MathHelper.ConvertMetersPerSecondToMilesPerHour(currentWaypoint.Speed);
                 collectorWaypoint.Checked = currentWaypoint.IsCollector;
                 changeCollectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
+                changeCollectorRadius.Value = (int)currentWaypoint.CollectorRadius;
                 changeSpeedZoneRadius.Enabled = collectorWaypoint.Checked ? true : false;
+                changeSpeedZoneRadius.Value = (int)currentWaypoint.SpeedZoneRadius;
                 updateWaypointPosition.Checked = false;
             }
 
@@ -170,7 +172,7 @@ namespace SceneManager
 
                 if (collectorWaypoint.Checked)
                 {
-                    currentPath.Waypoints.Add(new Waypoint(currentPath, currentWaypoint.Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, changeCollectorRadius.Value, changeSpeedZoneRadius.Value));
+                    currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, changeCollectorRadius.Value, changeSpeedZoneRadius.Value));
                 }
                 else
                 {
@@ -183,6 +185,7 @@ namespace SceneManager
                 editWaypoint.Index = editWaypoint.OptionCount - 1;
                 editWaypointMenu.RefreshIndex();
                 updateWaypointPosition.Checked = false;
+                Logger.Log($"New waypoint (#{currentWaypoint.Number + 1}) added.");
             }
 
             if (selectedItem == removeWaypoint)
