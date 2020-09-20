@@ -93,7 +93,6 @@ namespace SceneManager
                     Blip.Color = Color.Blue;
                     if (CollectorRadiusBlip)
                     {
-                        CollectorRadiusBlip.Position = Game.LocalPlayer.Character.Position;
                         CollectorRadiusBlip.Alpha = 0.5f;
                         CollectorRadiusBlip.Scale = collectorRadius * 0.5f;
                     }
@@ -130,6 +129,7 @@ namespace SceneManager
             void UpdateWaypointBlipPosition()
             {
                 Blip.Position = Game.LocalPlayer.Character.Position;
+                CollectorRadiusBlip.Position = Game.LocalPlayer.Character.Position;
             }
         }
 
