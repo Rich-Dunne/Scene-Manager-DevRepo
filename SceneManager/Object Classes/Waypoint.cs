@@ -94,7 +94,7 @@ namespace SceneManager
                     if (CollectorRadiusBlip)
                     {
                         CollectorRadiusBlip.Alpha = 0.5f;
-                        CollectorRadiusBlip.Scale = collectorRadius * 0.5f;
+                        CollectorRadiusBlip.Scale = collectorRadius;
                     }
                     else
                     {
@@ -128,8 +128,14 @@ namespace SceneManager
 
             void UpdateWaypointBlipPosition()
             {
-                Blip.Position = Game.LocalPlayer.Character.Position;
-                CollectorRadiusBlip.Position = Game.LocalPlayer.Character.Position;
+                if (Blip)
+                {
+                    Blip.Position = Game.LocalPlayer.Character.Position;
+                }
+                if (CollectorRadiusBlip)
+                {
+                    CollectorRadiusBlip.Position = Game.LocalPlayer.Character.Position;
+                }
             }
         }
 
