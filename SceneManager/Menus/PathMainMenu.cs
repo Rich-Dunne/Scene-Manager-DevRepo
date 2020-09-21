@@ -52,6 +52,7 @@ namespace SceneManager
             pathMainMenu.AddItem(createNewPath = new UIMenuItem("Create New Path"));
             createNewPath.ForeColor = Color.Gold;
             pathMainMenu.AddItem(editPath = new UIMenuNumericScrollerItem<int>("Edit Path", "", 1, paths.Count, 1));
+            editPath.Index = 0;
             editPath.ForeColor = Color.Gold;
             pathMainMenu.AddItem(disableAllPaths);
             disableAllPaths.Enabled = true;
@@ -152,6 +153,8 @@ namespace SceneManager
             if (pathsToDelete == Delete.Single)
             {
                 paths.Remove(path);
+                UpdatePathNumbers();
+                UpdatePathBlips();
                 BuildPathMenu();
                 pathMainMenu.Visible = true;
                 Game.LogTrivial($"Path {path.Number} deleted successfully.");
@@ -160,6 +163,27 @@ namespace SceneManager
 
             EditPathMenu.editPathMenu.Reset(true, true);
             EditPathMenu.disablePath.Enabled = true;
+        }
+
+        private static void UpdatePathBlips()
+        {
+            foreach (Path p in paths)
+            {
+                foreach (Waypoint waypoint in p.Waypoints)
+                {
+                    var blipColor = waypoint.Blip.Color;
+                    waypoint.Blip.Sprite = (BlipSprite)paths.IndexOf(p) + 17;
+                    waypoint.Blip.Color = blipColor;
+                }
+            }
+        }
+
+        private static void UpdatePathNumbers()
+        {
+            for (int i = 0; i < paths.Count; i++)
+            {
+                paths[i].Number = i + 1;
+            }
         }
 
         private static void PathMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
@@ -268,7 +292,7 @@ namespace SceneManager
 
             if (selectedItem == dismissDriver)
             {
-                var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(1).Where(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid()).SingleOrDefault();
+                var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(16).Where(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid()).FirstOrDefault();
                 if (nearbyVehicle)
                 {
                     var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
