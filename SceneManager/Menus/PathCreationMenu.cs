@@ -31,7 +31,7 @@ namespace SceneManager
         {
             pathCreationMenu.AddItem(waypointType);
 
-            pathCreationMenu.AddItem(waypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to the waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 80, 5));
+            pathCreationMenu.AddItem(waypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to the waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 100, 5));
             waypointSpeed.Index = 0;
 
             pathCreationMenu.AddItem(collectorWaypoint);
@@ -84,7 +84,7 @@ namespace SceneManager
                 }
                 else if(anyPathsExist && !PathMainMenu.paths.Any(p => p != null && p.State == State.Creating))
                 {
-                    AddNewPathToPathsCollection(PathMainMenu.paths, PathMainMenu.paths.IndexOf(PathMainMenu.paths.Where(p => p.State == State.Finished).First()) + 1);
+                    AddNewPathToPathsCollection(PathMainMenu.paths, PathMainMenu.paths.IndexOf(PathMainMenu.paths.Where(p => p.State == State.Finished).Last()) + 1);
                 }
 
                 var firstNonNullPath = PathMainMenu.paths.Where(p => p != null && p.State == State.Creating).First();
