@@ -63,7 +63,7 @@ namespace SceneManager
 
         private static bool IsValidForCollection(this Vehicle v)
         {
-            if(v && v.Speed > 1 && v.IsOnAllWheels && v != Game.LocalPlayer.Character.CurrentVehicle && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)) && !collectedVehicles.Any(cv => cv.Vehicle == v))
+            if(v && v.Speed > 1 && v.IsOnAllWheels && v.IsEngineOn && v != Game.LocalPlayer.Character.CurrentVehicle && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)) && !collectedVehicles.Any(cv => cv.Vehicle == v))
             {
                 if(v.HasDriver && !v.Driver.IsAlive)
                 {
@@ -72,6 +72,10 @@ namespace SceneManager
                 if (!v.HasDriver)
                 {
                     v.CreateRandomDriver();
+                    while (!v.HasDriver)
+                    {
+                        GameFiber.Yield();
+                    }
                     var driverBlip = v.Driver.AttachBlip();
                     driverBlip.Color = Color.Green;
                     driverBlip.Scale = 0.25f;
