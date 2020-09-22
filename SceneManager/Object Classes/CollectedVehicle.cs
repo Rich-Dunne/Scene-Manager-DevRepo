@@ -40,13 +40,19 @@ namespace SceneManager
             if (dismissOption == DismissOption.FromWorld)
             {
                 Game.LogTrivial($"Dismissed {Vehicle.Model.Name} from the world");
-                Vehicle.Driver.Delete();
+                if (Vehicle.HasDriver)
+                {
+                    while (Vehicle.Driver)
+                    {
+                        Vehicle.Driver.Dismiss();
+                        Vehicle.Driver.Delete();
+                        GameFiber.Yield();
+                    }
+                }
                 Vehicle.Delete();
                 return;
             }
 
-            Dismissed = true;
-            Dismissed = false;
             Driver.Tasks.Clear();
             if(StoppedAtWaypoint)
             {
@@ -66,12 +72,17 @@ namespace SceneManager
             {
                 Logger.Log($"Dismissed from waypoint.");
                 SkipWaypoint = true;
-                SkipWaypoint = false;
+                GameFiber.StartNew(() =>
+                {
+                    GameFiber.Sleep(100);
+                    SkipWaypoint = false;
+                });
             }
 
             if(dismissOption == DismissOption.FromWaypoint && CurrentWaypoint.Number == Path.Waypoints.Count || dismissOption == DismissOption.FromPath)
             {
                 Logger.Log($"Dismissed from path.");
+                Dismissed = true;
                 GameFiber.StartNew(() =>
                 {
                     // check if the vehicle is near any of the path's collector waypoints
