@@ -15,6 +15,8 @@ namespace SceneManager
 
         internal static void StartCollectingAtWaypoint(List<Path> paths, Path path, Waypoint waypoint)
         {
+            LoopForVehiclesToBeDismissed(paths, path);
+
             while (paths.Contains(path) && path.Waypoints.Contains(waypoint))
             {
                 if (path.IsEnabled && waypoint.IsCollector)
@@ -23,6 +25,29 @@ namespace SceneManager
                 }
                 GameFiber.Sleep(100);
             }
+        }
+
+        private static void LoopForVehiclesToBeDismissed(List<Path> paths, Path path)
+        {
+            GameFiber.StartNew(() =>
+            {
+                while (paths.Contains(path))
+                {
+                    Logger.Log($"Cleaning up bad collected vehicles");
+                    foreach (CollectedVehicle cv in collectedVehicles)
+                    {
+                        if (!cv.Vehicle.IsDriveable || cv.Vehicle.IsUpsideDown || !cv.Vehicle.HasDriver)
+                        {
+                            if (cv.Vehicle.HasDriver)
+                            {
+                                cv.Vehicle.Driver.Dismiss();
+                            }
+                            cv.Vehicle.Dismiss();
+                        }
+                    }
+                    GameFiber.Sleep(10000);
+                }
+            });
         }
 
         private static void LoopForNearbyValidVehicles(Path path, Waypoint waypoint)
