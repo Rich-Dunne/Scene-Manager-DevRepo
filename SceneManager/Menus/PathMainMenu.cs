@@ -303,7 +303,16 @@ namespace SceneManager
                     else if(dismissDriver.Index == (int)DismissOption.FromWorld)
                     {
                         Game.LogTrivial($"Dismissed {nearbyVehicle.Model.Name} from the world");
-                        nearbyVehicle.Driver.Delete();
+                        if (nearbyVehicle.HasDriver)
+                        {
+                            while (nearbyVehicle.Driver)
+                            {
+                                nearbyVehicle.Driver.Dismiss();
+                                nearbyVehicle.Driver.Delete();
+                                GameFiber.Yield();
+                            }
+                        }
+
                         nearbyVehicle.Delete(); 
                     }
                 }
