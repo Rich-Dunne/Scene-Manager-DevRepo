@@ -98,7 +98,7 @@ namespace SceneManager
                     }
                     else
                     {
-                        CollectorRadiusBlip = new Blip(Blip.Position)
+                        CollectorRadiusBlip = new Blip(Blip.Position, collectorRadius)
                         {
                             Color = Blip.Color,
                             Alpha = 0.5f
