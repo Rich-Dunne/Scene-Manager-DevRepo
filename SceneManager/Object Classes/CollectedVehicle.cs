@@ -40,14 +40,14 @@ namespace SceneManager
             if (dismissOption == DismissOption.FromWorld)
             {
                 Game.LogTrivial($"Dismissed {Vehicle.Model.Name} from the world");
-                if (Vehicle.HasDriver)
+                while (Vehicle.HasOccupants)
                 {
-                    while (Vehicle.Driver)
+                    foreach(Ped occupant in Vehicle.Occupants)
                     {
-                        Vehicle.Driver.Dismiss();
-                        Vehicle.Driver.Delete();
-                        GameFiber.Yield();
+                        occupant.Dismiss();
+                        occupant.Delete();
                     }
+                    GameFiber.Yield();
                 }
                 Vehicle.Delete();
                 return;
