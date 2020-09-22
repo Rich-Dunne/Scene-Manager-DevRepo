@@ -33,7 +33,7 @@ namespace SceneManager
             {
                 while (paths.Contains(path))
                 {
-                    Logger.Log($"Cleaning up bad collected vehicles");
+                    Logger.Log($"Dismissing unused vehicles for cleanup");
                     foreach (CollectedVehicle cv in collectedVehicles)
                     {
                         if (!cv.Vehicle.IsDriveable || cv.Vehicle.IsUpsideDown || !cv.Vehicle.HasDriver)
@@ -45,7 +45,7 @@ namespace SceneManager
                             cv.Vehicle.Dismiss();
                         }
                     }
-                    GameFiber.Sleep(10000);
+                    GameFiber.Sleep(60000);
                 }
             });
         }
