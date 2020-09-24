@@ -33,7 +33,7 @@ namespace SceneManager
             {
                 while (paths.Contains(path))
                 {
-                    Logger.Log($"Dismissing unused vehicles for cleanup");
+                    //Logger.Log($"Dismissing unused vehicles for cleanup");
                     foreach (CollectedVehicle cv in collectedVehicles.Where(cv => cv.Vehicle))
                     {
                         if (!cv.Vehicle.IsDriveable || cv.Vehicle.IsUpsideDown || !cv.Vehicle.HasDriver)
