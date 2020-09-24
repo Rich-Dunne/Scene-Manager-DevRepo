@@ -60,7 +60,7 @@ namespace SceneManager
                 Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
                 GameFiber.StartNew(() =>
                 {
-                    while(Vehicle.Speed < 1f)
+                    while(Vehicle && Vehicle.Speed < 1f)
                     {
                         GameFiber.Yield();
                     }
