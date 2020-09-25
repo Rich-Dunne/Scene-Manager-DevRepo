@@ -72,16 +72,16 @@ namespace SceneManager
             {
                 Logger.Log($"Dismissed from waypoint.");
                 SkipWaypoint = true;
-                GameFiber.StartNew(() =>
-                {
-                    GameFiber.Sleep(100);
-                    SkipWaypoint = false;
-                });
+                //GameFiber.StartNew(() =>
+                //{
+                //    GameFiber.Sleep(100);
+                //    SkipWaypoint = false;
+                //    Logger.Log($"SkipWaypoint false");
+                //});
             }
 
             if(dismissOption == DismissOption.FromWaypoint && CurrentWaypoint.Number == Path.Waypoints.Count || dismissOption == DismissOption.FromPath)
             {
-                Logger.Log($"Dismissed from path.");
                 Dismissed = true;
                 GameFiber.StartNew(() =>
                 {
