@@ -36,7 +36,7 @@ namespace SceneManager
             Logger.Log($"{collectedVehicle.Vehicle.Model.Name} all tasks complete.");
             if (!collectedVehicle.Dismissed)
             {
-                Logger.Log($"Dismissing {collectedVehicle.Vehicle.Model.Name}");
+                Logger.Log($"Dismissing {collectedVehicle.Vehicle.Model.Name} from path");
                 collectedVehicle.Dismiss();
             }
 
@@ -60,33 +60,35 @@ namespace SceneManager
             var vehicle = collectedVehicle.Vehicle;
             var driver = vehicle.Driver;
 
-            for (int nextWaypoint = currentWaypoint.Number; nextWaypoint < waypoints.Count; nextWaypoint++)
+            for (int currentWaypointTask = currentWaypoint.Number; currentWaypointTask < waypoints.Count; currentWaypointTask++)
             {
-                if (!VehicleAndDriverAreValid(waypoints, nextWaypoint, collectedVehicle) || collectedVehicle.Dismissed)
+                collectedVehicle.SkipWaypoint = false;
+                if (collectedVehicle.Dismissed)
                 {
+                    Logger.Log($"Vehicle dismissed, return");
                     return;
                 }
-                if (collectedVehicle.SkipWaypoint)
+                //if (collectedVehicle.SkipWaypoint)
+                //{
+                //    Logger.Log($"Vehicle still skipping waypoint");
+                //    continue;
+                //}
+                if (waypoints.ElementAtOrDefault(currentWaypointTask) != null && !collectedVehicle.StoppedAtWaypoint)
                 {
-                    continue;
-                }
+                    collectedVehicle.CurrentWaypoint = waypoints[currentWaypointTask];
+                    //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} current waypoint: {collectedVehicle.CurrentWaypoint.Number}");
+                    float acceptedDistance = GetAcceptedStoppingDistance(waypoints, currentWaypointTask);
 
-                if (waypoints.ElementAtOrDefault(nextWaypoint) != null && !collectedVehicle.StoppedAtWaypoint)
-                {
-                    collectedVehicle.CurrentWaypoint = waypoints[nextWaypoint];
-                    Logger.Log($"{collectedVehicle.Vehicle.Model.Name} current waypoint: {collectedVehicle.CurrentWaypoint.Number}");
-                    float acceptedDistance = GetAcceptedStoppingDistance(waypoints, nextWaypoint);
-
-                    Logger.Log($"{vehicle.Model.Name} is driving to waypoint {waypoints[nextWaypoint].Number}");
-                    if (waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.IgnorePathFinding)
+                    Logger.Log($"{vehicle.Model.Name} is driving to waypoint {waypoints[currentWaypointTask].Number}");
+                    if (waypoints[currentWaypointTask].DrivingFlag == VehicleDrivingFlags.IgnorePathFinding)
                     {
-                        driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)17040299, acceptedDistance);
+                        driver.Tasks.DriveToPosition(waypoints[currentWaypointTask].Position, waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)17040299, acceptedDistance);
                     }
                     else
                     {
-                        driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263075, acceptedDistance);
+                        driver.Tasks.DriveToPosition(waypoints[currentWaypointTask].Position, waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)263075, acceptedDistance);
                     }
-                    LoopWhileDrivingToWaypoint(nextWaypoint, acceptedDistance);
+                    LoopWhileDrivingToWaypoint(currentWaypointTask, acceptedDistance);
 
                     if (!VehicleAndDriverAreValid(collectedVehicle))
                     {
@@ -99,9 +101,9 @@ namespace SceneManager
                         continue;
                     }
 
-                    if (!collectedVehicle.Dismissed && waypoints.ElementAtOrDefault(nextWaypoint) != null && waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
+                    if (!collectedVehicle.Dismissed && waypoints.ElementAtOrDefault(currentWaypointTask) != null && waypoints[currentWaypointTask].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
                     {
-                        StopVehicleAtWaypoint(waypoints[nextWaypoint], collectedVehicle);
+                        StopVehicleAtWaypoint(waypoints[currentWaypointTask], collectedVehicle);
                     }
 
                     if (!VehicleAndDriverAreValid(collectedVehicle) || collectedVehicle.Dismissed)
