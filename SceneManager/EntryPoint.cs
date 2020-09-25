@@ -4,7 +4,7 @@ using System.Reflection;
 using System.Windows.Forms;
 using Rage;
 
-[assembly: Rage.Attributes.Plugin("Scene Manager", Author = "Rich", Description = "Control your scenes with custom AI pathing and traffic barrier management.")]
+[assembly: Rage.Attributes.Plugin("Scene Manager", Author = "Rich", Description = "Control your scenes with custom AI pathing and traffic barrier management.", PrefersSingleInstance = true)]
 
 namespace SceneManager
 {
