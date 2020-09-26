@@ -215,6 +215,8 @@ namespace SceneManager
             {
                 GameFiber.Yield();
             }
+            Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, 0f, 1, true);
+            collectedVehicle.Driver.Tasks.CruiseWithVehicle(5f);
         }
     }
 }
