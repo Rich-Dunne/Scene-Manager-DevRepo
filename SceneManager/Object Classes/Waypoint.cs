@@ -188,7 +188,7 @@ namespace SceneManager
                     else if ((Path.State == State.Finished && MenuManager.menuPool.IsAnyMenuOpen()) || (Path.State == State.Creating && PathCreationMenu.pathCreationMenu.Visible))
                     {
                         float markerHeight = 1f;
-                        if (PathMainMenu.editPath.Selected && PathMainMenu.editPath.Value == Path.Number)
+                        if (PathMainMenu.editPath.Selected && PathMainMenu.editPath.Value == Path.Number && (PathMainMenu.pathMainMenu.Visible || EditPathMenu.editPathMenu.Visible))
                         {
                             markerHeight = 2f;
                         }
