@@ -94,11 +94,11 @@ namespace SceneManager
 
                 if (collectorWaypoint.Checked)
                 {
-                    PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index]), true, collectorRadius.Value, speedZoneRadius.Value));
+                    PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(), true, collectorRadius.Value, speedZoneRadius.Value));
                 }
                 else
                 {
-                    PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(pathIndex, drivingFlags[waypointType.Index])));
+                    PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip()));
                 }
                 Logger.Log($"[Path {pathNumber}] Waypoint {waypointNumber} ({drivingFlags[waypointType.Index].ToString()}) added");
 
@@ -124,6 +124,36 @@ namespace SceneManager
                     }
 
                     return convertedSpeed;
+                }
+
+                Blip CreateWaypointBlip()
+                {
+                    var spriteNumericalEnum = pathIndex + 17; // 17 because the numerical value of these sprites are always 17 more than the path index
+                    var blip = new Blip(Game.LocalPlayer.Character.Position)
+                    {
+                        Scale = 0.5f,
+                        Sprite = (BlipSprite)spriteNumericalEnum
+                    };
+
+                    if (collectorWaypoint.Checked)
+                    {
+                        blip.Color = Color.Blue;
+                    }
+                    else if (drivingFlags[waypointType.Index] == VehicleDrivingFlags.StopAtDestination)
+                    {
+                        blip.Color = Color.Red;
+                    }
+                    else
+                    {
+                        blip.Color = Color.Green;
+                    }
+
+                    if (!SettingsMenu.mapBlips.Checked)
+                    {
+                        blip.Alpha = 0f;
+                    }
+
+                    return blip;
                 }
             }
 
@@ -226,36 +256,6 @@ namespace SceneManager
             {
                 trafficEndPath.Enabled = false;
             }
-        }
-
-        internal static Blip CreateWaypointBlip(int pathIndex, VehicleDrivingFlags drivingFlag)
-        {
-            var spriteNumericalEnum = pathIndex + 17; // 17 because the numerical value of these sprites are always 17 more than the path index
-            var blip = new Blip(Game.LocalPlayer.Character.Position)
-            {
-                Scale = 0.5f,
-                Sprite = (BlipSprite)spriteNumericalEnum
-            };
-
-            if (collectorWaypoint.Checked)
-            {
-                blip.Color = Color.Blue;
-            }
-            else if (drivingFlag == VehicleDrivingFlags.StopAtDestination)
-            {
-                blip.Color = Color.Red;
-            }
-            else
-            {
-                blip.Color = Color.Green;
-            }
-
-            if (!SettingsMenu.mapBlips.Checked)
-            {
-                blip.Alpha = 0f;
-            }
-
-            return blip;
         }
 
         internal static void AddNewPathToPathsCollection(List<Path> paths, int pathIndex)
