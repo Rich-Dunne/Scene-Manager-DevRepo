@@ -103,12 +103,19 @@ namespace SceneManager
                     {
                         GameFiber.Yield();
                     }
-                    var driverBlip = v.Driver.AttachBlip();
-                    driverBlip.Color = Color.Green;
-                    driverBlip.Scale = 0.25f;
-                    v.Driver.IsPersistent = true;
-                    v.Driver.BlockPermanentEvents = true;
-                    Logger.Log($"A missing driver was created for {v.Model.Name}.");
+                    if(v && v.Driver)
+                    {
+                        var driverBlip = v.Driver.AttachBlip();
+                        driverBlip.Color = Color.Green;
+                        driverBlip.Scale = 0.25f;
+                        v.Driver.IsPersistent = true;
+                        v.Driver.BlockPermanentEvents = true;
+                        Logger.Log($"A missing driver was created for {v.Model.Name}.");
+                    }
+                    else
+                    {
+                        return false;
+                    }
                 }
                 return true;
             }
