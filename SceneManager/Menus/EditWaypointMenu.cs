@@ -164,19 +164,19 @@ namespace SceneManager
             {
                 var pathIndex = PathMainMenu.paths.IndexOf(currentPath);
                 var drivingFlag = drivingFlags[changeWaypointType.Index];
-                var blip = PathCreationMenu.CreateWaypointBlip(pathIndex, drivingFlag);
+                var newWaypointBlip = CreateNewWaypointBlip();
                 if (!currentPath.IsEnabled)
                 {
-                    blip.Alpha = 0.5f;
+                    newWaypointBlip.Alpha = 0.5f;
                 }
 
                 if (collectorWaypoint.Checked)
                 {
-                    currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip, true, changeCollectorRadius.Value, changeSpeedZoneRadius.Value));
+                    currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, newWaypointBlip, true, changeCollectorRadius.Value, changeSpeedZoneRadius.Value));
                 }
                 else
                 {
-                    currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, blip));
+                    currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, newWaypointBlip));
                 }
 
                 editWaypointMenu.RemoveItemAt(0);
@@ -186,6 +186,36 @@ namespace SceneManager
                 editWaypointMenu.RefreshIndex();
                 updateWaypointPosition.Checked = false;
                 Logger.Log($"New waypoint (#{currentWaypoint.Number + 1}) added.");
+
+                Blip CreateNewWaypointBlip()
+                {
+                    var spriteNumericalEnum = pathIndex + 17; // 17 because the numerical value of these sprites are always 17 more than the path index
+                    var blip = new Blip(Game.LocalPlayer.Character.Position)
+                    {
+                        Scale = 0.5f,
+                        Sprite = (BlipSprite)spriteNumericalEnum
+                    };
+
+                    if (collectorWaypoint.Checked)
+                    {
+                        blip.Color = Color.Blue;
+                    }
+                    else if (drivingFlag == VehicleDrivingFlags.StopAtDestination)
+                    {
+                        blip.Color = Color.Red;
+                    }
+                    else
+                    {
+                        blip.Color = Color.Green;
+                    }
+
+                    if (!SettingsMenu.mapBlips.Checked)
+                    {
+                        blip.Alpha = 0f;
+                    }
+
+                    return blip;
+                }
             }
 
             if (selectedItem == removeWaypoint)
