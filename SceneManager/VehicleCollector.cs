@@ -90,9 +90,9 @@ namespace SceneManager
 
         private static bool IsValidForCollection(this Vehicle v)
         {
-            if(v && v.Speed > 1 && v.IsOnAllWheels && v.IsEngineOn && v != Game.LocalPlayer.Character.CurrentVehicle && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike || (v.HasSiren && !v.IsSirenOn)) && !collectedVehicles.Any(cv => cv.Vehicle == v))
+            if(v && v.Speed > 1 && v.IsOnAllWheels && v.IsEngineOn && v != Game.LocalPlayer.Character.CurrentVehicle && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && !collectedVehicles.Any(cv => cv?.Vehicle == v))
             {
-                if(v.HasDriver && !v.Driver.IsAlive)
+                if(v.HasDriver && v.Driver && !v.Driver.IsAlive)
                 {
                     return false;
                 }
