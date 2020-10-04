@@ -53,12 +53,6 @@ namespace SceneManager
 
         private static void MyTerminationHandler(object sender, EventArgs e)
         {
-            // Clean up paths
-            for (int i = 0; i < PathMainMenu.paths.Count; i++)
-            {
-                PathMainMenu.DeletePath(PathMainMenu.paths[i], PathMainMenu.Delete.All);
-            }
-
             // Clean up cones
             foreach (Barrier barrier in BarrierMenu.barriers.Where(b => b.Object))
             {
@@ -67,6 +61,12 @@ namespace SceneManager
             if (BarrierMenu.shadowBarrier)
             {
                 BarrierMenu.shadowBarrier.Delete();
+            }
+
+            // Clean up paths
+            for (int i = 0; i < PathMainMenu.paths.Count; i++)
+            {
+                PathMainMenu.DeletePath(PathMainMenu.paths[i], PathMainMenu.Delete.All);
             }
 
             // Clear everything
