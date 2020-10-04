@@ -78,7 +78,7 @@ namespace SceneManager
                     {
                         while (nearestCollectorWaypoint != null && Vehicle && Driver && Vehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius * 2)
                         {
-                            Game.LogTrivial($"{Vehicle.Model.Name} is within 2x collector radius, cannot be fully dismissed yet.");
+                            //Game.LogTrivial($"{Vehicle.Model.Name} is within 2x collector radius, cannot be fully dismissed yet.");
                             GameFiber.Yield();
                         }
                     }
