@@ -76,7 +76,7 @@ namespace SceneManager
 
             Vehicle[] GetNearbyVehiclesForCollection(Vector3 collectorWaypointPosition, float collectorRadius)
             {
-                return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorWaypointPosition) <= collectorRadius*1.5 && Math.Abs(collectorWaypointPosition.Z - v.Position.Z) < 3 && v.IsValidForCollection() select v).ToArray();
+                return (from v in World.GetAllVehicles() where v.DistanceTo2D(collectorWaypointPosition) <= collectorRadius*2 && Math.Abs(collectorWaypointPosition.Z - v.Position.Z) < 3 && v.IsValidForCollection() select v).ToArray();
             }
         }
 
