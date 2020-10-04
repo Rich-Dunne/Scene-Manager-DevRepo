@@ -68,25 +68,27 @@ namespace SceneManager
 
             if(dismissOption == DismissOption.FromWaypoint && CurrentWaypoint.Number == Path.Waypoints.Count || dismissOption == DismissOption.FromPath)
             {
+                Logger.Log($"Dismissing from path");
                 Dismissed = true;
                 GameFiber.StartNew(() =>
                 {
                     // check if the vehicle is near any of the path's collector waypoints
                     //var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector && Vehicle.DistanceTo2D(wp.Position) <= wp.CollectorRadius * 2).FirstOrDefault();
                     var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector).OrderBy(wp => Vehicle.DistanceTo2D(wp.Position)).FirstOrDefault();
-                    if(nearestCollectorWaypoint != null && Vehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= 5f)
-                    {
-                        while (nearestCollectorWaypoint != null && Vehicle && Driver && Vehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= 5f)
-                        {
-                            //Game.LogTrivial($"{Vehicle.Model.Name} is too close to the collector to be fully dismissed.");
-                            GameFiber.Yield();
-                        }
-                    }
-                    else if(nearestCollectorWaypoint != null)
+                    //if(nearestCollectorWaypoint != null && Vehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= 5f)
+                    //{
+                    //    while (nearestCollectorWaypoint != null && Vehicle && Driver && Vehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= 5f)
+                    //    {
+                    //        Game.LogTrivial($"{Vehicle.Model.Name} is within 5f of nearest collector to be fully dismissed.");
+                    //        GameFiber.Yield();
+                    //    }
+                    //}
+                    //else if
+                    if(nearestCollectorWaypoint != null)
                     {
                         while (nearestCollectorWaypoint != null && Vehicle && Driver && Vehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius * 2)
                         {
-                            //Game.LogTrivial($"{Vehicle.Model.Name} is too close to the collector to be fully dismissed.");
+                            Game.LogTrivial($"{Vehicle.Model.Name} is within 2x collector radius, cannot be fully dismissed yet.");
                             GameFiber.Yield();
                         }
                     }
