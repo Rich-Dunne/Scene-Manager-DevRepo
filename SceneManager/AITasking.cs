@@ -15,12 +15,14 @@ namespace SceneManager
 
             if (currentWaypoint != null && collectedVehicle.Directed)
             {
+                collectedVehicle.Dismissed = false;
+                collectedVehicle.Directed = false;
                 float acceptedDistance = GetAcceptedStoppingDistance(waypoints, waypoints.IndexOf(currentWaypoint));
                 Logger.Log($"{collectedVehicle.Vehicle.Model.Name} distance to collection waypoint: {collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}");
 
-                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} is driving to waypoint {currentWaypoint.Number}");
+                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {currentWaypoint.Number}");
                 collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)263075, acceptedDistance);
-                LoopWhileDrivingToWaypoint(acceptedDistance);
+                LoopWhileDrivingToDirectedWaypoint(acceptedDistance);
             }
 
             if (currentWaypoint.DrivingFlag == VehicleDrivingFlags.StopAtDestination)
@@ -40,7 +42,7 @@ namespace SceneManager
                 collectedVehicle.Dismiss();
             }
 
-            void LoopWhileDrivingToWaypoint(float acceptedDistance)
+            void LoopWhileDrivingToDirectedWaypoint(float acceptedDistance)
             {
                 while (VehicleAndDriverAreValid(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(currentWaypoint.Position) > acceptedDistance)
                 {
@@ -54,32 +56,32 @@ namespace SceneManager
         {
             if (!VehicleAndDriverAreValid(collectedVehicle) || currentWaypoint == null || currentWaypoint.Path == null)
             {
+                Logger.Log($"Vehicle, driver, waypoint, or path is null.");
                 return;
             }
 
             var vehicle = collectedVehicle.Vehicle;
             var driver = vehicle.Driver;
 
+            Logger.Log($"Preparing to run task loop for {collectedVehicle.Vehicle.Model.Name}");
             for (int currentWaypointTask = currentWaypoint.Number; currentWaypointTask < waypoints.Count; currentWaypointTask++)
             {
+                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} in the task loop");
                 collectedVehicle.SkipWaypoint = false;
+
                 if (collectedVehicle.Dismissed)
                 {
                     Logger.Log($"Vehicle dismissed, return");
                     return;
                 }
-                //if (collectedVehicle.SkipWaypoint)
-                //{
-                //    Logger.Log($"Vehicle still skipping waypoint");
-                //    continue;
-                //}
+
                 if (waypoints.ElementAtOrDefault(currentWaypointTask) != null && !collectedVehicle.StoppedAtWaypoint)
                 {
                     collectedVehicle.CurrentWaypoint = waypoints[currentWaypointTask];
                     //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} current waypoint: {collectedVehicle.CurrentWaypoint.Number}");
                     float acceptedDistance = GetAcceptedStoppingDistance(waypoints, currentWaypointTask);
 
-                    Logger.Log($"{vehicle.Model.Name} is driving to waypoint {waypoints[currentWaypointTask].Number}");
+                    Logger.Log($"{vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {waypoints[currentWaypointTask].Number}");
                     if (waypoints[currentWaypointTask].DrivingFlag == VehicleDrivingFlags.IgnorePathFinding)
                     {
                         driver.Tasks.DriveToPosition(waypoints[currentWaypointTask].Position, waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)17040299, acceptedDistance);
@@ -215,8 +217,11 @@ namespace SceneManager
             {
                 GameFiber.Yield();
             }
-            Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, 0f, 1, true);
-            collectedVehicle.Driver.Tasks.CruiseWithVehicle(5f);
+            if(collectedVehicle.Vehicle && collectedVehicle.Driver)
+            {
+                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, 0f, 1, true);
+                collectedVehicle.Driver.Tasks.CruiseWithVehicle(5f);
+            }
         }
     }
 }
