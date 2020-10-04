@@ -104,47 +104,9 @@ namespace SceneManager
         internal static void DeletePath(Path path, Delete pathsToDelete)
         {
             Game.LogTrivial($"Preparing to delete path {path.Number}");
-            var pathVehicles = VehicleCollector.collectedVehicles.Where(cv => cv.Path.Number == path.Number).ToList();
 
-            Game.LogTrivial($"Removing all vehicles on the path");
-            foreach (CollectedVehicle cv in pathVehicles.Where(cv => cv != null && cv.Vehicle && cv.Driver))
-            {
-                if (cv.StoppedAtWaypoint)
-                {
-                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(cv.Vehicle, 1f, 1, true);
-                }
-                cv.StoppedAtWaypoint = false;
-                if (cv.Driver.GetAttachedBlip())
-                {
-                    cv.Driver.GetAttachedBlip().Delete();
-                }
-                cv.Driver.Tasks.Clear();
-                cv.Driver.Dismiss();
-                cv.Vehicle.IsSirenOn = false;
-                cv.Vehicle.IsSirenSilent = true;
-                cv.Vehicle.Dismiss();
-
-                //Game.LogTrivial($"{cv.vehicle.Model.Name} cleared from path {cv.path}");
-                VehicleCollector.collectedVehicles.Remove(cv);
-            }
-
-            // Remove the speed zone so cars don't continue to be affected after the path is deleted
-            Game.LogTrivial($"Removing yield zone and waypoint blips");
-            foreach (Waypoint waypoint in path.Waypoints)
-            {
-                if (waypoint.SpeedZone != 0)
-                {
-                    waypoint.RemoveSpeedZone();
-                }
-                if (waypoint.Blip)
-                {
-                    waypoint.Blip.Delete();
-                }
-                if (waypoint.CollectorRadiusBlip)
-                {
-                    waypoint.CollectorRadiusBlip.Delete();
-                }
-            }
+            RemoveVehiclesFromPath();
+            RemoveBlipsAndYieldZones();
 
             Game.LogTrivial($"Clearing path waypoints");
             path.Waypoints.Clear();
@@ -163,26 +125,75 @@ namespace SceneManager
 
             EditPathMenu.editPathMenu.Reset(true, true);
             EditPathMenu.disablePath.Enabled = true;
-        }
 
-        private static void UpdatePathBlips()
-        {
-            foreach (Path p in paths)
+            void RemoveVehiclesFromPath()
             {
-                foreach (Waypoint waypoint in p.Waypoints)
+                Game.LogTrivial($"Removing all vehicles on the path");
+                var pathVehicles = VehicleCollector.collectedVehicles.Where(cv => cv.Path.Number == path.Number).ToList();
+                foreach (CollectedVehicle cv in pathVehicles.Where(cv => cv != null && cv.Vehicle && cv.Driver))
                 {
-                    var blipColor = waypoint.Blip.Color;
-                    waypoint.Blip.Sprite = (BlipSprite)paths.IndexOf(p) + 17;
-                    waypoint.Blip.Color = blipColor;
+                    if (cv.StoppedAtWaypoint)
+                    {
+                        Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(cv.Vehicle, 1f, 1, true);
+                    }
+                    cv.StoppedAtWaypoint = false;
+                    if (cv.Driver.GetAttachedBlip())
+                    {
+                        cv.Driver.GetAttachedBlip().Delete();
+                    }
+                    Logger.Log($"{cv.Vehicle.Model.Name} task status before clear/dismiss: {cv.Driver.Tasks.CurrentTaskStatus.ToString()}");
+                    cv.Driver.Tasks.Clear();
+                    cv.Driver.Tasks.ClearSecondary();
+                    cv.Driver.Dismiss();
+                    Logger.Log($"{cv.Vehicle.Model.Name} task status after clear/dismiss: {cv.Driver.Tasks.CurrentTaskStatus.ToString()}");
+                    cv.Vehicle.IsSirenOn = false;
+                    cv.Vehicle.IsSirenSilent = true;
+                    cv.Vehicle.Dismiss();
+
+                    //Game.LogTrivial($"{cv.vehicle.Model.Name} cleared from path {cv.path}");
+                    VehicleCollector.collectedVehicles.Remove(cv);
                 }
             }
-        }
 
-        private static void UpdatePathNumbers()
-        {
-            for (int i = 0; i < paths.Count; i++)
+            void RemoveBlipsAndYieldZones()
             {
-                paths[i].Number = i + 1;
+                Game.LogTrivial($"Removing waypoint blips and yield zones.");
+                foreach (Waypoint waypoint in path.Waypoints)
+                {
+                    if (waypoint.SpeedZone != 0)
+                    {
+                        waypoint.RemoveSpeedZone();
+                    }
+                    if (waypoint.Blip)
+                    {
+                        waypoint.Blip.Delete();
+                    }
+                    if (waypoint.CollectorRadiusBlip)
+                    {
+                        waypoint.CollectorRadiusBlip.Delete();
+                    }
+                }
+            }
+
+            void UpdatePathBlips()
+            {
+                foreach (Path p in paths)
+                {
+                    foreach (Waypoint waypoint in p.Waypoints)
+                    {
+                        var blipColor = waypoint.Blip.Color;
+                        waypoint.Blip.Sprite = (BlipSprite)paths.IndexOf(p) + 17;
+                        waypoint.Blip.Color = blipColor;
+                    }
+                }
+            }
+
+            void UpdatePathNumbers()
+            {
+                for (int i = 0; i < paths.Count; i++)
+                {
+                    paths[i].Number = i + 1;
+                }
             }
         }
 
@@ -219,14 +230,7 @@ namespace SceneManager
                 {
                     DeletePath(paths[i], Delete.All);
                 }
-                foreach (Path path in paths)
-                {
-                    foreach(Waypoint waypoint in path.Waypoints.Where(wp => wp.SpeedZone != 0))
-                    {
-                        waypoint.RemoveSpeedZone();
-                    }
-                    path.Waypoints.Clear();
-                }
+
                 paths.Clear();
                 BuildPathMenu();
                 pathMainMenu.Visible = true;
@@ -237,11 +241,10 @@ namespace SceneManager
             if (selectedItem == directDriver)
             {
                 var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(1).Where(v => v.VehicleAndDriverValid()).SingleOrDefault();
-                CollectedVehicle collectedVehicle;
 
                 if (nearbyVehicle)
                 {
-                    collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
+                    var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
                     var path = paths[directDriver.Index];
                     var waypoints = path.Waypoints;
                     var firstWaypoint = waypoints.First();
@@ -268,7 +271,9 @@ namespace SceneManager
                         collectedVehicle.StoppedAtWaypoint = false;
                         Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, 0f, 1, true);
                     }
+                    collectedVehicle.Dismiss();
                     collectedVehicle.Directed = true;
+
 
                     if (directOptions.SelectedItem == "First waypoint")
                     {
