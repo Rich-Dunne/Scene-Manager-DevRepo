@@ -185,7 +185,7 @@ namespace SceneManager
                 editWaypoint.Index = editWaypoint.OptionCount - 1;
                 editWaypointMenu.RefreshIndex();
                 updateWaypointPosition.Checked = false;
-                Logger.Log($"New waypoint (#{currentWaypoint.Number + 1}) added.");
+                Logger.Log($"New waypoint (#{currentPath.Waypoints.Last().Number}) added.");
 
                 Blip CreateNewWaypointBlip()
                 {
@@ -230,11 +230,7 @@ namespace SceneManager
                 }
                 else
                 {
-                    currentWaypoint.Blip.Delete();
-                    if (currentWaypoint.CollectorRadiusBlip)
-                    {
-                        currentWaypoint.CollectorRadiusBlip.Delete();
-                    }
+                    currentWaypoint.Remove();
                     currentPath.Waypoints.Remove(currentWaypoint);
                     Logger.Log($"[Path {currentPath.Number}] Waypoint {currentWaypoint.Number} ({currentWaypoint.DrivingFlag}) removed");
 
