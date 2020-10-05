@@ -240,7 +240,7 @@ namespace SceneManager
 
             if (selectedItem == directDriver)
             {
-                var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(1).Where(v => v.VehicleAndDriverValid()).SingleOrDefault();
+                var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(1).Where(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid()).SingleOrDefault();
 
                 if (nearbyVehicle)
                 {
@@ -252,28 +252,32 @@ namespace SceneManager
 
                     VehicleCollector.SetVehicleAndDriverPersistence(nearbyVehicle);
 
+                    if(collectedVehicle != null)
+                    {
+                        collectedVehicle.Dismiss();
+                        collectedVehicle = null;
+                    }
+
                     // The vehicle should only be added to the collection when it's not null AND if the selected item is First Waypoint OR if the selected item is nearestWaypoint AND nearestWaypoint is not null
-                    if (collectedVehicle == null && (directOptions.SelectedItem == "First waypoint" || directOptions.SelectedItem == "Nearest waypoint" && nearestWaypoint != null))
+                    if (collectedVehicle == null && (directOptions.SelectedItem == "First waypoint" || (directOptions.SelectedItem == "Nearest waypoint" && nearestWaypoint != null)))
                     {
                         Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not found in collection, adding now.");
                         VehicleCollector.collectedVehicles.Add(new CollectedVehicle(nearbyVehicle, path));
                         collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
+                        Logger.Log($"Collected vehicle is {collectedVehicle.Vehicle.Model.Name}");
                     }
 
                     if (collectedVehicle == null)
                     {
                         return;
                     }
-
+                    collectedVehicle.Directed = true;
                     collectedVehicle.Driver.Tasks.Clear();
                     if (collectedVehicle.StoppedAtWaypoint)
                     {
                         collectedVehicle.StoppedAtWaypoint = false;
                         Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, 0f, 1, true);
                     }
-                    collectedVehicle.Dismiss();
-                    collectedVehicle.Directed = true;
-
 
                     if (directOptions.SelectedItem == "First waypoint")
                     {
