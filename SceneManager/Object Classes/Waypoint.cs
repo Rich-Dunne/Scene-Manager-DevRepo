@@ -31,18 +31,21 @@ namespace SceneManager
             IsCollector = collector;
             CollectorRadius = collectorRadius;
             SpeedZoneRadius = speedZoneRadius;
-            AddSpeedZone();
-            CollectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius)
+            if (collector)
             {
-                Color = waypointBlip.Color,
-            };
-            if (SettingsMenu.mapBlips.Checked)
-            {
-                CollectorRadiusBlip.Alpha = 0.5f;
-            }
-            else
-            {
-                CollectorRadiusBlip.Alpha = 0f;
+                AddSpeedZone();
+                CollectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius)
+                {
+                    Color = waypointBlip.Color,
+                };
+                if (SettingsMenu.mapBlips.Checked)
+                {
+                    CollectorRadiusBlip.Alpha = 0.5f;
+                }
+                else
+                {
+                    CollectorRadiusBlip.Alpha = 0f;
+                }
             }
             DrawWaypointMarker();
         }
@@ -89,7 +92,7 @@ namespace SceneManager
                 {
                     IsCollector = true;
                     RemoveSpeedZone();
-                    SpeedZone = World.AddSpeedZone(Game.LocalPlayer.Character.Position, SpeedZoneRadius, speed);
+                    SpeedZone = World.AddSpeedZone(currentWaypoint.Position, SpeedZoneRadius, speed);
                     Blip.Color = Color.Blue;
                     if (CollectorRadiusBlip)
                     {
@@ -137,6 +140,19 @@ namespace SceneManager
                     CollectorRadiusBlip.Position = Game.LocalPlayer.Character.Position;
                 }
             }
+        }
+
+        internal void Remove()
+        {
+            if (Blip)
+            {
+                Blip.Delete();
+            }
+            if (CollectorRadiusBlip)
+            {
+                CollectorRadiusBlip.Delete();
+            }
+            RemoveSpeedZone();
         }
 
         internal void AddSpeedZone()
