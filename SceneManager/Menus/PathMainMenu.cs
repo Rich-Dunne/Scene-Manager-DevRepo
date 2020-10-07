@@ -240,7 +240,7 @@ namespace SceneManager
 
             if (selectedItem == directDriver)
             {
-                var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(3).Where(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid()).FirstOrDefault();
+                var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(16).Where(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid()).FirstOrDefault();
 
                 if (nearbyVehicle)
                 {
