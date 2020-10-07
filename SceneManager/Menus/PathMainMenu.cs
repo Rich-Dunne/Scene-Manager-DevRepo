@@ -240,7 +240,7 @@ namespace SceneManager
 
             if (selectedItem == directDriver)
             {
-                var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(1).Where(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid()).SingleOrDefault();
+                var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(3).Where(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid()).FirstOrDefault();
 
                 if (nearbyVehicle)
                 {
@@ -250,16 +250,15 @@ namespace SceneManager
                     var firstWaypoint = waypoints.First();
                     var nearestWaypoint = waypoints.Where(wp => wp.Position.DistanceTo2D(nearbyVehicle.FrontPosition) < wp.Position.DistanceTo2D(nearbyVehicle.RearPosition)).OrderBy(wp => wp.Position.DistanceTo2D(nearbyVehicle)).FirstOrDefault();
 
-                    VehicleCollector.SetVehicleAndDriverPersistence(nearbyVehicle);
-
                     if(collectedVehicle != null)
                     {
                         collectedVehicle.Dismiss();
                         collectedVehicle = null;
                     }
+                    VehicleCollector.SetVehicleAndDriverPersistence(nearbyVehicle);
 
                     // The vehicle should only be added to the collection when it's not null AND if the selected item is First Waypoint OR if the selected item is nearestWaypoint AND nearestWaypoint is not null
-                    if (collectedVehicle == null && (directOptions.SelectedItem == "First waypoint" || (directOptions.SelectedItem == "Nearest waypoint" && nearestWaypoint != null)))
+                    if (collectedVehicle == null && directOptions.SelectedItem == "First waypoint" || (directOptions.SelectedItem == "Nearest waypoint" && nearestWaypoint != null))
                     {
                         Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not found in collection, adding now.");
                         VehicleCollector.collectedVehicles.Add(new CollectedVehicle(nearbyVehicle, path));
