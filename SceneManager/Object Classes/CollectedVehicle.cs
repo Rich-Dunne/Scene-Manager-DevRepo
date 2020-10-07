@@ -39,17 +39,7 @@ namespace SceneManager
 
             if (dismissOption == DismissOption.FromWorld)
             {
-                Game.LogTrivial($"Dismissed {Vehicle.Model.Name} from the world");
-                while (Vehicle.HasOccupants)
-                {
-                    foreach(Ped occupant in Vehicle.Occupants)
-                    {
-                        occupant.Dismiss();
-                        occupant.Delete();
-                    }
-                    GameFiber.Yield();
-                }
-                Vehicle.Delete();
+                DismissFromWorld();
                 return;
             }
 
@@ -60,13 +50,49 @@ namespace SceneManager
                 StoppedAtWaypoint = false;
             }
 
-            if(dismissOption == DismissOption.FromWaypoint && CurrentWaypoint.Number != Path.Waypoints.Count)
+            if(dismissOption == DismissOption.FromWaypoint)
             {
-                Logger.Log($"Dismissed from waypoint.");
-                SkipWaypoint = true;
+                DismissFromWaypoint();
             }
 
-            if(dismissOption == DismissOption.FromWaypoint && CurrentWaypoint.Number == Path.Waypoints.Count || dismissOption == DismissOption.FromPath)
+            if(dismissOption == DismissOption.FromPath)
+            {
+                DismissFromPath();
+            }
+
+            void DismissFromWorld()
+            {
+                Game.LogTrivial($"Dismissed {Vehicle.Model.Name} from the world");
+                while (Vehicle.HasOccupants)
+                {
+                    foreach (Ped occupant in Vehicle.Occupants)
+                    {
+                        occupant.Dismiss();
+                        occupant.Delete();
+                    }
+                    GameFiber.Yield();
+                }
+                Vehicle.Delete();
+            }
+
+            void DismissFromWaypoint()
+            {
+                if (CurrentWaypoint == null || Path == null)
+                {
+                    Logger.Log($"CurrentWaypoint or Path are null");
+                }
+                else if (CurrentWaypoint?.Number != Path?.Waypoints.Count)
+                {
+                    Logger.Log($"Dismissed from waypoint.");
+                    SkipWaypoint = true;
+                }
+                else if (CurrentWaypoint?.Number == Path?.Waypoints.Count)
+                {
+                    DismissFromPath();
+                }
+            }
+
+            void DismissFromPath()
             {
                 Logger.Log($"Dismissing from path");
                 Dismissed = true;
