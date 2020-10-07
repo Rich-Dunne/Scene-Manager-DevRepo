@@ -69,7 +69,7 @@ namespace SceneManager
                 Logger.Log($"{collectedVehicle.Vehicle.Model.Name} in the task loop");
                 collectedVehicle.SkipWaypoint = false;
 
-                if (collectedVehicle.Dismissed)
+                if (collectedVehicle.Dismissed || collectedVehicle == null)
                 {
                     Logger.Log($"Vehicle dismissed, return");
                     return;
