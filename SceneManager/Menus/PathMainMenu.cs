@@ -255,15 +255,15 @@ namespace SceneManager
                         collectedVehicle.Dismiss();
                         collectedVehicle = null;
                     }
-                    VehicleCollector.SetVehicleAndDriverPersistence(nearbyVehicle);
+                    //VehicleCollector.SetVehicleAndDriverPersistence(nearbyVehicle);
 
                     // The vehicle should only be added to the collection when it's not null AND if the selected item is First Waypoint OR if the selected item is nearestWaypoint AND nearestWaypoint is not null
                     if (collectedVehicle == null && directOptions.SelectedItem == "First waypoint" || (directOptions.SelectedItem == "Nearest waypoint" && nearestWaypoint != null))
                     {
-                        Game.LogTrivial($"[Direct Driver] {nearbyVehicle.Model.Name} not found in collection, adding now.");
+                        Game.LogTrivial($"[Direct Driver] Adding {nearbyVehicle.Model.Name} to collection.");
                         VehicleCollector.collectedVehicles.Add(new CollectedVehicle(nearbyVehicle, path));
                         collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
-                        Logger.Log($"Collected vehicle is {collectedVehicle.Vehicle.Model.Name}");
+                        //Logger.Log($"Collected vehicle is {collectedVehicle.Vehicle.Model.Name}");
                     }
 
                     if (collectedVehicle == null)
