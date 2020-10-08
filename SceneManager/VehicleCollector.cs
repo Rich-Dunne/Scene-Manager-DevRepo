@@ -66,7 +66,7 @@ namespace SceneManager
                 var collectedVehicle = collectedVehicles.Where(cv => cv.Vehicle == vehicle).FirstOrDefault();
                 if(collectedVehicle == null)
                 {
-                    SetVehicleAndDriverPersistence(vehicle);
+                    //SetVehicleAndDriverPersistence(vehicle);
                     CollectedVehicle newCollectedVehicle = AddVehicleToCollection(path, waypoint, vehicle);
                     Logger.Log($"Vehicle's front position distance to waypoint: {vehicle.FrontPosition.DistanceTo2D(waypoint.Position)}, collector radius: {waypoint.CollectorRadius}");
                     GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, path.Waypoints, waypoint));
@@ -123,14 +123,6 @@ namespace SceneManager
             {
                 return false;
             }
-        }
-
-        internal static void SetVehicleAndDriverPersistence(Vehicle v)
-        {
-            v.IsPersistent = true;
-            v.Driver.IsPersistent = true;
-            v.Driver.BlockPermanentEvents = true;
-            v.Driver.Tasks.Clear();
         }
     }
 }
