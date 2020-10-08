@@ -4,6 +4,9 @@ using System.Linq;
 
 namespace SceneManager
 {
+    // Driving styles https://gtaforums.com/topic/822314-guide-driving-styles/
+    // also https://vespura.com/fivem/drivingstyle/
+
     class AITasking
     {
         internal static void AssignWaypointTasks(CollectedVehicle collectedVehicle, List<Waypoint> waypoints, Waypoint currentWaypoint)
@@ -15,20 +18,8 @@ namespace SceneManager
 
             if (currentWaypoint != null && collectedVehicle.Directed)
             {
-                collectedVehicle.Dismissed = false;
-                collectedVehicle.Directed = false;
                 float acceptedDistance = GetAcceptedStoppingDistance(waypoints, waypoints.IndexOf(currentWaypoint));
-                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} distance to collection waypoint: {collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}");
-
-                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {currentWaypoint.Number}");
-                if(currentWaypoint.DrivingFlag == VehicleDrivingFlags.IgnorePathFinding)
-                {
-                    collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)17040299, acceptedDistance);
-                }
-                else
-                {
-                    collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)263075, acceptedDistance);
-                }
+                AssignTasksForDirectedDriver(acceptedDistance);
                 LoopWhileDrivingToDirectedWaypoint(acceptedDistance);
             }
 
@@ -47,6 +38,23 @@ namespace SceneManager
             {
                 Logger.Log($"Dismissing {collectedVehicle.Vehicle.Model.Name} from path");
                 collectedVehicle.Dismiss();
+            }
+
+            void AssignTasksForDirectedDriver(float acceptedDistance)
+            {
+                collectedVehicle.Dismissed = false;
+                collectedVehicle.Directed = false;
+                //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} distance to collection waypoint: {collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}");
+
+                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {currentWaypoint.Number}");
+                if (currentWaypoint.DrivingFlag == VehicleDrivingFlags.IgnorePathFinding)
+                {
+                    collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)17040299, acceptedDistance);
+                }
+                else
+                {
+                    collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)263075, acceptedDistance);
+                }
             }
 
             void LoopWhileDrivingToDirectedWaypoint(float acceptedDistance)
@@ -73,12 +81,12 @@ namespace SceneManager
             Logger.Log($"Preparing to run task loop for {collectedVehicle.Vehicle.Model.Name}");
             for (int currentWaypointTask = currentWaypoint.Number; currentWaypointTask < waypoints.Count; currentWaypointTask++)
             {
-                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} in the task loop");
+                //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} in the task loop");
                 collectedVehicle.SkipWaypoint = false;
 
                 if (collectedVehicle.Dismissed || collectedVehicle == null)
                 {
-                    Logger.Log($"Vehicle dismissed, return");
+                    Logger.Log($"Vehicle dismissed or null, return");
                     return;
                 }
 
@@ -119,7 +127,9 @@ namespace SceneManager
                     {
                         return;
                     }
+
                     driver.Tasks.PerformDrivingManeuver(collectedVehicle.Vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3).WaitForCompletion();
+                    // Do we need this?
                     if (driver)
                     {
                         driver.Tasks.Clear();
@@ -131,17 +141,6 @@ namespace SceneManager
             {
                 while (VehicleAndDriverAreValid(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && waypoints.ElementAtOrDefault(nextWaypoint) != null && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(waypoints[nextWaypoint].Position) > acceptedDistance)
                 {
-                    //Logger.Log($"Dismissed: {collectedVehicle.Dismissed} SkipWaypoint: {collectedVehicle.SkipWaypoint}");
-                    //if (waypoints[nextWaypoint].DrivingFlag == VehicleDrivingFlags.IgnorePathFinding)
-                    //{
-                    //    driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)17040299, acceptedDistance);
-                    //}
-                    //else
-                    //{
-                    //    driver.Tasks.DriveToPosition(waypoints[nextWaypoint].Position, waypoints[nextWaypoint].Speed, (VehicleDrivingFlags)263075, acceptedDistance);
-                    //}
-                    //Logger.Log($"Looping while {collectedVehicle.Vehicle.Model.Name} drives to waypoint {waypoints[nextWaypoint].Number} ({collectedVehicle.Vehicle.DistanceTo2D(waypoints[nextWaypoint].Position)}m away from collector radius {waypoints[nextWaypoint].CollectorRadius})");
-                    //Logger.Log($"Distance of front of vehicle to waypoint: {collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(waypoints[nextWaypoint].Position)}");
                     GameFiber.Sleep(100);
                 }
             }
@@ -166,31 +165,6 @@ namespace SceneManager
         private static bool VehicleAndDriverAreValid(CollectedVehicle collectedVehicle)
         {
             if (collectedVehicle == null)
-            {
-                Logger.Log($"CollectedVehicle is null");
-                return false;
-            }
-            if (!collectedVehicle.Vehicle)
-            {
-                Logger.Log($"Vehicle is null");
-                return false;
-            }
-            if (!collectedVehicle.Driver)
-            {
-                Logger.Log($"Driver is null");
-                return false;
-            }
-            return true;
-        }
-
-        private static bool VehicleAndDriverAreValid(List<Waypoint> waypoints, int nextWaypoint, CollectedVehicle collectedVehicle)
-        {
-            if (waypoints.ElementAtOrDefault(nextWaypoint) == null)
-            {
-                Logger.Log($"Waypoint is null");
-                return false;
-            }
-            if(collectedVehicle == null)
             {
                 Logger.Log($"CollectedVehicle is null");
                 return false;
