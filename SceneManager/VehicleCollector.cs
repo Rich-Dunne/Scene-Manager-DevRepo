@@ -8,9 +8,6 @@ namespace SceneManager
 {
     internal static class VehicleCollector
     {
-        // Driving styles https://gtaforums.com/topic/822314-guide-driving-styles/
-        // also https://vespura.com/fivem/drivingstyle/
-
         internal static List<CollectedVehicle> collectedVehicles = new List<CollectedVehicle>();
 
         internal static void StartCollectingAtWaypoint(List<Path> paths, Path path, Waypoint waypoint)
