@@ -21,6 +21,7 @@ namespace SceneManager
             Driver = vehicle.Driver;
             Path = path;
             CurrentWaypoint = currentWaypoint;
+            SetPersistence();
         }
 
         internal CollectedVehicle(Vehicle vehicle, Path path)
@@ -28,6 +29,14 @@ namespace SceneManager
             Vehicle = vehicle;
             Driver = vehicle.Driver;
             Path = path;
+            SetPersistence();
+        }
+
+        internal void SetPersistence()
+        {
+            Vehicle.IsPersistent = true;
+            Driver.IsPersistent = true;
+            Logger.Log($"{Vehicle.Model.Name} and driver are now persistent.");
         }
 
         internal void Dismiss(DismissOption dismissOption = DismissOption.FromPath)
