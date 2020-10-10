@@ -12,7 +12,8 @@ namespace SceneManager
     {
         FromPath = 0,
         FromWaypoint = 1,
-        FromWorld = 2
+        FromWorld = 2,
+        FromDirect = 3
     }
 
     static class PathMainMenu
@@ -141,11 +142,7 @@ namespace SceneManager
                     {
                         cv.Driver.GetAttachedBlip().Delete();
                     }
-                    Logger.Log($"{cv.Vehicle.Model.Name} task status before clear/dismiss: {cv.Driver.Tasks.CurrentTaskStatus.ToString()}");
-                    cv.Driver.Tasks.Clear();
-                    cv.Driver.Tasks.ClearSecondary();
                     cv.Driver.Dismiss();
-                    Logger.Log($"{cv.Vehicle.Model.Name} task status after clear/dismiss: {cv.Driver.Tasks.CurrentTaskStatus.ToString()}");
                     cv.Vehicle.IsSirenOn = false;
                     cv.Vehicle.IsSirenSilent = true;
                     cv.Vehicle.Dismiss();
@@ -250,13 +247,6 @@ namespace SceneManager
                     var firstWaypoint = waypoints.First();
                     var nearestWaypoint = waypoints.Where(wp => wp.Position.DistanceTo2D(nearbyVehicle.FrontPosition) < wp.Position.DistanceTo2D(nearbyVehicle.RearPosition)).OrderBy(wp => wp.Position.DistanceTo2D(nearbyVehicle)).FirstOrDefault();
 
-                    if(collectedVehicle != null)
-                    {
-                        collectedVehicle.Dismiss();
-                        collectedVehicle = null;
-                    }
-                    //VehicleCollector.SetVehicleAndDriverPersistence(nearbyVehicle);
-
                     // The vehicle should only be added to the collection when it's not null AND if the selected item is First Waypoint OR if the selected item is nearestWaypoint AND nearestWaypoint is not null
                     if (collectedVehicle == null && directOptions.SelectedItem == "First waypoint" || (directOptions.SelectedItem == "Nearest waypoint" && nearestWaypoint != null))
                     {
@@ -272,17 +262,12 @@ namespace SceneManager
                     }
                     collectedVehicle.Directed = true;
                     collectedVehicle.Driver.Tasks.Clear();
-                    if (collectedVehicle.StoppedAtWaypoint)
-                    {
-                        collectedVehicle.StoppedAtWaypoint = false;
-                        Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, 0f, 1, true);
-                    }
 
                     if (directOptions.SelectedItem == "First waypoint")
                     {
                         GameFiber.StartNew(() =>
                         {
-                            AITasking.AssignWaypointTasks(collectedVehicle, waypoints, firstWaypoint);
+                            AITasking.AssignWaypointTasks(collectedVehicle, path, firstWaypoint);
                         });
                     }
                     else
@@ -291,7 +276,7 @@ namespace SceneManager
                         {
                             GameFiber.StartNew(() =>
                             {
-                                AITasking.AssignWaypointTasks(collectedVehicle, waypoints, nearestWaypoint);
+                                AITasking.AssignWaypointTasks(collectedVehicle, path, nearestWaypoint);
                             });
                         }
                     }

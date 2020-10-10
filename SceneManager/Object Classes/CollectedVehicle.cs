@@ -14,6 +14,7 @@ namespace SceneManager
         internal bool Dismissed { get; set; } = false;
         internal bool Directed { get; set; } = false;
         internal bool SkipWaypoint { get; set; } = false;
+        internal bool ReadyForDirectTasks { get; set; } = false;
 
         internal CollectedVehicle(Vehicle vehicle, Path path, Waypoint currentWaypoint)
         {
@@ -52,14 +53,16 @@ namespace SceneManager
                 return;
             }
 
-            Driver.Tasks.Clear();
             if(StoppedAtWaypoint)
             {
                 Logger.Log($"Unstucking {Vehicle.Model.Name}");
                 StoppedAtWaypoint = false;
+                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
+                Driver.Tasks.CruiseWithVehicle(5f);
             }
+            Driver.Tasks.Clear();
 
-            if(dismissOption == DismissOption.FromWaypoint)
+            if (dismissOption == DismissOption.FromWaypoint)
             {
                 DismissFromWaypoint();
             }
@@ -67,6 +70,11 @@ namespace SceneManager
             if(dismissOption == DismissOption.FromPath)
             {
                 DismissFromPath();
+            }
+
+            if(dismissOption == DismissOption.FromDirect)
+            {
+                DismissFromDirect();
             }
 
             void DismissFromWorld()
@@ -105,12 +113,64 @@ namespace SceneManager
             {
                 Logger.Log($"Dismissing from path");
                 Dismissed = true;
+
+                // Check if the vehicle is near any of the path's collector waypoints
                 GameFiber.StartNew(() =>
                 {
-                    // check if the vehicle is near any of the path's collector waypoints
                     var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector).OrderBy(wp => Vehicle.DistanceTo2D(wp.Position)).FirstOrDefault();
-                    if(nearestCollectorWaypoint != null)
+                    if (nearestCollectorWaypoint != null)
                     {
+                        // Enabling this will keep the menu, but the dismissed vehicle is immediately re - collected
+                        while (nearestCollectorWaypoint != null && Vehicle && Vehicle.HasDriver && Driver && Driver.IsAlive && Vehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius)
+                        {
+                            //Game.LogTrivial($"{Vehicle.Model.Name} is within 2x collector radius, cannot be fully dismissed yet.");
+                            GameFiber.Yield();
+                        }
+                    }
+                    else
+                    {
+                        Logger.Log($"Nearest collector is null");
+                    }
+
+                    if (!Vehicle || !Driver)
+                    {
+                        return;
+                    }
+
+                    if (!Directed)
+                    {
+                        VehicleCollector.collectedVehicles.Remove(this);
+                        Logger.Log($"{Vehicle.Model.Name} dismissed successfully.");
+                        if (Driver)
+                        {
+                            if (Driver.GetAttachedBlip())
+                            {
+                                Driver.GetAttachedBlip().Delete();
+                            }
+                            Driver.BlockPermanentEvents = false;
+                            Driver.Dismiss();
+                        }
+                        if (Vehicle)
+                        {
+                            Vehicle.IsSirenOn = false;
+                            Vehicle.IsSirenSilent = true;
+                            Vehicle.Dismiss();
+                        }
+                    }
+                });
+                
+            }
+
+            void DismissFromDirect()
+            {
+                Logger.Log($"Dismissing from direct.");
+                ReadyForDirectTasks = false;
+                GameFiber.StartNew(() =>
+                {
+                    var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector).OrderBy(wp => Vehicle.DistanceTo2D(wp.Position)).FirstOrDefault();
+                    if (nearestCollectorWaypoint != null)
+                    {
+                        // Enabling this will keep the menu, but the dismissed vehicle is immediately re - collected
                         while (nearestCollectorWaypoint != null && Vehicle && Driver && Vehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius)
                         {
                             //Game.LogTrivial($"{Vehicle.Model.Name} is within 2x collector radius, cannot be fully dismissed yet.");
@@ -122,23 +182,7 @@ namespace SceneManager
                         Logger.Log($"Nearest collector is null");
                     }
 
-
-                    if (!Vehicle || !Driver)
-                    {
-                        return;
-                    }
-
-                    VehicleCollector.collectedVehicles.Remove(this);
-                    Logger.Log($"{Vehicle.Model.Name} dismissed successfully.");
-                    if (Driver.GetAttachedBlip())
-                    {
-                        Driver.GetAttachedBlip().Delete();
-                    }
-                    Driver.BlockPermanentEvents = false;
-                    Driver.Dismiss();
-                    Vehicle.IsSirenOn = false;
-                    Vehicle.IsSirenSilent = true;
-                    Vehicle.Dismiss();
+                    ReadyForDirectTasks = true;
                 });
             }
         }
