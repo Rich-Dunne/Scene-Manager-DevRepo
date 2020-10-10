@@ -66,7 +66,7 @@ namespace SceneManager
                     //SetVehicleAndDriverPersistence(vehicle);
                     CollectedVehicle newCollectedVehicle = AddVehicleToCollection(path, waypoint, vehicle);
                     Logger.Log($"Vehicle's front position distance to waypoint: {vehicle.FrontPosition.DistanceTo2D(waypoint.Position)}, collector radius: {waypoint.CollectorRadius}");
-                    GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, path.Waypoints, waypoint));
+                    GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, path, waypoint));
                     AssignTasksFiber.Start();
                 }
             }
