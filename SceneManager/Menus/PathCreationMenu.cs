@@ -10,14 +10,15 @@ namespace SceneManager
 {
     class PathCreationMenu
     {
-
         private static VehicleDrivingFlags[] drivingFlags = new VehicleDrivingFlags[] { VehicleDrivingFlags.Normal, VehicleDrivingFlags.IgnorePathFinding, VehicleDrivingFlags.StopAtDestination }; // Implement custom driving flag for normal
         private static string[] waypointTypes = new string[] { "Drive To (Normal)", "Drive To (Direct)", "Stop" };
         internal static UIMenu pathCreationMenu = new UIMenu("Scene Manager", "~o~Path Creation Menu");
         private static UIMenuItem trafficAddWaypoint = new UIMenuItem("Add waypoint"), trafficRemoveWaypoint = new UIMenuItem("Remove last waypoint"), trafficEndPath = new UIMenuItem("End path creation");
         internal static UIMenuListScrollerItem<string> waypointType = new UIMenuListScrollerItem<string>("Waypoint Type", $"~b~Drive To (Normal): ~w~AI obeys traffic as much as possible{Environment.NewLine}~b~Drive To (Direct): ~w~AI ignores pathfinding rules{Environment.NewLine}~b~Stop: ~w~AI stops at the waypoint until dismissed", waypointTypes);
         private static UIMenuNumericScrollerItem<int> waypointSpeed;
-        internal static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If this waypoint will collect vehicles to follow the path.  Your path's first waypoint ~b~must~w~ be a collector.");
+        internal static UIMenuCheckboxItem stopWaypointType = new UIMenuCheckboxItem("Is this a Stop waypoint?", false, "If checked, vehicles will drive to this waypoint, then stop.");
+        internal static UIMenuCheckboxItem directWaypointBehavior = new UIMenuCheckboxItem("Drive directly to waypoint?", false, "If checked, vehicles will ignore traffic rules and drive directly to this waypoint.");
+        internal static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If chcked, this waypoint will collect vehicles to follow the path.  Your path's first waypoint ~b~must~w~ be a collector.");
         internal static UIMenuNumericScrollerItem<int> collectorRadius = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint (in meters) vehicles will be collected", 1, 50, 1);
         internal static UIMenuNumericScrollerItem<int> speedZoneRadius = new UIMenuNumericScrollerItem<int>("Speed Zone Radius", "The distance from this collector waypoint (in meters) non-collected vehicles will drive at this waypoint's speed", 5, 200, 5);
 
@@ -29,11 +30,6 @@ namespace SceneManager
 
         internal static void BuildPathCreationMenu()
         {
-            pathCreationMenu.AddItem(waypointType);
-
-            pathCreationMenu.AddItem(waypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to the waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 100, 5));
-            waypointSpeed.Index = 0;
-
             pathCreationMenu.AddItem(collectorWaypoint);
             collectorWaypoint.Enabled = false;
             collectorWaypoint.Checked = true;
@@ -45,6 +41,12 @@ namespace SceneManager
             pathCreationMenu.AddItem(speedZoneRadius);
             speedZoneRadius.Index = 0;
             speedZoneRadius.Enabled = true;
+
+            pathCreationMenu.AddItem(stopWaypointType);
+            pathCreationMenu.AddItem(directWaypointBehavior);
+
+            pathCreationMenu.AddItem(waypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to this waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 100, 5));
+            waypointSpeed.Index = 0;
 
             pathCreationMenu.AddItem(trafficAddWaypoint);
             trafficAddWaypoint.ForeColor = Color.Gold;
@@ -91,16 +93,17 @@ namespace SceneManager
                 var pathIndex = PathMainMenu.paths.IndexOf(firstNonNullPath);
                 var pathNumber = firstNonNullPath.Number;
                 var waypointNumber = PathMainMenu.paths[pathIndex].Waypoints.Count + 1;
+                VehicleDrivingFlags drivingFlag = directWaypointBehavior.Checked ? (VehicleDrivingFlags)17040299 : (VehicleDrivingFlags)263075;
 
                 if (collectorWaypoint.Checked)
                 {
-                    PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip(), true, collectorRadius.Value, speedZoneRadius.Value));
+                    PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, stopWaypointType.Checked, CreateWaypointBlip(), true, collectorRadius.Value, speedZoneRadius.Value));
                 }
                 else
                 {
-                    PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlags[waypointType.Index], CreateWaypointBlip()));
+                    PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, stopWaypointType.Checked, CreateWaypointBlip()));
                 }
-                Logger.Log($"[Path {pathNumber}] Waypoint {waypointNumber} ({drivingFlags[waypointType.Index].ToString()}) added");
+                Logger.Log($"Path {pathNumber} Waypoint {waypointNumber} added [Driving style: {(DrivingFlagType)drivingFlag} | Stop waypoint: {stopWaypointType.Checked} | Speed: {waypointSpeed.Value} | Collector: {collectorWaypoint.Checked}]");
 
                 ToggleTrafficEndPathMenuItem(pathIndex);
                 collectorWaypoint.Enabled = true;
@@ -139,7 +142,7 @@ namespace SceneManager
                     {
                         blip.Color = Color.Blue;
                     }
-                    else if (drivingFlags[waypointType.Index] == VehicleDrivingFlags.StopAtDestination)
+                    else if (stopWaypointType.Checked)
                     {
                         blip.Color = Color.Red;
                     }
@@ -233,7 +236,10 @@ namespace SceneManager
             {
                 if (collectorRadius.Value > speedZoneRadius.Value)
                 {
-                    speedZoneRadius.ScrollToNextOption();
+                    while(collectorRadius.Value > speedZoneRadius.Value)
+                    {
+                        speedZoneRadius.ScrollToNextOption();
+                    }
                 }
             }
 
