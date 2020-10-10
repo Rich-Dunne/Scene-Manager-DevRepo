@@ -212,7 +212,7 @@ namespace SceneManager
                     {
                         blip.Color = Color.Blue;
                     }
-                    else if (drivingFlag == VehicleDrivingFlags.StopAtDestination)
+                    else if (stopWaypointType.Checked)
                     {
                         blip.Color = Color.Red;
                     }
