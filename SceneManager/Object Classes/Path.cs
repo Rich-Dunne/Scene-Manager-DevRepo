@@ -86,7 +86,7 @@ namespace SceneManager
                         {
                             if (i != Waypoints.Count - 1)
                             {
-                                if (Waypoints[i + 1].DrivingFlag == VehicleDrivingFlags.StopAtDestination)
+                                if (Waypoints[i + 1].IsStopWaypoint)
                                 {
                                     Debug.DrawLine(Waypoints[i].Position, Waypoints[i + 1].Position, Color.Orange);
                                 }
@@ -101,7 +101,5 @@ namespace SceneManager
                 }
             });
         }
-
-
     }
 }

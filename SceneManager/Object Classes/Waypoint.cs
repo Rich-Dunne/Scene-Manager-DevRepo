@@ -4,6 +4,12 @@ using System.Linq;
 
 namespace SceneManager
 {
+    public enum DrivingFlagType
+    {
+        Normal = 263075,
+        Direct = 17040299
+    }
+
     public class Waypoint
     {
         internal Path Path { get; set; }
@@ -11,6 +17,8 @@ namespace SceneManager
         internal Vector3 Position { get; set; }
         internal float Speed { get; set; }
         internal VehicleDrivingFlags DrivingFlag { get; set; }
+        internal DrivingFlagType DrivingFlagType { get; private set; }
+        internal bool IsStopWaypoint { get; set; }
         internal Blip Blip { get; }
         internal bool IsCollector { get; set; }
         internal float CollectorRadius { get; set; }
@@ -20,13 +28,15 @@ namespace SceneManager
         internal bool EnableWaypointMarker { get; set; } = true;
         internal bool EnableEditMarker { get; set; }
 
-        internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 5)
+        internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, bool stopWaypoint, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 5)
         {
             Path = path;
             Number = waypointNum;
             Position = waypointPos;
             Speed = speed;
             DrivingFlag = drivingFlag;
+            DrivingFlagType = (DrivingFlagType)DrivingFlag;
+            IsStopWaypoint = stopWaypoint;
             Blip = waypointBlip;
             IsCollector = collector;
             CollectorRadius = collectorRadius;
@@ -50,9 +60,13 @@ namespace SceneManager
             DrawWaypointMarker();
         }
 
-        internal void UpdateWaypoint(Waypoint currentWaypoint, VehicleDrivingFlags drivingFlag, float speed, bool collectorWaypointChecked, float collectorRadius, float speedZoneRadius, bool updateWaypointPositionChecked)
+        internal void UpdateWaypoint(Waypoint currentWaypoint, VehicleDrivingFlags drivingFlag, bool stopWaypoint, float speed, bool collectorWaypointChecked, float collectorRadius, float speedZoneRadius, bool updateWaypointPositionChecked)
         {
-            UpdateDrivingFlag(drivingFlag);
+            if(IsStopWaypoint != stopWaypoint)
+            {
+                UpdateIfStopWaypoint();
+            }
+            DrivingFlag = drivingFlag;
             UpdateWaypointSpeed(speed);
             UpdateCollectorOptions();
             if (updateWaypointPositionChecked)
@@ -60,25 +74,22 @@ namespace SceneManager
                 UpdateWaypointPosition(Game.LocalPlayer.Character.Position);
             }
 
-            void UpdateDrivingFlag(VehicleDrivingFlags newDrivingFlag)
+            void UpdateIfStopWaypoint()
             {
-                if(DrivingFlag == VehicleDrivingFlags.StopAtDestination && newDrivingFlag != VehicleDrivingFlags.StopAtDestination)
+                if (IsStopWaypoint && !stopWaypoint)
                 {
+                    Blip.Color = Color.Green;
                     foreach(CollectedVehicle cv in VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle && cv.Path == Path && cv.CurrentWaypoint == this && cv.StoppedAtWaypoint))
                     {
                         Logger.Log($"Setting StoppedAtWaypoint to false for {cv.Vehicle.Model.Name}");
                         cv.Dismiss(DismissOption.FromWaypoint);
                     }
                 }
-                DrivingFlag = newDrivingFlag;
-                if (newDrivingFlag == VehicleDrivingFlags.StopAtDestination)
+                else if(!IsStopWaypoint && stopWaypoint)
                 {
                     Blip.Color = Color.Red;
                 }
-                else
-                {
-                    Blip.Color = Color.Green;
-                }
+                IsStopWaypoint = stopWaypoint;
             }
 
             void UpdateWaypointSpeed(float newWaypointSpeed)
@@ -184,7 +195,7 @@ namespace SceneManager
                             Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, 2f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
                             Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, 2f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
                         }
-                        else if (EditWaypointMenu.changeWaypointType.SelectedItem == "Stop")
+                        else if (EditWaypointMenu.stopWaypointType.Checked)
                         {
                             if (EditWaypointMenu.updateWaypointPosition.Checked)
                             {
@@ -213,7 +224,7 @@ namespace SceneManager
                             Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, CollectorRadius * 2, CollectorRadius * 2, markerHeight, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
                             Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, SpeedZoneRadius * 2, SpeedZoneRadius * 2, markerHeight, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
                         }
-                        else if (DrivingFlag == VehicleDrivingFlags.StopAtDestination)
+                        else if (IsStopWaypoint)
                         {
                             Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, markerHeight, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
                         }
