@@ -37,6 +37,7 @@ namespace SceneManager
         {
             Vehicle.IsPersistent = true;
             Driver.IsPersistent = true;
+            Driver.BlockPermanentEvents = true;
             Logger.Log($"{Vehicle.Model.Name} and driver are now persistent.");
         }
 
