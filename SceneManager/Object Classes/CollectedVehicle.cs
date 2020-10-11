@@ -54,6 +54,21 @@ namespace SceneManager
                 return;
             }
 
+            if (dismissOption == DismissOption.FromPlayer)
+            {
+                if (Driver)
+                {
+                    Driver.Dismiss();
+                }
+                if (Vehicle)
+                {
+                    Vehicle.Dismiss();
+                }
+                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
+                VehicleCollector.collectedVehicles.Remove(this);
+                return;
+            }
+
             if(StoppedAtWaypoint)
             {
                 Logger.Log($"Unstucking {Vehicle.Model.Name}");
