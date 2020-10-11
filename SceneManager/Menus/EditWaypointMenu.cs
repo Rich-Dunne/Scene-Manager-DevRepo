@@ -65,7 +65,7 @@ namespace SceneManager
 
                 editWaypointMenu.AddItem(stopWaypointType = new UIMenuCheckboxItem("Is this a Stop waypoint?", currentWaypoint.IsStopWaypoint, "If checked, vehicles will drive to this waypoint, then stop."));
                 editWaypointMenu.AddItem(directWaypointBehavior);
-                if(currentWaypoint.DrivingFlag == (VehicleDrivingFlags)17040299)
+                if(currentWaypoint.DrivingFlagType == DrivingFlagType.Direct)
                 {
                     directWaypointBehavior.Checked = true;
                 }
@@ -110,7 +110,7 @@ namespace SceneManager
 
                 changeWaypointSpeed.Value = (int)MathHelper.ConvertMetersPerSecondToMilesPerHour(currentWaypoint.Speed);
                 stopWaypointType.Checked = currentWaypoint.IsStopWaypoint;
-                directWaypointBehavior.Checked = currentWaypoint.DrivingFlag == (VehicleDrivingFlags)17040299 ? true : false;
+                directWaypointBehavior.Checked = currentWaypoint.DrivingFlagType == DrivingFlagType.Direct ? true : false;
                 collectorWaypoint.Checked = currentWaypoint.IsCollector;
                 changeCollectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
                 changeCollectorRadius.Value = (int)currentWaypoint.CollectorRadius;
@@ -152,7 +152,7 @@ namespace SceneManager
         {
             var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
             var currentWaypoint = currentPath.Waypoints[editWaypoint.Index];
-            VehicleDrivingFlags drivingFlag = directWaypointBehavior.Checked ? (VehicleDrivingFlags)17040299 : (VehicleDrivingFlags)263075;
+            DrivingFlagType drivingFlag = directWaypointBehavior.Checked ? DrivingFlagType.Direct : DrivingFlagType.Normal;
 
             if (selectedItem == updateWaypoint)
             {
@@ -165,12 +165,13 @@ namespace SceneManager
                     currentWaypoint.UpdateWaypoint(currentWaypoint, drivingFlag, stopWaypointType.Checked, SetDriveSpeedForWaypoint(), collectorWaypoint.Checked, changeCollectorRadius.Value, changeSpeedZoneRadius.Value, updateWaypointPosition.Checked);
                 }
                 
-                Logger.Log($"Path {currentPath.Number} Waypoint {currentWaypoint.Number} updated [Driving style: {(DrivingFlagType)drivingFlag} | Stop waypoint: {stopWaypointType.Checked} | Speed: {changeWaypointSpeed.Value} | Collector: {currentWaypoint.IsCollector}]");
+                Logger.Log($"Path {currentPath.Number} Waypoint {currentWaypoint.Number} updated [Driving style: {drivingFlag} | Stop waypoint: {stopWaypointType.Checked} | Speed: {changeWaypointSpeed.Value} | Collector: {currentWaypoint.IsCollector}]");
 
                 updateWaypointPosition.Checked = false;
                 Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Waypoint {currentWaypoint.Number} updated.");
 
-                BuildEditWaypointMenu();
+                // Why am I rebuilding the menu??
+                //BuildEditWaypointMenu();
             }
 
             if (selectedItem == addAsNewWaypoint)
@@ -244,7 +245,7 @@ namespace SceneManager
                 {
                     currentWaypoint.Remove();
                     currentPath.Waypoints.Remove(currentWaypoint);
-                    Logger.Log($"[Path {currentPath.Number}] Waypoint {currentWaypoint.Number} ({currentWaypoint.DrivingFlag}) removed");
+                    Logger.Log($"[Path {currentPath.Number}] Waypoint {currentWaypoint.Number} ({currentWaypoint.DrivingFlagType}) removed");
 
                     foreach (Waypoint wp in currentPath.Waypoints)
                     {
