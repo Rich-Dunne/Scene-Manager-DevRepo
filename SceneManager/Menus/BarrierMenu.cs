@@ -150,6 +150,8 @@ namespace SceneManager
                 {
                     rotateBarrier.Enabled = true;
                 }
+
+                barrierMenu.Width = SetMenuWidth();
             }
 
             if (scrollerItem == rotateBarrier)
@@ -267,6 +269,28 @@ namespace SceneManager
 
                 removeBarrierOptions.Enabled = barriers.Count == 0 ? false : true;
                 resetBarriers.Enabled = barriers.Count == 0 ? false : true;
+            }
+        }
+
+        private static float SetMenuWidth()
+        {
+            float defaultWidth = UIMenu.DefaultWidth;
+            float width = barrierMenu.Width;
+
+            barrierList.TextStyle.Apply();
+            Rage.Native.NativeFunction.Natives.x54CE8AC98E120CAB("STRING"); // _BEGIN_TEXT_COMMAND_GET_WIDTH
+            Rage.Native.NativeFunction.Natives.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(barrierList.SelectedItem);
+            float textWidth = Rage.Native.NativeFunction.Natives.x85F061DA64ED2F67<float>(true); // _END_TEXT_COMMAND_GET_WIDTH
+            float padding = 0.00390625f * 2; // typical padding used in RNUI
+
+            var selectedItemWidth = textWidth + padding;
+            if(selectedItemWidth <= 0.14f)
+            {
+                return defaultWidth;
+            }
+            else
+            {
+                return selectedItemWidth * 1.6f;
             }
         }
     }
