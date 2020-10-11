@@ -7,7 +7,7 @@ namespace SceneManager
     public enum DrivingFlagType
     {
         Normal = 263075,
-        Direct = 17040299
+        Direct = 17040259
     }
 
     public class Waypoint
@@ -16,7 +16,7 @@ namespace SceneManager
         internal int Number { get; set; }
         internal Vector3 Position { get; set; }
         internal float Speed { get; set; }
-        internal VehicleDrivingFlags DrivingFlag { get; set; }
+        //internal VehicleDrivingFlags DrivingFlag { get; set; }
         internal DrivingFlagType DrivingFlagType { get; private set; }
         internal bool IsStopWaypoint { get; set; }
         internal Blip Blip { get; }
@@ -28,14 +28,14 @@ namespace SceneManager
         internal bool EnableWaypointMarker { get; set; } = true;
         internal bool EnableEditMarker { get; set; }
 
-        internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, VehicleDrivingFlags drivingFlag, bool stopWaypoint, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 5)
+        internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, DrivingFlagType drivingFlag, bool stopWaypoint, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 5)
         {
             Path = path;
             Number = waypointNum;
             Position = waypointPos;
             Speed = speed;
-            DrivingFlag = drivingFlag;
-            DrivingFlagType = (DrivingFlagType)DrivingFlag;
+            //DrivingFlag = drivingFlag;
+            DrivingFlagType = drivingFlag;
             IsStopWaypoint = stopWaypoint;
             Blip = waypointBlip;
             IsCollector = collector;
@@ -60,13 +60,13 @@ namespace SceneManager
             DrawWaypointMarker();
         }
 
-        internal void UpdateWaypoint(Waypoint currentWaypoint, VehicleDrivingFlags drivingFlag, bool stopWaypoint, float speed, bool collectorWaypointChecked, float collectorRadius, float speedZoneRadius, bool updateWaypointPositionChecked)
+        internal void UpdateWaypoint(Waypoint currentWaypoint, DrivingFlagType drivingFlag, bool stopWaypoint, float speed, bool collectorWaypointChecked, float collectorRadius, float speedZoneRadius, bool updateWaypointPositionChecked)
         {
             if(IsStopWaypoint != stopWaypoint)
             {
                 UpdateIfStopWaypoint();
             }
-            DrivingFlag = drivingFlag;
+            DrivingFlagType = drivingFlag;
             UpdateWaypointSpeed(speed);
             UpdateCollectorOptions();
             if (updateWaypointPositionChecked)
