@@ -20,6 +20,13 @@ namespace SceneManager
                 {
                     LoopForNearbyValidVehicles(path, waypoint);
                 }
+
+                var collectedVehiclePlayerIsIn = collectedVehicles.Where(x => x.Vehicle == Game.LocalPlayer.Character.CurrentVehicle).FirstOrDefault();
+                if (collectedVehiclePlayerIsIn != null)
+                {
+                    collectedVehiclePlayerIsIn.Dismiss(DismissOption.FromPlayer);
+                    Logger.Log($"Dismissed a collected vehicle the player was in.");
+                }
                 GameFiber.Sleep(100);
             }
         }
