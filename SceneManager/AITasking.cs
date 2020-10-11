@@ -33,7 +33,7 @@ namespace SceneManager
             {
                 StopVehicleAtWaypoint(currentWaypoint, collectedVehicle);
             }
-            if(currentWaypoint != path?.Waypoints?.Last())
+            if(path?.Waypoints?.Count > 0 && currentWaypoint != path?.Waypoints?.Last())
             {
                 DriveVehicleToNextWaypoint(collectedVehicle, path, currentWaypoint);
             }
@@ -58,15 +58,7 @@ namespace SceneManager
 
                 Logger.Log($"{collectedVehicle.Vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {currentWaypoint.Number} (directed)");
                 Logger.Log($"{collectedVehicle.Vehicle.Model.Name} Dismissed: {collectedVehicle.Dismissed}, Directed: {collectedVehicle.SkipWaypoint}");
-                collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, currentWaypoint.DrivingFlag, acceptedDistance);
-                //if (currentWaypoint.DrivingFlag == VehicleDrivingFlags.IgnorePathFinding)
-                //{
-                //    collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)17040299, acceptedDistance);
-                //}
-                //else
-                //{
-                //    collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)263075, acceptedDistance);
-                //}
+                collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)currentWaypoint.DrivingFlagType, acceptedDistance);
             }
 
             void LoopWhileDrivingToDirectedWaypoint(float acceptedDistance)
@@ -112,9 +104,9 @@ namespace SceneManager
                     //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} current waypoint: {collectedVehicle.CurrentWaypoint.Number}");
                     float acceptedDistance = GetAcceptedStoppingDistance(path.Waypoints, currentWaypointTask);
 
-                    Logger.Log($"{vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {path.Waypoints[currentWaypointTask].Number} (Stop: {currentWaypoint.IsStopWaypoint}, Driving flag: {(DrivingFlagType)currentWaypoint.DrivingFlag})");
+                    Logger.Log($"{vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {path.Waypoints[currentWaypointTask].Number} (Stop: {currentWaypoint.IsStopWaypoint}, Driving flag: {currentWaypoint.DrivingFlagType})");
                     Logger.Log($"{vehicle.Model.Name} driver is persistent: {driver.IsPersistent}");
-                    driver.Tasks.DriveToPosition(path.Waypoints[currentWaypointTask].Position, path.Waypoints[currentWaypointTask].Speed, path.Waypoints[currentWaypointTask].DrivingFlag, acceptedDistance);
+                    driver.Tasks.DriveToPosition(path.Waypoints[currentWaypointTask].Position, path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
                     LoopWhileDrivingToWaypoint(currentWaypointTask, acceptedDistance);
 
                     if (!VehicleAndDriverAreValid(collectedVehicle))
@@ -184,18 +176,12 @@ namespace SceneManager
             {
                 Logger.Log($"Vehicle is null");
                 collectedVehicle.Dismiss();
-                //if(collectedVehicle.Driver)
-                //{
-                //    collectedVehicle.Driver.IsPersistent = false;
-                //}
                 return false;
             }
             if (!collectedVehicle.Driver || !collectedVehicle.Driver.IsAlive && !collectedVehicle.Dismissed)
             {
                 collectedVehicle.Dismiss();
                 //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} driver is null or dead");
-                //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} persistent: {collectedVehicle.Vehicle.IsPersistent}");
-                //collectedVehicle.Vehicle.IsPersistent = false;
                 return false;
             }
             return true;
