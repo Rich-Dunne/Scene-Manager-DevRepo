@@ -16,7 +16,6 @@ namespace SceneManager
         internal int Number { get; set; }
         internal Vector3 Position { get; set; }
         internal float Speed { get; set; }
-        //internal VehicleDrivingFlags DrivingFlag { get; set; }
         internal DrivingFlagType DrivingFlagType { get; private set; }
         internal bool IsStopWaypoint { get; set; }
         internal Blip Blip { get; }
@@ -34,7 +33,6 @@ namespace SceneManager
             Number = waypointNum;
             Position = waypointPos;
             Speed = speed;
-            //DrivingFlag = drivingFlag;
             DrivingFlagType = drivingFlag;
             IsStopWaypoint = stopWaypoint;
             Blip = waypointBlip;
@@ -85,7 +83,7 @@ namespace SceneManager
                         cv.Dismiss(DismissOption.FromWaypoint);
                     }
                 }
-                else if(!IsStopWaypoint && stopWaypoint)
+                else if(stopWaypoint && !IsStopWaypoint)
                 {
                     Blip.Color = Color.Red;
                 }
@@ -124,6 +122,14 @@ namespace SceneManager
                 else
                 {
                     IsCollector = false;
+                    if (IsStopWaypoint)
+                    {
+                        Blip.Color = Color.Red;
+                    }
+                    else
+                    {
+                        Blip.Color = Color.Green;
+                    }
                     RemoveSpeedZone();
                     if (CollectorRadiusBlip)
                     {
@@ -181,56 +187,59 @@ namespace SceneManager
             // This is called once when the waypoint is created
             GameFiber.StartNew(() =>
             {
-                while (SettingsMenu.threeDWaypoints.Checked && EnableWaypointMarker && Path.Waypoints.Contains(this))
+                while (true)
                 {
-                    if (EditWaypointMenu.editWaypointMenu.Visible && PathMainMenu.editPath.Value == Path.Number && EditWaypointMenu.editWaypoint.Value == Number)
+                    if(SettingsMenu.threeDWaypoints.Checked && EnableWaypointMarker && Path.Waypoints.Contains(this))
                     {
-                        if (EditWaypointMenu.collectorWaypoint.Checked)
+                        if (EditWaypointMenu.editWaypointMenu.Visible && PathMainMenu.editPath.Value == Path.Number && EditWaypointMenu.editWaypoint.Value == Number)
                         {
-                            if (EditWaypointMenu.updateWaypointPosition.Checked)
+                            if (EditWaypointMenu.collectorWaypoint.Checked)
                             {
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, 1f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, 1f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
+                                if (EditWaypointMenu.updateWaypointPosition.Checked)
+                                {
+                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, 1f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
+                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, 1f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
+                                }
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, 2f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, 2f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
                             }
-                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, 2f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
-                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, 2f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
-                        }
-                        else if (EditWaypointMenu.stopWaypointType.Checked)
-                        {
-                            if (EditWaypointMenu.updateWaypointPosition.Checked)
+                            else if (EditWaypointMenu.stopWaypointType.Checked)
                             {
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
+                                if (EditWaypointMenu.updateWaypointPosition.Checked)
+                                {
+                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
+                                }
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 2f, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
                             }
-                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 2f, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
-                        }
-                        else
-                        {
-                            if (EditWaypointMenu.updateWaypointPosition.Checked)
+                            else
                             {
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
+                                if (EditWaypointMenu.updateWaypointPosition.Checked)
+                                {
+                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
+                                }
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 2f, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
                             }
-                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 2f, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
                         }
-                    }
-                    else if ((Path.State == State.Finished && MenuManager.menuPool.IsAnyMenuOpen()) || (Path.State == State.Creating && PathCreationMenu.pathCreationMenu.Visible))
-                    {
-                        float markerHeight = 1f;
-                        if ((PathMainMenu.directDriver.Selected && PathMainMenu.directDriver.Value == Path.Number) || PathMainMenu.editPath.Selected && PathMainMenu.editPath.Value == Path.Number && (PathMainMenu.pathMainMenu.Visible || EditPathMenu.editPathMenu.Visible))
+                        else if ((Path.State == State.Finished && MenuManager.menuPool.IsAnyMenuOpen()) || (Path.State == State.Creating && PathCreationMenu.pathCreationMenu.Visible))
                         {
-                            markerHeight = 2f;
-                        }
-                        if (IsCollector)
-                        {
-                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, CollectorRadius * 2, CollectorRadius * 2, markerHeight, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
-                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, SpeedZoneRadius * 2, SpeedZoneRadius * 2, markerHeight, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
-                        }
-                        else if (IsStopWaypoint)
-                        {
-                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, markerHeight, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
-                        }
-                        else
-                        {
-                            Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, markerHeight, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
+                            float markerHeight = 1f;
+                            if ((PathMainMenu.directDriver.Selected && PathMainMenu.directDriver.Value == Path.Number) || PathMainMenu.editPath.Selected && PathMainMenu.editPath.Value == Path.Number && (PathMainMenu.pathMainMenu.Visible || EditPathMenu.editPathMenu.Visible))
+                            {
+                                markerHeight = 2f;
+                            }
+                            if (IsCollector)
+                            {
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, CollectorRadius * 2, CollectorRadius * 2, markerHeight, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, SpeedZoneRadius * 2, SpeedZoneRadius * 2, markerHeight, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
+                            }
+                            else if (IsStopWaypoint)
+                            {
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, markerHeight, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
+                            }
+                            else
+                            {
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, markerHeight, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
+                            }
                         }
                     }
 
@@ -241,23 +250,41 @@ namespace SceneManager
 
         internal void EnableBlip()
         {
-            if(!PathMainMenu.paths.Where(p => p == Path).First().IsEnabled)
+            if(!Path.IsEnabled)
             {
-                Blip.Alpha = 0.5f;
-                CollectorRadiusBlip.Alpha = 0.25f;
+                if (Blip)
+                {
+                    Blip.Alpha = 0.5f;
+                }
+                if (CollectorRadiusBlip)
+                {
+                    CollectorRadiusBlip.Alpha = 0.25f;
+                }
             }
             else
             {
-                Blip.Alpha = 1.0f;
-                CollectorRadiusBlip.Alpha = 0.5f;
+                if (Blip)
+                {
+                    Blip.Alpha = 1.0f;
+                }
+                if (CollectorRadiusBlip)
+                {
+                    CollectorRadiusBlip.Alpha = 0.5f;
+                }
             }
 
         }
 
         internal void DisableBlip()
         {
-            Blip.Alpha = 0;
-            CollectorRadiusBlip.Alpha = 0;
+            if (Blip)
+            {
+                Blip.Alpha = 0;
+            }
+            if (CollectorRadiusBlip)
+            {
+                CollectorRadiusBlip.Alpha = 0;
+            }
         }
     }
 }
