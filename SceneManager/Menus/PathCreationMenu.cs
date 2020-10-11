@@ -93,7 +93,7 @@ namespace SceneManager
                 var pathIndex = PathMainMenu.paths.IndexOf(firstNonNullPath);
                 var pathNumber = firstNonNullPath.Number;
                 var waypointNumber = PathMainMenu.paths[pathIndex].Waypoints.Count + 1;
-                VehicleDrivingFlags drivingFlag = directWaypointBehavior.Checked ? (VehicleDrivingFlags)17040299 : (VehicleDrivingFlags)263075;
+                DrivingFlagType drivingFlag = directWaypointBehavior.Checked ? DrivingFlagType.Direct : DrivingFlagType.Normal;
 
                 if (collectorWaypoint.Checked)
                 {
@@ -103,7 +103,7 @@ namespace SceneManager
                 {
                     PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, Game.LocalPlayer.Character.Position, SetDriveSpeedForWaypoint(), drivingFlag, stopWaypointType.Checked, CreateWaypointBlip()));
                 }
-                Logger.Log($"Path {pathNumber} Waypoint {waypointNumber} added [Driving style: {(DrivingFlagType)drivingFlag} | Stop waypoint: {stopWaypointType.Checked} | Speed: {waypointSpeed.Value} | Collector: {collectorWaypoint.Checked}]");
+                Logger.Log($"Path {pathNumber} Waypoint {waypointNumber} added [Driving style: {drivingFlag} | Stop waypoint: {stopWaypointType.Checked} | Speed: {waypointSpeed.Value} | Collector: {collectorWaypoint.Checked}]");
 
                 ToggleTrafficEndPathMenuItem(pathIndex);
                 collectorWaypoint.Enabled = true;
@@ -167,7 +167,7 @@ namespace SceneManager
                 {
                     if (PathMainMenu.paths.ElementAtOrDefault(i) != null && PathMainMenu.paths[i].State == State.Creating)
                     {
-                        Logger.Log($"[Path {i + 1}] {PathMainMenu.paths[i].Waypoints.Last().DrivingFlag.ToString()} waypoint removed");
+                        Logger.Log($"[Path {i + 1}] {PathMainMenu.paths[i].Waypoints.Last().DrivingFlagType} waypoint removed");
                         PathMainMenu.paths[i].Waypoints.Last().Blip.Delete();
                         PathMainMenu.paths[i].Waypoints.Last().RemoveSpeedZone();
 
