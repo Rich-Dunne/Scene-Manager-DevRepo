@@ -13,8 +13,7 @@ namespace SceneManager
         FromPath = 0,
         FromWaypoint = 1,
         FromWorld = 2,
-        FromDirect = 3,
-        FromPlayer = 4
+        FromPlayer = 3
     }
 
     static class PathMainMenu

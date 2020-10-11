@@ -3,7 +3,7 @@ using System.Linq;
 
 namespace SceneManager
 {
-    public class CollectedVehicle
+    internal class CollectedVehicle
     {
         internal Ped Driver { get; set; }
         internal Vehicle Vehicle { get; set; }
@@ -14,7 +14,7 @@ namespace SceneManager
         internal bool Dismissed { get; set; } = false;
         internal bool Directed { get; set; } = false;
         internal bool SkipWaypoint { get; set; } = false;
-        internal bool ReadyForDirectTasks { get; set; } = false;
+        internal bool ReadyForDirectTasks { get; set; } = true;
 
         internal CollectedVehicle(Vehicle vehicle, Path path, Waypoint currentWaypoint)
         {
@@ -83,14 +83,9 @@ namespace SceneManager
                 DismissFromWaypoint();
             }
 
-            if(dismissOption == DismissOption.FromPath)
+            if (dismissOption == DismissOption.FromPath)
             {
                 DismissFromPath();
-            }
-
-            if(dismissOption == DismissOption.FromDirect)
-            {
-                DismissFromDirect();
             }
 
             void DismissFromWorld()
@@ -175,31 +170,6 @@ namespace SceneManager
                     }
                 });
                 
-            }
-
-            void DismissFromDirect()
-            {
-                Logger.Log($"Dismissing from direct.");
-                ReadyForDirectTasks = false;
-                GameFiber.StartNew(() =>
-                {
-                    var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector).OrderBy(wp => Vehicle.DistanceTo2D(wp.Position)).FirstOrDefault();
-                    if (nearestCollectorWaypoint != null)
-                    {
-                        // Enabling this will keep the menu, but the dismissed vehicle is immediately re - collected
-                        while (nearestCollectorWaypoint != null && Vehicle && Driver && Vehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius)
-                        {
-                            //Game.LogTrivial($"{Vehicle.Model.Name} is within 2x collector radius, cannot be fully dismissed yet.");
-                            GameFiber.Yield();
-                        }
-                    }
-                    else
-                    {
-                        Logger.Log($"Nearest collector is null");
-                    }
-
-                    ReadyForDirectTasks = true;
-                });
             }
         }
     }
