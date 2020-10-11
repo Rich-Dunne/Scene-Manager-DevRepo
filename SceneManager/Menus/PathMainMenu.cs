@@ -13,7 +13,8 @@ namespace SceneManager
         FromPath = 0,
         FromWaypoint = 1,
         FromWorld = 2,
-        FromDirect = 3
+        FromDirect = 3,
+        FromPlayer = 4
     }
 
     static class PathMainMenu
@@ -296,17 +297,18 @@ namespace SceneManager
                     else if(dismissDriver.Index == (int)DismissOption.FromWorld)
                     {
                         Game.LogTrivial($"Dismissed {nearbyVehicle.Model.Name} from the world");
-                        while (nearbyVehicle.HasOccupants)
+                        while (nearbyVehicle && nearbyVehicle.HasOccupants)
                         {
                             foreach (Ped occupant in nearbyVehicle.Occupants)
                             {
-                                occupant.Dismiss();
                                 occupant.Delete();
                             }
                             GameFiber.Yield();
                         }
-
-                        nearbyVehicle.Delete(); 
+                        if (nearbyVehicle)
+                        {
+                            nearbyVehicle.Delete();
+                        }
                     }
                 }
             }
