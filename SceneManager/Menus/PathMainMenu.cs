@@ -264,6 +264,7 @@ namespace SceneManager
                     collectedVehicle.Directed = true;
                     collectedVehicle.Driver.Tasks.Clear();
 
+                    Logger.Log($"Collected vehicle properties:  Dismissed [{collectedVehicle.Dismissed}], Directed [{collectedVehicle.Directed}], StopppedAtWaypoint [{collectedVehicle.StoppedAtWaypoint}]");
                     if (directOptions.SelectedItem == "First waypoint")
                     {
                         GameFiber.StartNew(() =>
