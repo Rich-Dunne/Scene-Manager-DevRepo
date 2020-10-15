@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Rage;
@@ -51,6 +50,10 @@ namespace SceneManager
                 shadowBarrier.Delete();
 
             shadowBarrier = new Rage.Object(Settings.barrierValues[barrierList.Index], TracePlayerView(Settings.BarrierPlacementDistance, TraceFlags.IntersectWorld).HitPosition, rotateBarrier.Value);
+            if (!shadowBarrier)
+            {
+                shadowBarrier = new Rage.Object(Settings.barrierValues[barrierList.Index], TracePlayerView(Settings.BarrierPlacementDistance, TraceFlags.IntersectWorld).HitPosition, rotateBarrier.Value);
+            }
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
             shadowBarrier.IsGravityDisabled = true;
             shadowBarrier.IsCollisionEnabled = false;
