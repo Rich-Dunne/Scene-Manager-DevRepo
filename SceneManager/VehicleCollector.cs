@@ -72,7 +72,7 @@ namespace SceneManager
                 {
                     //SetVehicleAndDriverPersistence(vehicle);
                     CollectedVehicle newCollectedVehicle = AddVehicleToCollection(path, waypoint, vehicle);
-                    Logger.Log($"Vehicle's front position distance to waypoint: {vehicle.FrontPosition.DistanceTo2D(waypoint.Position)}, collector radius: {waypoint.CollectorRadius}");
+                    //Logger.Log($"Vehicle's front position distance to waypoint: {vehicle.FrontPosition.DistanceTo2D(waypoint.Position)}, collector radius: {waypoint.CollectorRadius}");
                     GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, path, waypoint));
                     AssignTasksFiber.Start();
                 }
@@ -88,7 +88,7 @@ namespace SceneManager
         {
             var collectedVehicle = new CollectedVehicle(v, path, waypoint);
             collectedVehicles.Add(collectedVehicle);
-            Logger.Log($"Added {v.Model.Name} to collection from path {path.Number}, waypoint {waypoint.Number}.");
+            Logger.Log($"Added {v.Model.Name} to collection from path {path.Number} waypoint {waypoint.Number}.");
             return collectedVehicle;
         }
 
@@ -109,12 +109,12 @@ namespace SceneManager
                     }
                     if(v && v.Driver)
                     {
-                        var driverBlip = v.Driver.AttachBlip();
-                        driverBlip.Color = Color.Green;
-                        driverBlip.Scale = 0.25f;
+                        //var driverBlip = v.Driver.AttachBlip();
+                        //driverBlip.Color = Color.Green;
+                        //driverBlip.Scale = 0.25f;
                         v.Driver.IsPersistent = true;
                         v.Driver.BlockPermanentEvents = true;
-                        Logger.Log($"A missing driver was created for {v.Model.Name}.");
+                        //Logger.Log($"A missing driver was created for {v.Model.Name}.");
                     }
                     else
                     {

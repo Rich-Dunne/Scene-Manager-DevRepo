@@ -79,7 +79,7 @@ namespace SceneManager
                     Blip.Color = Color.Green;
                     foreach(CollectedVehicle cv in VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle && cv.Path == Path && cv.CurrentWaypoint == this && cv.StoppedAtWaypoint))
                     {
-                        Logger.Log($"Setting StoppedAtWaypoint to false for {cv.Vehicle.Model.Name}");
+                       // Logger.Log($"Setting StoppedAtWaypoint to false for {cv.Vehicle.Model.Name}");
                         cv.Dismiss(DismissOption.FromWaypoint);
                     }
                 }

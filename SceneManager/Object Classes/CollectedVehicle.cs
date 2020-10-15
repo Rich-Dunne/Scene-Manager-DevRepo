@@ -19,7 +19,7 @@ namespace SceneManager
         internal CollectedVehicle(Vehicle vehicle, Path path, Waypoint currentWaypoint)
         {
             Vehicle = vehicle;
-            Driver = vehicle.Driver;
+            Driver = Vehicle.Driver;
             Path = path;
             CurrentWaypoint = currentWaypoint;
             SetPersistence();
@@ -38,7 +38,7 @@ namespace SceneManager
             Vehicle.IsPersistent = true;
             Driver.IsPersistent = true;
             Driver.BlockPermanentEvents = true;
-            Logger.Log($"{Vehicle.Model.Name} and driver are now persistent.");
+            //Logger.Log($"{Vehicle.Model.Name} and driver are now persistent.");
         }
 
         internal void Dismiss(DismissOption dismissOption = DismissOption.FromPath)
@@ -56,6 +56,7 @@ namespace SceneManager
 
             if (dismissOption == DismissOption.FromPlayer)
             {
+                Dismissed = true;
                 if (Driver)
                 {
                     Driver.Dismiss();
@@ -71,7 +72,7 @@ namespace SceneManager
 
             if(StoppedAtWaypoint)
             {
-                Logger.Log($"Unstucking {Vehicle.Model.Name}");
+                //Logger.Log($"Unstucking {Vehicle.Model.Name}");
                 StoppedAtWaypoint = false;
                 Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
                 Driver.Tasks.CruiseWithVehicle(5f);

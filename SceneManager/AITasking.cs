@@ -70,7 +70,7 @@ namespace SceneManager
                 //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} distance to collection waypoint: {collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}");
 
                 Logger.Log($"{collectedVehicle.Vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {currentWaypoint.Number} (directed)");
-                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} Dismissed: {collectedVehicle.Dismissed}, Directed: {collectedVehicle.Directed}");
+                //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} Dismissed: {collectedVehicle.Dismissed}, Directed: {collectedVehicle.Directed}");
                 collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)currentWaypoint.DrivingFlagType, acceptedDistance);
             }
 
@@ -96,19 +96,19 @@ namespace SceneManager
             var driver = vehicle.Driver;
 
             Logger.Log($"Preparing to run task loop for {collectedVehicle.Vehicle.Model.Name} on path {path.Number}");
-            Logger.Log($"Current path: {collectedVehicle.Path.Number}, Current waypoint: {collectedVehicle.CurrentWaypoint.Number}");
+            //Logger.Log($"Current path: {collectedVehicle.Path.Number}, Current waypoint: {collectedVehicle.CurrentWaypoint.Number}");
             for (int currentWaypointTask = currentWaypoint.Number; currentWaypointTask < path.Waypoints.Count; currentWaypointTask++)
             {
-                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} in the task loop");
-                Logger.Log($"Dismissed: {collectedVehicle.Dismissed}, Directed: {collectedVehicle.Directed}, StoppedAtWaypoint: {collectedVehicle.StoppedAtWaypoint}");
+                //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} in the task loop");
+                //Logger.Log($"Dismissed: {collectedVehicle.Dismissed}, Directed: {collectedVehicle.Directed}, StoppedAtWaypoint: {collectedVehicle.StoppedAtWaypoint}");
                 collectedVehicle.SkipWaypoint = false;
 
-                if (collectedVehicle == null || collectedVehicle.Dismissed || collectedVehicle.Directed)
+                if (collectedVehicle == null || !collectedVehicle.Vehicle || collectedVehicle.Dismissed || collectedVehicle.Directed)
                 {
-                    Logger.Log($"Vehicle dismissed or null, return");
+                    Logger.Log($"Vehicle dismissed, directed, or null, return");
                     return;
                 }
-                if(collectedVehicle.Driver == null || !collectedVehicle.Vehicle.HasDriver || !collectedVehicle.Driver.IsAlive)
+                if(collectedVehicle.Driver == null || !collectedVehicle.Driver || !collectedVehicle.Vehicle.HasDriver || !collectedVehicle.Driver.IsAlive || collectedVehicle.Vehicle.Driver == Game.LocalPlayer.Character)
                 {
                     Logger.Log($"{vehicle.Model.Name} does not have a driver/driver is null or driver is dead.");
                     return;
@@ -121,7 +121,7 @@ namespace SceneManager
                     float acceptedDistance = GetAcceptedStoppingDistance(path.Waypoints, currentWaypointTask);
 
                     Logger.Log($"{vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {path.Waypoints[currentWaypointTask].Number} (Stop: {currentWaypoint.IsStopWaypoint}, Driving flag: {currentWaypoint.DrivingFlagType})");
-                    Logger.Log($"{vehicle.Model.Name} driver is persistent: {driver.IsPersistent}");
+                    //Logger.Log($"{vehicle.Model.Name} driver is persistent: {driver.IsPersistent}");
                     driver.Tasks.DriveToPosition(path.Waypoints[currentWaypointTask].Position, path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
                     LoopWhileDrivingToWaypoint(currentWaypointTask, acceptedDistance);
 
@@ -194,7 +194,7 @@ namespace SceneManager
                 collectedVehicle.Dismiss();
                 return false;
             }
-            if (!collectedVehicle.Driver || !collectedVehicle.Driver.IsAlive && !collectedVehicle.Dismissed)
+            if (collectedVehicle.Driver == null || !collectedVehicle.Driver || !collectedVehicle.Driver.IsAlive && !collectedVehicle.Dismissed)
             {
                 collectedVehicle.Dismiss();
                 //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} driver is null or dead");

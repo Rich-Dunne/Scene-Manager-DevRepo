@@ -250,7 +250,7 @@ namespace SceneManager
                     foreach (Waypoint wp in currentPath.Waypoints)
                     {
                         wp.Number = currentPath.Waypoints.IndexOf(wp) + 1;
-                        Logger.Log($"Waypoint at index {currentPath.Waypoints.IndexOf(wp)} is now waypoint #{wp.Number}");
+                        //Logger.Log($"Waypoint at index {currentPath.Waypoints.IndexOf(wp)} is now waypoint #{wp.Number}");
                     }
 
                     editWaypointMenu.Clear();
