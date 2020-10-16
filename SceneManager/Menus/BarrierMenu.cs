@@ -52,7 +52,9 @@ namespace SceneManager
             shadowBarrier = new Rage.Object(Settings.barrierValues[barrierList.Index], TracePlayerView(Settings.BarrierPlacementDistance, TraceFlags.IntersectWorld).HitPosition, rotateBarrier.Value);
             if (!shadowBarrier)
             {
-                shadowBarrier = new Rage.Object(Settings.barrierValues[barrierList.Index], TracePlayerView(Settings.BarrierPlacementDistance, TraceFlags.IntersectWorld).HitPosition, rotateBarrier.Value);
+                barrierMenu.Close();
+                Game.DisplayNotification($"~o~Scene Manager\n~red~[Error]~w~ Something went wrong creating the shadow barrier.  Please try again.");
+                return;
             }
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
             shadowBarrier.IsGravityDisabled = true;
