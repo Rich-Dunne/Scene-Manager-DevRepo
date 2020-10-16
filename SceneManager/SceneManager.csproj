@@ -38,7 +38,6 @@
       <HintPath>D:\Program Files\Rockstar Games\Grand Theft Auto V\plugins\LSPDFR\RagePluginHookSDK.dll</HintPath>
     </Reference>
     <Reference Include="System" />
-    <Reference Include="System.Collections.Immutable, Version=1.2.3.0, Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a, processorArchitecture=MSIL" />
     <Reference Include="System.Core" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Management" />
@@ -51,14 +50,26 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ControlledVehicle.cs" />
+    <Compile Include="AITasking.cs" />
+    <Compile Include="Logger.cs" />
+    <Compile Include="Object Classes\Barrier.cs" />
+    <Compile Include="Hints.cs" />
+    <Compile Include="Menus\BarrierMenu.cs" />
+    <Compile Include="Object Classes\CollectedVehicle.cs" />
+    <Compile Include="Menus\EditPathMenu.cs" />
+    <Compile Include="Menus\EditWaypointMenu.cs" />
     <Compile Include="EntryPoint.cs" />
-    <Compile Include="PathData.cs" />
+    <Compile Include="GetUserInput.cs" />
+    <Compile Include="Menus\MainMenu.cs" />
+    <Compile Include="Menus\MenuManager.cs" />
+    <Compile Include="Object Classes\Path.cs" />
+    <Compile Include="Menus\PathCreationMenu.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
-    <Compile Include="TrafficMenu.cs" />
-    <Compile Include="TrafficPathing.cs" />
-    <Compile Include="Verification.cs" />
-    <Compile Include="WaypointData.cs" />
+    <Compile Include="Menus\PathMainMenu.cs" />
+    <Compile Include="Menus\SettingsMenu.cs" />
+    <Compile Include="Settings.cs" />
+    <Compile Include="VehicleCollector.cs" />
+    <Compile Include="Object Classes\Waypoint.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
