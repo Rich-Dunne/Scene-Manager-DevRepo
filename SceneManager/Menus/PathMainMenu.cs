@@ -104,12 +104,12 @@ namespace SceneManager
 
         internal static void DeletePath(Path path, Delete pathsToDelete)
         {
-            Game.LogTrivial($"Preparing to delete path {path.Number}");
+            //Game.LogTrivial($"Preparing to delete path {path.Number}");
 
             RemoveVehiclesFromPath();
             RemoveBlipsAndYieldZones();
 
-            Game.LogTrivial($"Clearing path waypoints");
+            //Game.LogTrivial($"Clearing path waypoints");
             path.Waypoints.Clear();
 
             // Manipulating the menu to reflect specific paths being deleted
@@ -129,7 +129,7 @@ namespace SceneManager
 
             void RemoveVehiclesFromPath()
             {
-                Game.LogTrivial($"Removing all vehicles on the path");
+                //Game.LogTrivial($"Removing all vehicles on the path");
                 var pathVehicles = VehicleCollector.collectedVehicles.Where(cv => cv.Path.Number == path.Number).ToList();
                 foreach (CollectedVehicle cv in pathVehicles.Where(cv => cv != null && cv.Vehicle && cv.Driver))
                 {
@@ -154,7 +154,7 @@ namespace SceneManager
 
             void RemoveBlipsAndYieldZones()
             {
-                Game.LogTrivial($"Removing waypoint blips and yield zones.");
+                //Game.LogTrivial($"Removing waypoint blips and yield zones.");
                 foreach (Waypoint waypoint in path.Waypoints)
                 {
                     if (waypoint.SpeedZone != 0)
