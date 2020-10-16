@@ -1,7 +1,7 @@
 # Scene Manager
 
 ## INSTALLATION
-Drag and drop the included GTA V folder into where your GTA V is installed.  Everything is installed into the plugins folder.
+Drag and drop the contents from within the downloaded GTA V folder into where your GTA V is installed.
 
 ## HOW-TO USE
 ### Using the Menus:
