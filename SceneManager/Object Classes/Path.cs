@@ -1,6 +1,7 @@
 ﻿using Rage;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 
 namespace SceneManager
 {
@@ -10,6 +11,7 @@ namespace SceneManager
         internal bool IsEnabled { get; set; }
         internal State State { get; set; }
         internal List<Waypoint> Waypoints = new List<Waypoint>();
+        internal List<CollectedVehicle> CollectedVehicles = new List<CollectedVehicle>();
 
         internal Path(int pathNum, State pathState)
         {
@@ -98,6 +100,31 @@ namespace SceneManager
                         }
                     }
                     GameFiber.Yield();
+                }
+            });
+        }
+
+        internal void LoopForVehiclesToBeDismissed()
+        {
+            GameFiber.StartNew(() =>
+            {
+                while (PathMainMenu.paths.Contains(this))
+                {
+                    //Logger.Log($"Dismissing unused vehicles for cleanup");
+                    foreach (CollectedVehicle cv in CollectedVehicles.Where(cv => cv.Vehicle))
+                    {
+                        if (!cv.Vehicle.IsDriveable || cv.Vehicle.IsUpsideDown || !cv.Vehicle.HasDriver)
+                        {
+                            if (cv.Vehicle.HasDriver)
+                            {
+                                cv.Vehicle.Driver.Dismiss();
+                            }
+                            cv.Vehicle.Dismiss();
+                        }
+                    }
+
+                    CollectedVehicles.RemoveAll(cv => !cv.Vehicle);
+                    GameFiber.Sleep(60000);
                 }
             });
         }
