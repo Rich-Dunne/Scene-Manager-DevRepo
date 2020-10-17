@@ -71,7 +71,6 @@ namespace SceneManager
 
             // Clear everything
             BarrierMenu.barriers.Clear();
-            VehicleCollector.collectedVehicles.Clear();
             PathMainMenu.paths.Clear();
 
             Logger.Log($"Plugin has shut down.");
