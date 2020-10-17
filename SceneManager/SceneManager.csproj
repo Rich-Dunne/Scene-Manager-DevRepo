@@ -51,11 +51,11 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AITasking.cs" />
+    <Compile Include="CollectedVehicle.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Object Classes\Barrier.cs" />
     <Compile Include="Hints.cs" />
     <Compile Include="Menus\BarrierMenu.cs" />
-    <Compile Include="Object Classes\CollectedVehicle.cs" />
     <Compile Include="Menus\EditPathMenu.cs" />
     <Compile Include="Menus\EditWaypointMenu.cs" />
     <Compile Include="EntryPoint.cs" />
@@ -68,7 +68,6 @@
     <Compile Include="Menus\PathMainMenu.cs" />
     <Compile Include="Menus\SettingsMenu.cs" />
     <Compile Include="Settings.cs" />
-    <Compile Include="VehicleCollector.cs" />
     <Compile Include="Object Classes\Waypoint.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
