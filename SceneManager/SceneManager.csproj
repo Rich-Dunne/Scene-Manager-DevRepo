@@ -51,7 +51,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="AITasking.cs" />
-    <Compile Include="CollectedVehicle.cs" />
+    <Compile Include="Object Classes\CollectedVehicle.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Object Classes\Barrier.cs" />
     <Compile Include="Hints.cs" />
