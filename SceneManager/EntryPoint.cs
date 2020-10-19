@@ -1,4 +1,7 @@
 ﻿using System;
+using System.ComponentModel.Design.Serialization;
+using System.Drawing.Text;
+using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
@@ -12,42 +15,72 @@ namespace SceneManager
     {
         internal static void Main()
         {
-            AppDomain.CurrentDomain.DomainUnload += MyTerminationHandler;
-            Settings.LoadSettings();
-            GetAssemblyVersion();
-            MenuManager.InstantiateMenus();
+            if (CheckRNUIVersion())
+            {
+                AppDomain.CurrentDomain.DomainUnload += MyTerminationHandler;
+                Settings.LoadSettings();
+                GetAssemblyVersion();
+                MenuManager.InstantiateMenus();
 
-            DisplayHintsToOpenMenu();
+                DisplayHintsToOpenMenu();
 
-            GameFiber UserInputFiber = new GameFiber(() => GetUserInput.LoopForUserInput());
-            UserInputFiber.Start();
+                GameFiber UserInputFiber = new GameFiber(() => GetUserInput.LoopForUserInput());
+                UserInputFiber.Start();
+            }
+            else
+            {
+                Game.UnloadActivePlugin();
+                return;
+            }
+
+            void GetAssemblyVersion()
+            {
+                string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
+                Logger.Log($"Scene Manager V{version} is ready.");
+            }
         }
-
-        private static void GetAssemblyVersion()
+        private static bool CheckRNUIVersion()
         {
-            Assembly assembly = Assembly.GetExecutingAssembly();
-            System.Diagnostics.FileVersionInfo fvi = System.Diagnostics.FileVersionInfo.GetVersionInfo(assembly.Location);
-            var version = fvi.FileVersion;
-            Logger.Log($"Scene Manager V{version} is ready.");
+            var directory = Directory.GetCurrentDirectory();
+            var exists = File.Exists(directory + @"\RAGENativeUI.dll");
+            if (!exists)
+            {
+                Logger.Log($"RNUI was not found in the user's GTA V directory.");
+                Game.DisplayNotification($"~o~Scene Manager ~r~[Error]\n~w~RAGENativeUI.dll was not found in your GTA V directory.  Please install RAGENativeUI and try again.");
+                return false;
+            }
+ 
+            var userVersion = Assembly.LoadFrom(directory + @"\RAGENativeUI.dll").GetName().Version;
+            Version requiredMinimumVersion = new Version("1.7.0.0");
+            if(userVersion >= requiredMinimumVersion)
+            {
+                Logger.Log($"User's RNUI version: {userVersion}");
+                return true;
+            }
+            else
+            {
+                Game.DisplayNotification($"~o~Scene Manager~r~[Error]\n~w~ Your RAGENativeUI.dll version is below 1.7, please update RAGENativeUI and try again.");
+                return false;
+            }
+            
         }
-
         private static void DisplayHintsToOpenMenu()
         {
             if (Settings.ModifierKey == Keys.None && Settings.ModifierButton == ControllerButtons.None)
             {
-                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ToggleButton} button");
+                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ToggleButton} button");
             }
             else if (Settings.ModifierKey == Keys.None)
             {
-                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons");
+                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons");
             }
             else if (Settings.ModifierButton == ControllerButtons.None)
             {
-                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} ~w~or the ~b~{Settings.ToggleButton} button");
+                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~ To open the menu, press ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} ~w~or the ~b~{Settings.ToggleButton} button");
             }
             else
             {
-                Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ To open the menu, press the ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} keys ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons");
+                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~ To open the menu, press the ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} keys ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons");
             }
         }
 
@@ -71,11 +104,10 @@ namespace SceneManager
 
             // Clear everything
             BarrierMenu.barriers.Clear();
-            VehicleCollector.collectedVehicles.Clear();
             PathMainMenu.paths.Clear();
 
             Logger.Log($"Plugin has shut down.");
-            Game.DisplayNotification($"~o~Scene Manager\n~r~[Notice]~w~ The plugin has shut down.");
+            Game.DisplayNotification($"~o~Scene Manager ~r~[Terminated]\n~w~ The plugin has shut down.");
         }
     }
 }

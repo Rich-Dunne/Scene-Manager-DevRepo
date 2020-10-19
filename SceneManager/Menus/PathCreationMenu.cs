@@ -18,7 +18,7 @@ namespace SceneManager
         private static UIMenuNumericScrollerItem<int> waypointSpeed;
         internal static UIMenuCheckboxItem stopWaypointType = new UIMenuCheckboxItem("Is this a Stop waypoint?", false, "If checked, vehicles will drive to this waypoint, then stop.");
         internal static UIMenuCheckboxItem directWaypointBehavior = new UIMenuCheckboxItem("Drive directly to waypoint?", false, "If checked, vehicles will ignore traffic rules and drive directly to this waypoint.");
-        internal static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If chcked, this waypoint will collect vehicles to follow the path.  Your path's first waypoint ~b~must~w~ be a collector.");
+        internal static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If checked, this waypoint will collect vehicles to follow the path.  Your path's first waypoint ~b~must~w~ be a collector.");
         internal static UIMenuNumericScrollerItem<int> collectorRadius = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint (in meters) vehicles will be collected", 1, 50, 1);
         internal static UIMenuNumericScrollerItem<int> speedZoneRadius = new UIMenuNumericScrollerItem<int>("Speed Zone Radius", "The distance from this collector waypoint (in meters) non-collected vehicles will drive at this waypoint's speed", 5, 200, 5);
 
@@ -107,6 +107,7 @@ namespace SceneManager
 
                 ToggleTrafficEndPathMenuItem(pathIndex);
                 collectorWaypoint.Enabled = true;
+                collectorWaypoint.Checked = false;
                 trafficRemoveWaypoint.Enabled = true;
                 PathMainMenu.createNewPath.Text = $"Continue Creating Path {pathNumber}";
 
@@ -206,21 +207,32 @@ namespace SceneManager
                         currentPath.State = State.Finished;
                         currentPath.IsEnabled = true;
                         currentPath.Number = i + 1;
+                        currentPath.LoopForVehiclesToBeDismissed();
 
-                        foreach (Waypoint waypoint in PathMainMenu.paths[i].Waypoints)
+                        GameFiber.StartNew(() =>
                         {
-                            GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => VehicleCollector.StartCollectingAtWaypoint(PathMainMenu.paths, PathMainMenu.paths[i], waypoint));
-                            WaypointVehicleCollectorFiber.Start();
-                        }
+                            currentPath.LoopWaypointCollection();
+                            //foreach(Waypoint waypoint in PathMainMenu.paths[i].Waypoints)
+                            //{
+                            //    GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => waypoint.CollectVehicles(PathMainMenu.paths));
+                            //    WaypointVehicleCollectorFiber.Start();
+                            //    GameFiber.Sleep(1000);
+                            //}
+                        });
 
                         PathMainMenu.createNewPath.Text = "Create New Path";
                         PathMainMenu.BuildPathMenu();
                         PathMainMenu.pathMainMenu.RefreshIndex();
                         pathCreationMenu.RefreshIndex();
+                        waypointSpeed.Index = 0;
                         collectorWaypoint.Enabled = false;
                         collectorWaypoint.Checked = true;
                         speedZoneRadius.Enabled = true;
+                        speedZoneRadius.Index = 0;
                         collectorRadius.Enabled = true;
+                        collectorRadius.Index = 0;
+                        stopWaypointType.Checked = false;
+                        directWaypointBehavior.Checked = false;
                         trafficEndPath.Enabled = false;
                         PathMainMenu.pathMainMenu.Visible = true;
 

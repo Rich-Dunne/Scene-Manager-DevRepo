@@ -41,7 +41,7 @@ namespace SceneManager
             //Logger.Log($"{Vehicle.Model.Name} and driver are now persistent.");
         }
 
-        internal void Dismiss(DismissOption dismissOption = DismissOption.FromPath)
+        internal void Dismiss(DismissOption dismissOption = DismissOption.FromPath, Path newPath = null)
         {
             if (!Vehicle || !Driver)
             {
@@ -66,7 +66,7 @@ namespace SceneManager
                     Vehicle.Dismiss();
                 }
                 Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
-                VehicleCollector.collectedVehicles.Remove(this);
+                Path.CollectedVehicles.Remove(this);
                 return;
             }
 
@@ -87,6 +87,11 @@ namespace SceneManager
             if (dismissOption == DismissOption.FromPath)
             {
                 DismissFromPath();
+            }
+
+            if(dismissOption == DismissOption.FromDirected)
+            {
+                DismissFromDirect();
             }
 
             void DismissFromWorld()
@@ -151,7 +156,7 @@ namespace SceneManager
 
                     if (!Directed)
                     {
-                        VehicleCollector.collectedVehicles.Remove(this);
+                        Path.CollectedVehicles.Remove(this);
                         Logger.Log($"{Vehicle.Model.Name} dismissed successfully.");
                         if (Driver)
                         {
@@ -171,6 +176,18 @@ namespace SceneManager
                     }
                 });
                 
+            }
+
+            void DismissFromDirect()
+            {
+                Dismissed = true;
+                Directed = true;
+                if (newPath != null)
+                {
+                    newPath.CollectedVehicles.Add(this);
+                    Path.CollectedVehicles.Remove(this);
+                }
+                Driver.Tasks.Clear();
             }
         }
     }

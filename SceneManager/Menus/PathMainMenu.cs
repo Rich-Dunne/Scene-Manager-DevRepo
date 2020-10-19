@@ -13,7 +13,8 @@ namespace SceneManager
         FromPath = 0,
         FromWaypoint = 1,
         FromWorld = 2,
-        FromPlayer = 3
+        FromPlayer = 3,
+        FromDirected = 4
     }
 
     static class PathMainMenu
@@ -130,7 +131,7 @@ namespace SceneManager
             void RemoveVehiclesFromPath()
             {
                 //Game.LogTrivial($"Removing all vehicles on the path");
-                var pathVehicles = VehicleCollector.collectedVehicles.Where(cv => cv.Path.Number == path.Number).ToList();
+                var pathVehicles = path.CollectedVehicles.Where(cv => cv.Path.Number == path.Number).ToList();
                 foreach (CollectedVehicle cv in pathVehicles.Where(cv => cv != null && cv.Vehicle && cv.Driver))
                 {
                     if (cv.StoppedAtWaypoint)
@@ -148,8 +149,9 @@ namespace SceneManager
                     cv.Vehicle.Dismiss();
 
                     //Game.LogTrivial($"{cv.vehicle.Model.Name} cleared from path {cv.path}");
-                    VehicleCollector.collectedVehicles.Remove(cv);
+                    path.CollectedVehicles.Remove(cv);
                 }
+                path.CollectedVehicles.Clear();
             }
 
             void RemoveBlipsAndYieldZones()
@@ -227,7 +229,7 @@ namespace SceneManager
                 {
                     DeletePath(paths[i], Delete.All);
                 }
-
+                disableAllPaths.Checked = false;
                 paths.Clear();
                 BuildPathMenu();
                 pathMainMenu.Visible = true;
@@ -238,21 +240,48 @@ namespace SceneManager
             if (selectedItem == directDriver)
             {
                 var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(16).Where(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid()).FirstOrDefault();
+                var path = paths[directDriver.Index];
+                var collectedVehicle = path.CollectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
+                var waypoints = path.Waypoints;
+                var firstWaypoint = waypoints.First();
+                var nearestWaypoint = waypoints.Where(wp => wp.Position.DistanceTo2D(nearbyVehicle.FrontPosition) < wp.Position.DistanceTo2D(nearbyVehicle.RearPosition)).OrderBy(wp => wp.Position.DistanceTo2D(nearbyVehicle)).FirstOrDefault();
 
                 if (nearbyVehicle)
                 {
-                    var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
-                    var path = paths[directDriver.Index];
-                    var waypoints = path.Waypoints;
-                    var firstWaypoint = waypoints.First();
-                    var nearestWaypoint = waypoints.Where(wp => wp.Position.DistanceTo2D(nearbyVehicle.FrontPosition) < wp.Position.DistanceTo2D(nearbyVehicle.RearPosition)).OrderBy(wp => wp.Position.DistanceTo2D(nearbyVehicle)).FirstOrDefault();
+                    var nearbyVehiclePath = paths.Where(p => p.CollectedVehicles.Any(v => v.Vehicle == nearbyVehicle)).FirstOrDefault();
+                    if(nearbyVehiclePath != null)
+                    {
+                        var nearbyCollectedVehicle = nearbyVehiclePath.CollectedVehicles.Where(v => v.Vehicle == nearbyVehicle).FirstOrDefault();
+                        if (nearbyCollectedVehicle != null)
+                        {
+                            nearbyCollectedVehicle.Dismiss(DismissOption.FromDirected, path);
+                            if (directOptions.SelectedItem == "First waypoint")
+                            {
+                                GameFiber.StartNew(() =>
+                                {
+                                    AITasking.AssignWaypointTasks(nearbyCollectedVehicle, path, firstWaypoint);
+                                });
+                            }
+                            else
+                            {
+                                if (nearestWaypoint != null)
+                                {
+                                    GameFiber.StartNew(() =>
+                                    {
+                                        AITasking.AssignWaypointTasks(nearbyCollectedVehicle, path, nearestWaypoint);
+                                    });
+                                }
+                            }
+                            return;
+                        }
+                    }
 
                     // The vehicle should only be added to the collection when it's not null AND if the selected item is First Waypoint OR if the selected item is nearestWaypoint AND nearestWaypoint is not null
                     if (collectedVehicle == null && directOptions.SelectedItem == "First waypoint" || (directOptions.SelectedItem == "Nearest waypoint" && nearestWaypoint != null))
                     {
                         Game.LogTrivial($"[Direct Driver] Adding {nearbyVehicle.Model.Name} to collection.");
-                        VehicleCollector.collectedVehicles.Add(new CollectedVehicle(nearbyVehicle, path));
-                        collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
+                        path.CollectedVehicles.Add(new CollectedVehicle(nearbyVehicle, path));
+                        collectedVehicle = path.CollectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
                         //Logger.Log($"Collected vehicle is {collectedVehicle.Vehicle.Model.Name}");
                     }
 
@@ -289,12 +318,7 @@ namespace SceneManager
                 var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(16).Where(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid()).FirstOrDefault();
                 if (nearbyVehicle)
                 {
-                    var collectedVehicle = VehicleCollector.collectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
-                    if(collectedVehicle != null)
-                    {
-                        collectedVehicle.Dismiss((DismissOption)dismissDriver.Index);
-                    }
-                    else if(dismissDriver.Index == (int)DismissOption.FromWorld)
+                    if (!paths.Any() && dismissDriver.Index == (int)DismissOption.FromWorld)
                     {
                         Game.LogTrivial($"Dismissed {nearbyVehicle.Model.Name} from the world");
                         while (nearbyVehicle && nearbyVehicle.HasOccupants)
@@ -308,6 +332,34 @@ namespace SceneManager
                         if (nearbyVehicle)
                         {
                             nearbyVehicle.Delete();
+                        }
+                        return;
+                    }
+
+                    foreach(Path path in paths)
+                    {
+                        var collectedVehicle = path.CollectedVehicles.Where(cv => cv.Vehicle == nearbyVehicle).FirstOrDefault();
+                        if (collectedVehicle != null)
+                        {
+                            collectedVehicle.Dismiss((DismissOption)dismissDriver.Index);
+                            break;
+                        }
+                        else if (dismissDriver.Index == (int)DismissOption.FromWorld)
+                        {
+                            Game.LogTrivial($"Dismissed {nearbyVehicle.Model.Name} from the world");
+                            while (nearbyVehicle && nearbyVehicle.HasOccupants)
+                            {
+                                foreach (Ped occupant in nearbyVehicle.Occupants)
+                                {
+                                    occupant.Delete();
+                                }
+                                GameFiber.Yield();
+                            }
+                            if (nearbyVehicle)
+                            {
+                                nearbyVehicle.Delete();
+                            }
+                            break;
                         }
                     }
                 }
