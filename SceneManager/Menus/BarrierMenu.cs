@@ -44,7 +44,7 @@ namespace SceneManager
 
         internal static void CreateShadowBarrier(UIMenu barrierMenu)
         {
-            Hints.Display($"~o~Scene Manager\n~y~[Hint]~y~ ~w~The shadow cone will disappear if you aim too far away.");
+            Hints.Display($"~o~Scene Manager ~y~[Hint]\n~y~ ~w~The shadow cone will disappear if you aim too far away.");
 
             if (shadowBarrier)
                 shadowBarrier.Delete();
@@ -53,7 +53,7 @@ namespace SceneManager
             if (!shadowBarrier)
             {
                 barrierMenu.Close();
-                Game.DisplayNotification($"~o~Scene Manager\n~red~[Error]~w~ Something went wrong creating the shadow barrier.  Please try again.");
+                Game.DisplayNotification($"~o~Scene Manager ~red~[Error]\n~w~ Something went wrong creating the shadow barrier.  Please try again.");
                 return;
             }
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
