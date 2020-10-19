@@ -211,12 +211,13 @@ namespace SceneManager
 
                         GameFiber.StartNew(() =>
                         {
-                            foreach(Waypoint waypoint in PathMainMenu.paths[i].Waypoints)
-                            {
-                                GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => waypoint.CollectVehicles(PathMainMenu.paths));
-                                WaypointVehicleCollectorFiber.Start();
-                                GameFiber.Sleep(1000);
-                            }
+                            currentPath.LoopWaypointCollection();
+                            //foreach(Waypoint waypoint in PathMainMenu.paths[i].Waypoints)
+                            //{
+                            //    GameFiber WaypointVehicleCollectorFiber = new GameFiber(() => waypoint.CollectVehicles(PathMainMenu.paths));
+                            //    WaypointVehicleCollectorFiber.Start();
+                            //    GameFiber.Sleep(1000);
+                            //}
                         });
 
                         PathMainMenu.createNewPath.Text = "Create New Path";
