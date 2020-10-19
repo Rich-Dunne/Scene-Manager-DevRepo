@@ -188,7 +188,7 @@ namespace SceneManager
 
             bool IsValidForCollection(Vehicle v)
             {
-                if (v && v.Speed > 1 && v.IsOnAllWheels && v.IsEngineOn && v != Game.LocalPlayer.Character.CurrentVehicle && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && !CollectedVehicles.Any(cv => cv?.Vehicle == v))
+                if (v && v != Game.LocalPlayer.Character.CurrentVehicle && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && v.IsEngineOn && v.IsOnAllWheels && v.Speed > 1 && !CollectedVehicles.Any(cv => cv?.Vehicle == v))
                 {
                     var vehicleCollectedOnAnotherPath = PathMainMenu.paths.Any(p => p.Number != Number && p.CollectedVehicles.Any(cv => cv.Vehicle == v));
                     if (vehicleCollectedOnAnotherPath)
