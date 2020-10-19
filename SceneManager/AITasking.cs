@@ -17,7 +17,14 @@ namespace SceneManager
             }
 
             collectedVehicle.Path = path;
-            collectedVehicle.CurrentWaypoint = currentWaypoint;
+            if(currentWaypoint != null)
+            {
+                collectedVehicle.CurrentWaypoint = currentWaypoint;
+            }
+            else
+            {
+                collectedVehicle.CurrentWaypoint = path.Waypoints[0];
+            }
 
             if (currentWaypoint != null && collectedVehicle.Directed)
             {
@@ -27,13 +34,6 @@ namespace SceneManager
                 {
                     GameFiber.Yield();
                 }
-                //if (collectedVehicle.StoppedAtWaypoint)
-                //{
-                //    Logger.Log($"Unstucking {collectedVehicle.Vehicle.Model.Name}");
-                //    collectedVehicle.StoppedAtWaypoint = false;
-                //    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, 0f, 1, true);
-                //    collectedVehicle.Driver.Tasks.CruiseWithVehicle(5f);
-                //}
                 collectedVehicle.Driver.Tasks.Clear();
                 AssignTasksForDirectedDriver(acceptedDistance);
                 LoopWhileDrivingToDirectedWaypoint(acceptedDistance);
