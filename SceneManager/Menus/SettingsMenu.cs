@@ -2,6 +2,8 @@
 using RAGENativeUI;
 using RAGENativeUI.Elements;
 using System;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace SceneManager
 {
@@ -19,6 +21,10 @@ namespace SceneManager
         {
             settingsMenu.ParentMenu = MainMenu.mainMenu;
             MenuManager.menuPool.Add(settingsMenu);
+            settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
+            settingsMenu.OnScrollerChange += SettingsMenu_OnScrollerChange;
+            settingsMenu.OnItemSelect += SettingsMenu_OnItemSelected;
+            settingsMenu.OnMenuOpen += SettingsMenu_OnMouseDown;
         }
 
         internal static void BuildSettingsMenu()
@@ -30,18 +36,38 @@ namespace SceneManager
             speedUnits.Index = Array.IndexOf(speedArray, Settings.SpeedUnit);
             settingsMenu.AddItem(saveSettings);
             saveSettings.ForeColor = System.Drawing.Color.Gold;
-
-            settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
-            settingsMenu.OnScrollerChange += SettingsMenu_OnScrollerChange;
-            settingsMenu.OnItemSelect += SettingsMenu_OnItemSelected;
         }
         
+        internal static void ToggleMapBlips()
+        {
+            if (mapBlips.Checked)
+            {
+                foreach (Path path in PathMainMenu.paths)
+                {
+                    foreach (Waypoint wp in path.Waypoints)
+                    {
+                        wp.EnableBlip();
+                    }
+                }
+            }
+            else
+            {
+                foreach (Path path in PathMainMenu.paths)
+                {
+                    foreach (Waypoint wp in path.Waypoints)
+                    {
+                        wp.DisableBlip();
+                    }
+                }
+            }
+        }
+
         private static void SettingsMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
             if(selectedItem == saveSettings)
             {
                 Settings.UpdateSettings(threeDWaypoints.Checked, mapBlips.Checked, hints.Checked, speedUnits.SelectedItem);
-                Game.DisplayHelp($"Settings saved");
+                Game.DisplayHelp($"Scene Manager settings saved");
             }
         }
 
@@ -49,26 +75,7 @@ namespace SceneManager
         {
             if (checkboxItem == mapBlips)
             {
-                if (mapBlips.Checked)
-                {
-                    foreach(Path path in PathMainMenu.paths)
-                    {
-                        foreach(Waypoint wp in path.Waypoints)
-                        {
-                            wp.EnableBlip();
-                        }
-                    }
-                }
-                else
-                {
-                    foreach (Path path in PathMainMenu.paths)
-                    {
-                        foreach (Waypoint wp in path.Waypoints)
-                        {
-                            wp.DisableBlip();
-                        }
-                    }
-                }
+                ToggleMapBlips();
             }
 
             if (checkboxItem == hints)
@@ -84,6 +91,101 @@ namespace SceneManager
                 // Clear the menu and rebuild it to reflect the menu item text change
                 PathCreationMenu.pathCreationMenu.Clear();
                 PathCreationMenu.BuildPathCreationMenu();
+            }
+        }
+
+        private static void SettingsMenu_OnMouseDown(UIMenu menu)
+        {
+            GameFiber.StartNew(() =>
+            {
+                while (menu.Visible)
+                {
+                    var selectedScroller = menu.MenuItems.Where(x => x == speedUnits && x.Selected).FirstOrDefault();
+                    if (selectedScroller != null)
+                    {
+                        HandleScrollerItemsWithMouseWheel(selectedScroller);
+                    }
+
+                    // Add waypoint if menu item is selected and user left clicks
+                    if (Game.IsKeyDown(Keys.LButton))
+                    {
+                        OnCheckboxItemClicked();
+                        OnMenuItemClicked();
+                    }
+                    GameFiber.Yield();
+                }
+            });
+
+            void OnCheckboxItemClicked()
+            {
+                if (threeDWaypoints.Selected && threeDWaypoints.Enabled)
+                {
+                    threeDWaypoints.Checked = !threeDWaypoints.Checked;
+                }
+                else if (mapBlips.Selected)
+                {
+                    mapBlips.Checked = !mapBlips.Checked;
+                    ToggleMapBlips();
+                }
+                else if (hints.Selected)
+                {
+                    hints.Checked = !hints.Checked;
+                    Hints.Enabled = hints.Checked ? true : false;
+                }
+            }
+
+            void OnMenuItemClicked()
+            {
+                if (saveSettings.Selected)
+                {
+                    Settings.UpdateSettings(threeDWaypoints.Checked, mapBlips.Checked, hints.Checked, speedUnits.SelectedItem);
+                    Game.DisplayHelp($"Scene Manager settings saved");
+                }
+            }
+
+            void HandleScrollerItemsWithMouseWheel(UIMenuItem selectedScroller)
+            {
+                var menuScrollingDisabled = false;
+                var menuItems = menu.MenuItems.Where(x => x != selectedScroller);
+                while (Game.IsShiftKeyDownRightNow)
+                {
+                    menu.ResetKey(Common.MenuControls.Up);
+                    menu.ResetKey(Common.MenuControls.Down);
+                    menuScrollingDisabled = true;
+                    ScrollMenuItem();
+                    GameFiber.Yield();
+                }
+
+                if (menuScrollingDisabled)
+                {
+                    menuScrollingDisabled = false;
+                    menu.SetKey(Common.MenuControls.Up, GameControl.CursorScrollUp);
+                    menu.SetKey(Common.MenuControls.Up, GameControl.CellphoneUp);
+                    menu.SetKey(Common.MenuControls.Down, GameControl.CursorScrollDown);
+                    menu.SetKey(Common.MenuControls.Down, GameControl.CellphoneDown);
+                }
+
+                void ScrollMenuItem()
+                {
+                    if (Game.GetMouseWheelDelta() > 0)
+                    {
+                        if (selectedScroller == speedUnits)
+                        {
+                            speedUnits.ScrollToNextOption();
+                            PathCreationMenu.pathCreationMenu.Clear();
+                            PathCreationMenu.BuildPathCreationMenu();
+                        }
+                    }
+                    else if (Game.GetMouseWheelDelta() < 0)
+                    {
+                        if (selectedScroller == speedUnits)
+                        {
+                            speedUnits.ScrollToPreviousOption();
+                            PathCreationMenu.pathCreationMenu.Clear();
+                            PathCreationMenu.BuildPathCreationMenu();
+                        }
+                    }
+                }
             }
         }
     }

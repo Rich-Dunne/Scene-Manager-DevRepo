@@ -34,7 +34,6 @@ namespace SceneManager
             MainMenu.BuildMainMenu();
             SettingsMenu.BuildSettingsMenu();
             PathMainMenu.BuildPathMenu();
-            PathCreationMenu.BuildPathCreationMenu();
             EditPathMenu.BuildEditPathMenu();
             BarrierMenu.BuildBarrierMenu();
         }

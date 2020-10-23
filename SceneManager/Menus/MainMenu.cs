@@ -1,6 +1,9 @@
-﻿using RAGENativeUI;
+﻿using Rage;
+using RAGENativeUI;
 using RAGENativeUI.Elements;
 using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace SceneManager
 {
@@ -29,6 +32,7 @@ namespace SceneManager
 
             mainMenu.RefreshIndex();
             mainMenu.OnItemSelect += MainMenu_OnItemSelected;
+            mainMenu.OnMenuOpen += MainMenu_OnMouseDown;
         }
 
         private static void MainMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
@@ -36,6 +40,39 @@ namespace SceneManager
             if (selectedItem == navigateToBarrierMenu)
             {
                 BarrierMenu.CreateShadowBarrier(BarrierMenu.barrierMenu);
+            }
+        }
+
+        private static void MainMenu_OnMouseDown(UIMenu menu)
+        {
+            GameFiber.StartNew(() =>
+            {
+                while (menu.Visible)
+                {
+                    if (Game.IsKeyDown(Keys.LButton))
+                    {
+                        menu.Visible = false;
+                        OnMenuItemClicked();
+                    }
+                    GameFiber.Yield();
+                }
+            });
+
+            void OnMenuItemClicked()
+            {
+                if (navigateToPathMenu.Selected)
+                {
+                    PathMainMenu.pathMainMenu.Visible = true;
+                }
+                else if (navigateToBarrierMenu.Selected)
+                {
+                    BarrierMenu.barrierMenu.Visible = true;
+                    BarrierMenu.CreateShadowBarrier(BarrierMenu.barrierMenu);
+                }
+                else if (navigateToSettingsMenu.Selected)
+                {
+                    SettingsMenu.settingsMenu.Visible = true;
+                }
             }
         }
     }

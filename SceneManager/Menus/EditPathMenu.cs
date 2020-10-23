@@ -1,4 +1,6 @@
 ﻿using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
@@ -15,6 +17,9 @@ namespace SceneManager
         {
             editPathMenu.ParentMenu = PathMainMenu.pathMainMenu;
             MenuManager.menuPool.Add(editPathMenu);
+            editPathMenu.OnItemSelect += EditPath_OnItemSelected;
+            editPathMenu.OnCheckboxChange += EditPath_OnCheckboxChange;
+            editPathMenu.OnMenuOpen += EditPath_OnMouseDown;
         }
 
         internal static void BuildEditPathMenu()
@@ -26,22 +31,44 @@ namespace SceneManager
             deletePath.ForeColor = Color.Gold;
 
             editPathMenu.RefreshIndex();
-            editPathMenu.OnItemSelect += EditPath_OnItemSelected;
-            editPathMenu.OnCheckboxChange += EditPath_OnCheckboxChange;
+        }
+
+        private static void EditPathWaypoints()
+        {
+            EditWaypointMenu.BuildEditWaypointMenu();
+        }
+
+        private static void DeletePath()
+        {
+            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
+            PathMainMenu.DeletePath(currentPath, PathMainMenu.Delete.Single);
+        }
+
+        private static void DisablePath()
+        {
+            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
+            if (disablePath.Checked)
+            {
+                currentPath.DisablePath();
+                Game.LogTrivial($"Path {currentPath.Number} disabled.");
+            }
+            else
+            {
+                currentPath.EnablePath();
+                Game.LogTrivial($"Path {currentPath.Number} enabled.");
+            }
         }
 
         private static void EditPath_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
-
             if (selectedItem == editPathWaypoints)
             {
-                EditWaypointMenu.BuildEditWaypointMenu();
+                EditPathWaypoints();
             }
 
             if (selectedItem == deletePath)
             {
-                PathMainMenu.DeletePath(currentPath, PathMainMenu.Delete.Single);
+                DeletePath();
             }
         }
 
@@ -49,16 +76,44 @@ namespace SceneManager
         {
             if (checkboxItem == disablePath)
             {
-                var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
-                if (disablePath.Checked)
+                DisablePath();
+            }
+        }
+
+        private static void EditPath_OnMouseDown(UIMenu menu)
+        {
+            GameFiber.StartNew(() =>
+            {
+                while (menu.Visible)
                 {
-                    currentPath.DisablePath();
-                    Logger.Log($"Path {currentPath.Number} disabled.");
+                    // Add waypoint if menu item is selected and user left clicks
+                    if (Game.IsKeyDown(Keys.LButton))
+                    {
+                        OnCheckboxItemClicked();
+                        OnMenuItemClicked();
+                    }
+                    GameFiber.Yield();
                 }
-                else
+            });
+
+            void OnCheckboxItemClicked()
+            {
+                if (disablePath.Selected && disablePath.Enabled)
                 {
-                    currentPath.EnablePath();
-                    Logger.Log($"Path {currentPath.Number} enabled.");
+                    disablePath.Checked = !disablePath.Checked;
+                    DisablePath();
+                }
+            }
+
+            void OnMenuItemClicked()
+            {
+                if (editPathWaypoints.Selected)
+                {
+                    EditPathWaypoints();
+                }
+                else if (deletePath.Selected)
+                {
+                    DeletePath();
                 }
             }
         }
