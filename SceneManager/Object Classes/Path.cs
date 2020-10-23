@@ -81,9 +81,9 @@ namespace SceneManager
         {
             GameFiber.StartNew(() =>
             {
-                while (SettingsMenu.threeDWaypoints.Checked)
+                while(true)
                 {
-                    if (MenuManager.menuPool.IsAnyMenuOpen())
+                    if (Settings.Enable3DWaypoints && (State == State.Finished && MenuManager.menuPool.IsAnyMenuOpen()) || (State == State.Creating && PathCreationMenu.pathCreationMenu.Visible))
                     {
                         for (int i = 0; i < Waypoints.Count; i++)
                         {
@@ -133,7 +133,6 @@ namespace SceneManager
         internal void LoopWaypointCollection()
         {
             uint lastProcessTime = Game.GameTime; // Store the last time the full loop finished; this is a value in ms
-            int timeBetweenChecks = 1000; // How many ms to wait between outer loops
             int yieldAfterChecks = 50; // How many calculations to do before yielding
             while (PathMainMenu.paths.Contains(this))
             {
@@ -177,7 +176,7 @@ namespace SceneManager
             {
                 var collectedVehicle = new CollectedVehicle(vehicle, this);
                 CollectedVehicles.Add(collectedVehicle);
-                Logger.Log($"Added {vehicle.Model.Name} to collection from path {Number} waypoint {1}.");
+                Game.LogTrivial($"Added {vehicle.Model.Name} to collection from path {Number} waypoint {1}.");
                 return collectedVehicle;
             }
 
