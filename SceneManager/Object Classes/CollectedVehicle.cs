@@ -75,7 +75,10 @@ namespace SceneManager
                 //Logger.Log($"Unstucking {Vehicle.Model.Name}");
                 StoppedAtWaypoint = false;
                 Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
-                Driver.Tasks.CruiseWithVehicle(5f);
+                if (Driver.CurrentVehicle)
+                {
+                    Driver.Tasks.CruiseWithVehicle(5f);
+                }
             }
             Driver.Tasks.Clear();
 
@@ -113,11 +116,11 @@ namespace SceneManager
             {
                 if (CurrentWaypoint == null || Path == null)
                 {
-                    Logger.Log($"CurrentWaypoint or Path are null");
+                    Game.LogTrivial($"CurrentWaypoint or Path are null");
                 }
                 else if (CurrentWaypoint?.Number != Path?.Waypoints.Count)
                 {
-                    Logger.Log($"Dismissed from waypoint.");
+                    Game.LogTrivial($"Dismissed from waypoint.");
                     SkipWaypoint = true;
                 }
                 else if (CurrentWaypoint?.Number == Path?.Waypoints.Count)
@@ -128,7 +131,7 @@ namespace SceneManager
 
             void DismissFromPath()
             {
-                Logger.Log($"Dismissing from path");
+                Game.LogTrivial($"Dismissing from path");
                 Dismissed = true;
 
                 // Check if the vehicle is near any of the path's collector waypoints
@@ -146,7 +149,7 @@ namespace SceneManager
                     }
                     else
                     {
-                        Logger.Log($"Nearest collector is null");
+                        Game.LogTrivial($"Nearest collector is null");
                     }
 
                     if (!Vehicle || !Driver)
@@ -157,7 +160,7 @@ namespace SceneManager
                     if (!Directed)
                     {
                         Path.CollectedVehicles.Remove(this);
-                        Logger.Log($"{Vehicle.Model.Name} dismissed successfully.");
+                        Game.LogTrivial($"{Vehicle.Model.Name} dismissed successfully.");
                         if (Driver)
                         {
                             if (Driver.GetAttachedBlip())
