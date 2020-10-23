@@ -6,12 +6,6 @@ using System.Linq;
 
 namespace SceneManager
 {
-    public enum DrivingFlagType
-    {
-        Normal = 263075,
-        Direct = 17040259
-    }
-
     public class Waypoint
     {
         internal Path Path { get; set; }
@@ -60,7 +54,7 @@ namespace SceneManager
             DrawWaypointMarker();
         }
 
-        internal void UpdateWaypoint(Waypoint currentWaypoint, DrivingFlagType drivingFlag, bool stopWaypoint, float speed, bool collectorWaypointChecked, float collectorRadius, float speedZoneRadius, bool updateWaypointPositionChecked)
+        internal void UpdateWaypoint(Waypoint currentWaypoint, Vector3 newWaypointPosition, DrivingFlagType drivingFlag, bool stopWaypoint, float speed, bool collectorWaypointChecked, float collectorRadius, float speedZoneRadius, bool updateWaypointPositionChecked)
         {
             if(IsStopWaypoint != stopWaypoint)
             {
@@ -71,7 +65,7 @@ namespace SceneManager
             UpdateCollectorOptions();
             if (updateWaypointPositionChecked)
             {
-                UpdateWaypointPosition(Game.LocalPlayer.Character.Position);
+                UpdateWaypointPosition();
             }
 
             void UpdateIfStopWaypoint()
@@ -140,7 +134,7 @@ namespace SceneManager
                 }
             }
 
-            void UpdateWaypointPosition(Vector3 newWaypointPosition)
+            void UpdateWaypointPosition()
             {
                 Position = newWaypointPosition;
                 RemoveSpeedZone();
@@ -199,27 +193,27 @@ namespace SceneManager
                             {
                                 if (EditWaypointMenu.updateWaypointPosition.Checked)
                                 {
-                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, 1f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
-                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, 1f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
+                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, GetMousePositionInWorld(), 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, 1f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
+                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, GetMousePositionInWorld(), 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, 1f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
                                 }
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, 2f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, 2f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, 2f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, 2f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
                             }
                             else if (EditWaypointMenu.stopWaypointType.Checked)
                             {
                                 if (EditWaypointMenu.updateWaypointPosition.Checked)
                                 {
-                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
+                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, GetMousePositionInWorld(), 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
                                 }
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 2f, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, 1f, 1f, 2f, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
                             }
                             else
                             {
                                 if (EditWaypointMenu.updateWaypointPosition.Checked)
                                 {
-                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
+                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, GetMousePositionInWorld(), 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
                                 }
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 2f, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, 1f, 1f, 2f, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
                             }
                         }
                         else if ((Path.State == State.Finished && MenuManager.menuPool.IsAnyMenuOpen()) || (Path.State == State.Creating && PathCreationMenu.pathCreationMenu.Visible))
@@ -231,16 +225,16 @@ namespace SceneManager
                             }
                             if (IsCollector)
                             {
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, CollectorRadius * 2, CollectorRadius * 2, markerHeight, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, SpeedZoneRadius * 2, SpeedZoneRadius * 2, markerHeight, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, CollectorRadius * 2, CollectorRadius * 2, markerHeight, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, SpeedZoneRadius * 2, SpeedZoneRadius * 2, markerHeight, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
                             }
                             else if (IsStopWaypoint)
                             {
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, markerHeight, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, 1f, 1f, markerHeight, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
                             }
                             else
                             {
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position.X, Position.Y, Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, markerHeight, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, 1f, 1f, markerHeight, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
                             }
                         }
                     }
@@ -292,7 +286,7 @@ namespace SceneManager
         internal void CollectVehicles(List<Path> paths)
         {
             var sleepInterval = 1000;
-            Logger.Log($"Starting collection loop on waypoint {Number}");
+            Game.LogTrivial($"Starting collection loop on waypoint {Number}");
             while (paths.Contains(Path) && Path.Waypoints.Contains(this))
             {
                 if (Path.IsEnabled && IsCollector)
@@ -309,7 +303,7 @@ namespace SceneManager
                 if (collectedVehiclePlayerIsIn != null)
                 {
                     collectedVehiclePlayerIsIn.Dismiss(DismissOption.FromPlayer);
-                    Logger.Log($"Dismissed a collected vehicle the player was in.");
+                    Game.LogTrivial($"Dismissed a collected vehicle the player was in.");
                 }
                 GameFiber.Sleep(sleepInterval);
             }
@@ -343,7 +337,7 @@ namespace SceneManager
             {
                 var collectedVehicle = new CollectedVehicle(vehicle, Path, this);
                 Path.CollectedVehicles.Add(collectedVehicle);
-                Logger.Log($"Added {vehicle.Model.Name} to collection from path {Path.Number} waypoint {this.Number}.");
+                Game.LogTrivial($"Added {vehicle.Model.Name} to collection from path {Path.Number} waypoint {this.Number}.");
                 return collectedVehicle;
             }
 
@@ -384,6 +378,37 @@ namespace SceneManager
                     return false;
                 }
             }
+        }
+
+        private static Vector3 GetMousePositionInWorld()
+        {
+            HitResult TracePlayerView(float maxTraceDistance = 100f, TraceFlags flags = TraceFlags.IntersectWorld) => TracePlayerView2(out Vector3 v1, out Vector3 v2, maxTraceDistance, flags);
+
+            HitResult TracePlayerView2(out Vector3 start, out Vector3 end, float maxTraceDistance, TraceFlags flags)
+            {
+                Vector3 direction = GetPlayerLookingDirection(out start);
+                end = start + (maxTraceDistance * direction);
+                return World.TraceLine(start, end, flags);
+            }
+
+            Vector3 GetPlayerLookingDirection(out Vector3 camPosition)
+            {
+                if (Camera.RenderingCamera)
+                {
+                    camPosition = Camera.RenderingCamera.Position;
+                    return Camera.RenderingCamera.Direction;
+                }
+                else
+                {
+                    float pitch = Rage.Native.NativeFunction.Natives.GET_GAMEPLAY_CAM_RELATIVE_PITCH<float>();
+                    float heading = Rage.Native.NativeFunction.Natives.GET_GAMEPLAY_CAM_RELATIVE_HEADING<float>();
+
+                    camPosition = Rage.Native.NativeFunction.Natives.GET_GAMEPLAY_CAM_COORD<Vector3>();
+                    return (Game.LocalPlayer.Character.Rotation + new Rotator(pitch, 0, heading)).ToVector().ToNormalized();
+                }
+            }
+
+            return TracePlayerView(100f, TraceFlags.IntersectWorld).HitPosition;
         }
     }
 }
