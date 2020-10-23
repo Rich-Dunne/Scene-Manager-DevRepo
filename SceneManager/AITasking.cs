@@ -11,6 +11,8 @@ namespace SceneManager
     {
         internal static void AssignWaypointTasks(CollectedVehicle collectedVehicle, Path path, Waypoint currentWaypoint)
         {
+            float acceptedDistance = GetAcceptedStoppingDistance(path.Waypoints, path.Waypoints.IndexOf(currentWaypoint));
+            Vector3 oldPosition = currentWaypoint.Position;
             if (!VehicleAndDriverAreValid(collectedVehicle))
             {
                 return;
@@ -29,14 +31,14 @@ namespace SceneManager
             if (currentWaypoint != null && collectedVehicle.Directed)
             {
                 collectedVehicle.Dismissed = false;
-                float acceptedDistance = GetAcceptedStoppingDistance(path.Waypoints, path.Waypoints.IndexOf(currentWaypoint));
+
                 while (!collectedVehicle.ReadyForDirectTasks)
                 {
                     GameFiber.Yield();
                 }
                 collectedVehicle.Driver.Tasks.Clear();
-                AssignTasksForDirectedDriver(acceptedDistance);
-                LoopWhileDrivingToDirectedWaypoint(acceptedDistance);
+                AssignTasksForDirectedDriver();
+                LoopWhileDrivingToDirectedWaypoint();
                 if(collectedVehicle != null)
                 {
                     collectedVehicle.Directed = false;
@@ -44,7 +46,7 @@ namespace SceneManager
                 if (collectedVehicle.Vehicle)
                 {
                     collectedVehicle.Driver.Tasks.PerformDrivingManeuver(collectedVehicle.Vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3).WaitForCompletion();
-                    Logger.Log($"{collectedVehicle.Vehicle.Model.Name} directed task is complete, directed is now false");
+                    Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} directed task is complete, directed is now false");
                 }
             }
 
@@ -61,26 +63,26 @@ namespace SceneManager
             {
                 return;
             }
-            Logger.Log($"{collectedVehicle.Vehicle.Model.Name} all Path {path.Number} tasks complete.");
+            Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} all Path {path.Number} tasks complete.");
             if(!collectedVehicle.Dismissed)
             {
                 collectedVehicle.Dismiss();
             }
 
-            void AssignTasksForDirectedDriver(float acceptedDistance)
+            void AssignTasksForDirectedDriver()
             {
-                //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} distance to collection waypoint: {collectedVehicle.Vehicle.DistanceTo2D(currentWaypoint.Position)}");
-
-                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {currentWaypoint.Number} (directed)");
-                //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} Dismissed: {collectedVehicle.Dismissed}, Directed: {collectedVehicle.Directed}");
+                Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {currentWaypoint.Number} (directed)");
                 collectedVehicle.Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)currentWaypoint.DrivingFlagType, acceptedDistance);
             }
 
-            void LoopWhileDrivingToDirectedWaypoint(float acceptedDistance)
+            void LoopWhileDrivingToDirectedWaypoint()
             {
-                while (VehicleAndDriverAreValid(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(currentWaypoint.Position) > acceptedDistance)
+                while (VehicleAndDriverAreValid(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(oldPosition) > acceptedDistance)
                 {
-                    //Logger.Log($"Looping while {collectedVehicle.Vehicle.Model.Name} drives to path {path.Number} waypoint {currentWaypoint.Number}");
+                    if (oldPosition != currentWaypoint.Position)
+                    {
+                        oldPosition = currentWaypoint.Position;
+                    }
                     GameFiber.Yield();
                 }
             }
@@ -90,42 +92,40 @@ namespace SceneManager
         {
             if (!VehicleAndDriverAreValid(collectedVehicle) || currentWaypoint == null || currentWaypoint.Path == null)
             {
-                Logger.Log($"Vehicle, driver, waypoint, or path is null.");
+                Game.LogTrivial($"Vehicle, driver, waypoint, or path is null.");
                 return;
             }
 
             var vehicle = collectedVehicle.Vehicle;
             var driver = vehicle.Driver;
 
-            Logger.Log($"Preparing to run task loop for {collectedVehicle.Vehicle.Model.Name} on path {path.Number}");
+            Game.LogTrivial($"Preparing to run task loop for {collectedVehicle.Vehicle.Model.Name} on path {path.Number}");
             //Logger.Log($"Current path: {collectedVehicle.Path.Number}, Current waypoint: {collectedVehicle.CurrentWaypoint.Number}");
             for (int currentWaypointTask = currentWaypoint.Number; currentWaypointTask < path.Waypoints.Count; currentWaypointTask++)
             {
-                //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} in the task loop");
-                //Logger.Log($"Dismissed: {collectedVehicle.Dismissed}, Directed: {collectedVehicle.Directed}, StoppedAtWaypoint: {collectedVehicle.StoppedAtWaypoint}");
+                var oldPosition = path.Waypoints[currentWaypointTask].Position;
                 collectedVehicle.SkipWaypoint = false;
 
                 if (collectedVehicle == null || !collectedVehicle.Vehicle || collectedVehicle.Dismissed || collectedVehicle.Directed)
                 {
-                    Logger.Log($"Vehicle dismissed, directed, or null, return");
+                    Game.LogTrivial($"Vehicle dismissed, directed, or null, return");
                     return;
                 }
                 if(collectedVehicle.Driver == null || !collectedVehicle.Driver || !collectedVehicle.Vehicle.HasDriver || !collectedVehicle.Driver.IsAlive || collectedVehicle.Vehicle.Driver == Game.LocalPlayer.Character)
                 {
-                    Logger.Log($"{vehicle.Model.Name} does not have a driver/driver is null or driver is dead.");
+                    Game.LogTrivial($"{vehicle.Model.Name} does not have a driver/driver is null or driver is dead.");
                     return;
                 }
 
                 if (path.Waypoints.ElementAtOrDefault(currentWaypointTask) != null && !collectedVehicle.StoppedAtWaypoint)
                 {
                     collectedVehicle.CurrentWaypoint = path.Waypoints[currentWaypointTask];
-                    //Logger.Log($"{collectedVehicle.Vehicle.Model.Name} current waypoint: {collectedVehicle.CurrentWaypoint.Number}");
                     float acceptedDistance = GetAcceptedStoppingDistance(path.Waypoints, currentWaypointTask);
 
-                    Logger.Log($"{vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {path.Waypoints[currentWaypointTask].Number} (Stop: {currentWaypoint.IsStopWaypoint}, Driving flag: {currentWaypoint.DrivingFlagType})");
+                    Game.LogTrivial($"{vehicle.Model.Name} is driving to path {currentWaypoint.Path.Number} waypoint {path.Waypoints[currentWaypointTask].Number} (Stop: {currentWaypoint.IsStopWaypoint}, Driving flag: {currentWaypoint.DrivingFlagType})");
                     //Logger.Log($"{vehicle.Model.Name} driver is persistent: {driver.IsPersistent}");
                     driver.Tasks.DriveToPosition(path.Waypoints[currentWaypointTask].Position, path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
-                    LoopWhileDrivingToWaypoint(currentWaypointTask, acceptedDistance);
+                    LoopWhileDrivingToWaypoint(currentWaypointTask, acceptedDistance, oldPosition);
 
                     if (!VehicleAndDriverAreValid(collectedVehicle))
                     {
@@ -150,18 +150,22 @@ namespace SceneManager
 
                     driver.Tasks.PerformDrivingManeuver(collectedVehicle.Vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3).WaitForCompletion();
                     // Do we need this?
-                    if (driver)
-                    {
-                        driver.Tasks.Clear();
-                    }
+                    //if (driver)
+                    //{
+                    //    driver.Tasks.Clear();
+                    //}
                 }
             }
 
-            void LoopWhileDrivingToWaypoint(int nextWaypoint, float acceptedDistance)
+            void LoopWhileDrivingToWaypoint(int currentWaypointTask, float acceptedDistance, Vector3 oldPosition)
             {
-                while (VehicleAndDriverAreValid(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && !collectedVehicle.Directed && path.Waypoints.ElementAtOrDefault(nextWaypoint) != null && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(path.Waypoints[nextWaypoint].Position) > acceptedDistance)
+                while (VehicleAndDriverAreValid(collectedVehicle) && !collectedVehicle.Dismissed && !collectedVehicle.SkipWaypoint && !collectedVehicle.Directed && path.Waypoints.ElementAtOrDefault(currentWaypointTask) != null && collectedVehicle.Vehicle.FrontPosition.DistanceTo2D(path.Waypoints[currentWaypointTask].Position) > acceptedDistance)
                 {
-                    //Logger.Log($"Looping while {vehicle.Model.Name} drives to waypoint.");
+                    if (oldPosition != path.Waypoints[currentWaypointTask].Position)
+                    {
+                        oldPosition = path.Waypoints[currentWaypointTask].Position;
+                        driver.Tasks.DriveToPosition(path.Waypoints[currentWaypointTask].Position, path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
+                    }
                     GameFiber.Sleep(100);
                 }
             }
@@ -187,12 +191,12 @@ namespace SceneManager
         {
             if (collectedVehicle == null)
             {
-                Logger.Log($"CollectedVehicle is null");
+                Game.LogTrivial($"CollectedVehicle is null");
                 return false;
             }
             if (!collectedVehicle.Vehicle && !collectedVehicle.Dismissed)
             {
-                Logger.Log($"Vehicle is null");
+                Game.LogTrivial($"Vehicle is null");
                 collectedVehicle.Dismiss();
                 return false;
             }
@@ -213,7 +217,7 @@ namespace SceneManager
             }
 
             var stoppingDistance = GetAcceptedStoppingDistance(currentWaypoint.Path.Waypoints, currentWaypoint.Path.Waypoints.IndexOf(currentWaypoint));
-            Logger.Log($"{collectedVehicle.Vehicle.Model.Name} stopping at path {currentWaypoint.Path.Number} waypoint.");
+            Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} stopping at path {currentWaypoint.Path.Number} waypoint.");
             Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, stoppingDistance, -1, true);
             collectedVehicle.StoppedAtWaypoint = true;
 
@@ -223,7 +227,7 @@ namespace SceneManager
             }
             if(collectedVehicle.Vehicle && collectedVehicle.Driver)
             {
-                Logger.Log($"{collectedVehicle.Vehicle.Model.Name} releasing from stop waypoint.");
+                Game.LogTrivial($"{collectedVehicle.Vehicle.Model.Name} releasing from stop waypoint.");
                 Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, 0f, 1, true);
                 collectedVehicle.Driver.Tasks.CruiseWithVehicle(5f);
             }
