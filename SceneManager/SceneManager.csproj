@@ -52,7 +52,6 @@
   <ItemGroup>
     <Compile Include="AITasking.cs" />
     <Compile Include="Object Classes\CollectedVehicle.cs" />
-    <Compile Include="Logger.cs" />
     <Compile Include="Object Classes\Barrier.cs" />
     <Compile Include="Hints.cs" />
     <Compile Include="Menus\BarrierMenu.cs" />
