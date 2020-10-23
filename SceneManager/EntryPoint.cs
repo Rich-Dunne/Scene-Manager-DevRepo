@@ -1,6 +1,4 @@
 ﻿using System;
-using System.ComponentModel.Design.Serialization;
-using System.Drawing.Text;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -36,7 +34,7 @@ namespace SceneManager
             void GetAssemblyVersion()
             {
                 string version = Assembly.GetExecutingAssembly().GetName().Version.ToString();
-                Logger.Log($"Scene Manager V{version} is ready.");
+                Game.LogTrivial($"Scene Manager V{version} is ready.");
             }
         }
         private static bool CheckRNUIVersion()
@@ -45,7 +43,7 @@ namespace SceneManager
             var exists = File.Exists(directory + @"\RAGENativeUI.dll");
             if (!exists)
             {
-                Logger.Log($"RNUI was not found in the user's GTA V directory.");
+                Game.LogTrivial($"RNUI was not found in the user's GTA V directory.");
                 Game.DisplayNotification($"~o~Scene Manager ~r~[Error]\n~w~RAGENativeUI.dll was not found in your GTA V directory.  Please install RAGENativeUI and try again.");
                 return false;
             }
@@ -54,7 +52,7 @@ namespace SceneManager
             Version requiredMinimumVersion = new Version("1.7.0.0");
             if(userVersion >= requiredMinimumVersion)
             {
-                Logger.Log($"User's RNUI version: {userVersion}");
+                Game.LogTrivial($"User's RNUI version: {userVersion}");
                 return true;
             }
             else
@@ -68,22 +66,21 @@ namespace SceneManager
         {
             if (Settings.ModifierKey == Keys.None && Settings.ModifierButton == ControllerButtons.None)
             {
-                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ToggleButton} button");
+                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ToggleButton} button");
             }
             else if (Settings.ModifierKey == Keys.None)
             {
-                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~ To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons");
+                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~To open the menu, press the ~b~{Settings.ToggleKey} key ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons");
             }
             else if (Settings.ModifierButton == ControllerButtons.None)
             {
-                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~ To open the menu, press ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} ~w~or the ~b~{Settings.ToggleButton} button");
+                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~To open the menu, press ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} ~w~or the ~b~{Settings.ToggleButton} button");
             }
             else
             {
-                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~ To open the menu, press the ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} keys ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons");
+                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~To open the menu, press the ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} keys ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons");
             }
         }
-
         private static void MyTerminationHandler(object sender, EventArgs e)
         {
             // Clean up cones
@@ -102,12 +99,8 @@ namespace SceneManager
                 PathMainMenu.DeletePath(PathMainMenu.paths[i], PathMainMenu.Delete.All);
             }
 
-            // Clear everything
-            BarrierMenu.barriers.Clear();
-            PathMainMenu.paths.Clear();
-
-            Logger.Log($"Plugin has shut down.");
-            Game.DisplayNotification($"~o~Scene Manager ~r~[Terminated]\n~w~ The plugin has shut down.");
+            Game.LogTrivial($"Plugin has shut down.");
+            Game.DisplayNotification($"~o~Scene Manager ~r~[Terminated]\n~w~The plugin has shut down.");
         }
     }
 }
