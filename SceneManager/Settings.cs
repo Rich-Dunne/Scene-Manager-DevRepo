@@ -67,12 +67,14 @@ namespace SceneManager
             ModifierKey = ini.ReadEnum("Keybindings", "ModifierKey", Keys.LShiftKey);
             ToggleButton = ini.ReadEnum("Keybindings", "ToggleButton", ControllerButtons.A);
             ModifierButton = ini.ReadEnum("Keybindings", "ModifierButton", ControllerButtons.DPadDown);
+            
             // Plugin Settings
             Enable3DWaypoints = ini.ReadBoolean("Plugin Settings", "Enable3DWaypoints", true);
             EnableMapBlips = ini.ReadBoolean("Plugin Settings", "EnableMapBlips", true);
             EnableHints = ini.ReadBoolean("Plugin Settings", "EnableHints", true);
             SpeedUnit = ini.ReadEnum("Plugin Settings", "SpeedUnits", SpeedUnits.MPH);
             BarrierPlacementDistance = ini.ReadInt32("Plugin Settings", "BarrierPlacementDistance", 30);
+            
             // Default Waypoint Settings
             CollectorRadius = ini.ReadInt32("Default Waypoint Settings", "CollectorRadius", 1);
             SpeedZoneRadius = ini.ReadInt32("Default Waypoint Settings", "SpeedZoneRadius", 5);
@@ -80,6 +82,7 @@ namespace SceneManager
             DirectDrivingBehavior = ini.ReadBoolean("Default Waypoint Settings", "DirectDrivingBehavior", false);
             WaypointSpeed = ini.ReadInt32("Default Waypoint Settings", "WaypointSpeed", 5);
             CheckForValidWaypointSettings();
+            
             // Barriers
             foreach(string key in ini.GetKeyNames("Barriers"))
             {
@@ -94,14 +97,23 @@ namespace SceneManager
                 if(CollectorRadius > 50 || CollectorRadius < 1)
                 {
                     CollectorRadius = 1;
+                    Game.LogTrivial($"Invalid value for CollectorRadius in user settings, resetting to default.");
                 }
                 if(SpeedZoneRadius > 200 || SpeedZoneRadius < 5)
                 {
                     SpeedZoneRadius = 5;
+                    Game.LogTrivial($"Invalid value for SpeedZoneRadius in user settings, resetting to default.");
                 }
-                if(WaypointSpeed > 100 || WaypointSpeed < 5)
+                if (CollectorRadius > SpeedZoneRadius)
+                {
+                    CollectorRadius = 1;
+                    SpeedZoneRadius = 5;
+                    Game.LogTrivial($"CollectorRadius is greater than SpeedZoneRadius in user settings, resetting to defaults.");
+                }
+                if (WaypointSpeed > 100 || WaypointSpeed < 5)
                 {
                     WaypointSpeed = 5;
+                    Game.LogTrivial($"Invalid value for WaypointSpeed in user settings, resetting to default.");
                 }
             }
         }
