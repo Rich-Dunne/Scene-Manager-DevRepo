@@ -103,7 +103,7 @@ namespace SceneManager
             Game.LogTrivial($"Path {currentPath.Number} Waypoint {currentWaypoint.Number} updated [Driving style: {drivingFlag} | Stop waypoint: {stopWaypointType.Checked} | Speed: {changeWaypointSpeed.Value} | Collector: {currentWaypoint.IsCollector}]");
 
             updateWaypointPosition.Checked = false;
-            Game.DisplayNotification($"~o~Scene Manager\n~g~[Success]~w~ Waypoint {currentWaypoint.Number} updated.");
+            Game.DisplayNotification($"~o~Scene Manager ~g~[Success]~w~\nWaypoint {currentWaypoint.Number} updated.");
         }
 
         private static void RemoveWaypoint(Path currentPath, Waypoint currentWaypoint, DrivingFlagType drivingFlag)
@@ -125,7 +125,6 @@ namespace SceneManager
                 foreach (Waypoint wp in currentPath.Waypoints)
                 {
                     wp.Number = currentPath.Waypoints.IndexOf(wp) + 1;
-                    //Logger.Log($"Waypoint at index {currentPath.Waypoints.IndexOf(wp)} is now waypoint #{wp.Number}");
                 }
 
                 editWaypointMenu.Clear();
@@ -133,7 +132,7 @@ namespace SceneManager
 
                 if (currentPath.Waypoints.Count == 1)
                 {
-                    Hints.Display($"~o~Scene Manager\n~y~[Hint]~w~ Your path's first waypoint ~b~must~w~ be a collector.  If it's not, it will automatically be made into one.");
+                    Hints.Display($"~o~Scene Manager ~y~[Hint]~w~\nYour path's first waypoint ~b~must~w~ be a collector.  If it's not, it will automatically be made into one.");
                     Game.LogTrivial($"The path only has 1 waypoint left, this waypoint must be a collector.");
                     currentPath.Waypoints[0].UpdateWaypoint(currentWaypoint, GetMousePositionInWorld(), drivingFlag, stopWaypointType.Checked, SetDriveSpeedForWaypoint(), true, changeCollectorRadius.Value, changeSpeedZoneRadius.Value, updateWaypointPosition.Checked);
                     collectorWaypoint.Checked = true;
@@ -295,6 +294,16 @@ namespace SceneManager
                 if (collectorWaypoint.Selected && collectorWaypoint.Enabled)
                 {
                     collectorWaypoint.Checked = !collectorWaypoint.Checked;
+                    if (collectorWaypoint.Checked)
+                    {
+                        changeCollectorRadius.Enabled = true;
+                        changeSpeedZoneRadius.Enabled = true;
+                    }
+                    else
+                    {
+                        changeCollectorRadius.Enabled = false;
+                        changeSpeedZoneRadius.Enabled = false;
+                    }
                 }
                 else if (stopWaypointType.Selected)
                 {
