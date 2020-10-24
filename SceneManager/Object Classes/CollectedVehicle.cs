@@ -1,4 +1,5 @@
 ﻿using Rage;
+using System.Collections.Generic;
 using System.Linq;
 
 namespace SceneManager
@@ -33,12 +34,250 @@ namespace SceneManager
             SetPersistence();
         }
 
-        internal void SetPersistence()
+        private void SetPersistence()
         {
             Vehicle.IsPersistent = true;
             Driver.IsPersistent = true;
             Driver.BlockPermanentEvents = true;
-            //Logger.Log($"{Vehicle.Model.Name} and driver are now persistent.");
+        }
+
+        internal void AssignWaypointTasks(Path path, Waypoint currentWaypoint)
+        {
+            // Driving styles https://gtaforums.com/topic/822314-guide-driving-styles/
+            // also https://vespura.com/fivem/drivingstyle/
+
+            if (!VehicleAndDriverAreValid())
+            {
+                return;
+            }
+
+            AssignPathAndCurrentWaypoint();
+
+            AssignDirectedTask();
+
+            if (currentWaypoint.IsStopWaypoint)
+            {
+                StopAtWaypoint();
+            }
+            if (path?.Waypoints?.Count > 0 && currentWaypoint != path?.Waypoints?.Last())
+            {
+                DriveToNextWaypoint();
+            }
+
+            if (!VehicleAndDriverAreValid() || Directed)
+            {
+                return;
+            }
+
+            Game.LogTrivial($"{Vehicle.Model.Name} [{Vehicle.Handle}] all Path {path.Number} tasks complete.");
+            if (!Dismissed)
+            {
+                Dismiss();
+            }
+
+            void AssignPathAndCurrentWaypoint()
+            {
+                Path = path;
+                if (currentWaypoint != null)
+                {
+                    CurrentWaypoint = currentWaypoint;
+                }
+                else
+                {
+                    CurrentWaypoint = path.Waypoints[0];
+                }
+            }
+
+            void AssignDirectedTask()
+            {
+                if (currentWaypoint != null && Directed)
+                {
+                    Dismissed = false;
+
+                    while (!ReadyForDirectTasks)
+                    {
+                        GameFiber.Yield();
+                    }
+                    if (!VehicleAndDriverAreValid())
+                    {
+                        return;
+                    }
+                    Driver.Tasks.Clear();
+                    DriveToDirectedWaypoint();
+                }
+            }
+
+            void DriveToDirectedWaypoint()
+            {
+                Dismissed = false;
+
+                while (!ReadyForDirectTasks)
+                {
+                    GameFiber.Yield();
+                }
+                Driver.Tasks.Clear();
+                AssignTasksForDirectedDriver();
+
+                void AssignTasksForDirectedDriver()
+                {
+                    float acceptedDistance = GetAcceptedStoppingDistance(Path.Waypoints, Path.Waypoints.IndexOf(currentWaypoint));
+                    Vector3 oldPosition = currentWaypoint.Position;
+                    Game.LogTrivial($"{Vehicle.Model.Name} [{Vehicle.Handle}] is driving to path {currentWaypoint.Path.Number} waypoint {currentWaypoint.Number} (directed)");
+                    Driver.Tasks.DriveToPosition(currentWaypoint.Position, currentWaypoint.Speed, (VehicleDrivingFlags)currentWaypoint.DrivingFlagType, acceptedDistance);
+                    LoopWhileDrivingToDirectedWaypoint();
+
+                    void LoopWhileDrivingToDirectedWaypoint()
+                    {
+                        while (VehicleAndDriverAreValid() && !Dismissed && !SkipWaypoint && Vehicle.FrontPosition.DistanceTo2D(oldPosition) > acceptedDistance)
+                        {
+                            if (oldPosition != currentWaypoint.Position)
+                            {
+                                oldPosition = currentWaypoint.Position;
+                            }
+                            GameFiber.Yield();
+                        }
+                        if (Vehicle)
+                        {
+                            Driver.Tasks.PerformDrivingManeuver(Vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3).WaitForCompletion();
+                            Game.LogTrivial($"{Vehicle.Model.Name} [{Vehicle.Handle}] directed task is complete, directed is now false");
+                        }
+                        Directed = false;
+                    }
+                }
+            }
+
+            void DriveToNextWaypoint()
+            {
+                if (!VehicleAndDriverAreValid() || CurrentWaypoint == null || Path == null)
+                {
+                    Game.LogTrivial($"Vehicle, driver, waypoint, or path is null.");
+                    return;
+                }
+
+                Game.LogTrivial($"Preparing to run task loop for {Vehicle.Model.Name} [{Vehicle.Handle}] on path {Path.Number}");
+                for (int currentWaypointTask = CurrentWaypoint.Number; currentWaypointTask < Path.Waypoints.Count; currentWaypointTask++)
+                {
+                    var oldPosition = Path.Waypoints[currentWaypointTask].Position;
+                    SkipWaypoint = false;
+
+                    if (this == null || !Vehicle || Dismissed || Directed)
+                    {
+                        Game.LogTrivial($"Vehicle dismissed, directed, or null, return");
+                        return;
+                    }
+                    if (Driver == null || !Driver || !Vehicle.HasDriver || !Driver.IsAlive || Vehicle.Driver == Game.LocalPlayer.Character)
+                    {
+                        Game.LogTrivial($"{Vehicle.Model.Name} [{Vehicle.Handle}] does not have a driver/driver is null or driver is dead.");
+                        return;
+                    }
+
+                    if (Path.Waypoints.ElementAtOrDefault(currentWaypointTask) != null && !StoppedAtWaypoint)
+                    {
+                        CurrentWaypoint = Path.Waypoints[currentWaypointTask];
+                        float acceptedDistance = GetAcceptedStoppingDistance(Path.Waypoints, currentWaypointTask);
+
+                        Game.LogTrivial($"{Vehicle.Model.Name} [{Vehicle.Handle}] is driving to path {Path.Number} waypoint {Path.Waypoints[currentWaypointTask].Number} (Stop: {CurrentWaypoint.IsStopWaypoint}, Driving flag: {CurrentWaypoint.DrivingFlagType})");
+                        Driver.Tasks.DriveToPosition(Path.Waypoints[currentWaypointTask].Position, Path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)Path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
+                        LoopWhileDrivingToWaypoint(currentWaypointTask, acceptedDistance, oldPosition);
+
+                        if (!VehicleAndDriverAreValid())
+                        {
+                            return;
+                        }
+
+                        if (SkipWaypoint)
+                        {
+                            SkipWaypoint = false;
+                            continue;
+                        }
+
+                        if (!Dismissed && !Directed && Path.Waypoints.ElementAtOrDefault(currentWaypointTask) != null && Path.Waypoints[currentWaypointTask].IsStopWaypoint)
+                        {
+                            StopAtWaypoint();
+                        }
+
+                        if (!VehicleAndDriverAreValid() || Dismissed || Directed)
+                        {
+                            return;
+                        }
+
+                        Driver.Tasks.PerformDrivingManeuver(Vehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3).WaitForCompletion();
+                    }
+                }
+
+                void LoopWhileDrivingToWaypoint(int currentWaypointTask, float acceptedDistance, Vector3 oldPosition)
+                {
+                    while (VehicleAndDriverAreValid() && !Dismissed && !SkipWaypoint && !Directed && Path.Waypoints.ElementAtOrDefault(currentWaypointTask) != null && Vehicle.FrontPosition.DistanceTo2D(Path.Waypoints[currentWaypointTask].Position) > acceptedDistance)
+                    {
+                        if (oldPosition != Path.Waypoints[currentWaypointTask].Position)
+                        {
+                            oldPosition = Path.Waypoints[currentWaypointTask].Position;
+                            Driver.Tasks.DriveToPosition(Path.Waypoints[currentWaypointTask].Position, Path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)Path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
+                        }
+                        GameFiber.Sleep(100);
+                    }
+                }
+            }
+
+            float GetAcceptedStoppingDistance(List<Waypoint> waypoints, int nextWaypoint)
+            {
+                float dist;
+                if (Settings.SpeedUnit == SpeedUnits.MPH)
+                {
+                    dist = (MathHelper.ConvertMilesPerHourToKilometersPerHour(waypoints[nextWaypoint].Speed) * MathHelper.ConvertMilesPerHourToKilometersPerHour(waypoints[nextWaypoint].Speed)) / (250 * 0.8f);
+                }
+                else
+                {
+                    dist = (waypoints[nextWaypoint].Speed * waypoints[nextWaypoint].Speed) / (250 * 0.8f);
+                }
+                var acceptedDistance = MathHelper.Clamp(dist, 2, 10);
+                return acceptedDistance;
+            }
+
+            void StopAtWaypoint()
+            {
+                if (!VehicleAndDriverAreValid())
+                {
+                    return;
+                }
+
+                var stoppingDistance = GetAcceptedStoppingDistance(currentWaypoint.Path.Waypoints, currentWaypoint.Path.Waypoints.IndexOf(currentWaypoint));
+                Game.LogTrivial($"{Vehicle.Model.Name} stopping at path {currentWaypoint.Path.Number} waypoint.");
+                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, stoppingDistance, -1, true);
+                StoppedAtWaypoint = true;
+
+                while (currentWaypoint != null && VehicleAndDriverAreValid() && StoppedAtWaypoint && !Directed)
+                {
+                    GameFiber.Yield();
+                }
+                if (Vehicle && Driver)
+                {
+                    Game.LogTrivial($"{Vehicle.Model.Name} releasing from stop waypoint.");
+                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
+                    Driver.Tasks.CruiseWithVehicle(5f);
+                }
+            }
+
+            bool VehicleAndDriverAreValid()
+            {
+                if (this == null)
+                {
+                    Game.LogTrivial($"CollectedVehicle is null");
+                    return false;
+                }
+                if (!Vehicle && !Dismissed)
+                {
+                    Game.LogTrivial($"Vehicle is null");
+                    Dismiss();
+                    return false;
+                }
+                if (Driver == null || !Driver || !Driver.IsAlive && !Dismissed)
+                {
+                    Dismiss();
+                    return false;
+                }
+                return true;
+            }
         }
 
         internal void Dismiss(DismissOption dismissOption = DismissOption.FromPath, Path newPath = null)
@@ -72,7 +311,6 @@ namespace SceneManager
 
             if(StoppedAtWaypoint)
             {
-                //Logger.Log($"Unstucking {Vehicle.Model.Name}");
                 StoppedAtWaypoint = false;
                 Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
                 if (Driver.CurrentVehicle)
@@ -99,7 +337,7 @@ namespace SceneManager
 
             void DismissFromWorld()
             {
-                Game.LogTrivial($"Dismissed {Vehicle.Model.Name} from the world");
+                Game.LogTrivial($"Dismissed {Vehicle.Model.Name} [{Vehicle.Handle}] from the world");
                 while (Vehicle.HasOccupants)
                 {
                     foreach (Ped occupant in Vehicle.Occupants)
@@ -120,7 +358,7 @@ namespace SceneManager
                 }
                 else if (CurrentWaypoint?.Number != Path?.Waypoints.Count)
                 {
-                    Game.LogTrivial($"Dismissed from waypoint.");
+                    Game.LogTrivial($"{Vehicle.Model.Name} [{Vehicle.Handle}] dismissed from waypoint.");
                     SkipWaypoint = true;
                 }
                 else if (CurrentWaypoint?.Number == Path?.Waypoints.Count)
@@ -160,7 +398,7 @@ namespace SceneManager
                     if (!Directed)
                     {
                         Path.CollectedVehicles.Remove(this);
-                        Game.LogTrivial($"{Vehicle.Model.Name} dismissed successfully.");
+                        Game.LogTrivial($"{Vehicle.Model.Name} [{Vehicle.Handle}] dismissed successfully.");
                         if (Driver)
                         {
                             if (Driver.GetAttachedBlip())

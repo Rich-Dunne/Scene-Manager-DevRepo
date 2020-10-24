@@ -110,7 +110,6 @@ namespace SceneManager
                 {
                     if (paths.ElementAtOrDefault(i) != null && paths[i].State == State.Creating)
                     {
-                        //Game.LogTrivial($"Resuming path {paths[i].Number}");
                         Game.DisplayNotification($"~o~Scene Manager~y~[Creating]\n~w~Resuming path {paths[i].Number}");
                         break;
                     }
@@ -267,7 +266,8 @@ namespace SceneManager
                         {
                             GameFiber.StartNew(() =>
                             {
-                                AITasking.AssignWaypointTasks(nearbyCollectedVehicle, path, firstWaypoint);
+                                nearbyCollectedVehicle.AssignWaypointTasks(path, firstWaypoint);
+                                //AITasking.AssignWaypointTasks(nearbyCollectedVehicle, path, firstWaypoint);
                             });
                         }
                         else
@@ -276,7 +276,8 @@ namespace SceneManager
                             {
                                 GameFiber.StartNew(() =>
                                 {
-                                    AITasking.AssignWaypointTasks(nearbyCollectedVehicle, path, nearestWaypoint);
+                                    nearbyCollectedVehicle.AssignWaypointTasks(path, nearestWaypoint);
+                                    //AITasking.AssignWaypointTasks(nearbyCollectedVehicle, path, nearestWaypoint);
                                 });
                             }
                         }
@@ -305,7 +306,8 @@ namespace SceneManager
                 {
                     GameFiber.StartNew(() =>
                     {
-                        AITasking.AssignWaypointTasks(collectedVehicle, path, firstWaypoint);
+                        collectedVehicle.AssignWaypointTasks(path, firstWaypoint);
+                        //AITasking.AssignWaypointTasks(collectedVehicle, path, firstWaypoint);
                     });
                 }
                 else
@@ -314,7 +316,8 @@ namespace SceneManager
                     {
                         GameFiber.StartNew(() =>
                         {
-                            AITasking.AssignWaypointTasks(collectedVehicle, path, nearestWaypoint);
+                            collectedVehicle.AssignWaypointTasks(path, nearestWaypoint);
+                            //AITasking.AssignWaypointTasks(collectedVehicle, path, nearestWaypoint);
                         });
                     }
                 }

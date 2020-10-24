@@ -150,7 +150,8 @@ namespace SceneManager
                                     if (IsNearWaypoint(v, waypoint) && IsValidForCollection(v))
                                     {
                                         CollectedVehicle newCollectedVehicle = AddVehicleToCollection(v);
-                                        GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, this, waypoint));
+                                        GameFiber AssignTasksFiber = new GameFiber(() => newCollectedVehicle.AssignWaypointTasks(this, waypoint));
+                                        //GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, this, waypoint));
                                         AssignTasksFiber.Start();
                                     }
 
