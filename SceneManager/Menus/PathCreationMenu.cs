@@ -146,6 +146,16 @@ namespace SceneManager
                 if (collectorWaypoint.Selected && collectorWaypoint.Enabled)
                 {
                     collectorWaypoint.Checked = !collectorWaypoint.Checked;
+                    if (collectorWaypoint.Checked)
+                    {
+                        collectorRadius.Enabled = true;
+                        speedZoneRadius.Enabled = true;
+                    }
+                    else
+                    {
+                        collectorRadius.Enabled = false;
+                        speedZoneRadius.Enabled = false;
+                    }
                 }
                 else if (stopWaypointType.Selected)
                 {
@@ -280,6 +290,16 @@ namespace SceneManager
             ToggleTrafficEndPathMenuItem(pathIndex);
             collectorWaypoint.Enabled = true;
             collectorWaypoint.Checked = false;
+            if (collectorWaypoint.Checked)
+            {
+                collectorRadius.Enabled = true;
+                speedZoneRadius.Enabled = true;
+            }
+            else
+            {
+                collectorRadius.Enabled = false;
+                speedZoneRadius.Enabled = false;
+            }
             trafficRemoveWaypoint.Enabled = true;
             PathMainMenu.createNewPath.Text = $"Continue Creating Path {pathNumber}";
 
