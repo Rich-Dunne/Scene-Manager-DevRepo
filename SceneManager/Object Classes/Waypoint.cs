@@ -97,7 +97,7 @@ namespace SceneManager
                 {
                     IsCollector = true;
                     RemoveSpeedZone();
-                    SpeedZone = World.AddSpeedZone(currentWaypoint.Position, SpeedZoneRadius, speed);
+                    SpeedZone = World.AddSpeedZone(currentWaypoint.Position, speedZoneRadius, speed);
                     Blip.Color = Color.Blue;
                     if (CollectorRadiusBlip)
                     {
@@ -321,8 +321,8 @@ namespace SceneManager
                     if (collectedVehicle == null)
                     {
                         CollectedVehicle newCollectedVehicle = AddVehicleToCollection(vehicle);
-                        //Logger.Log($"Vehicle's front position distance to waypoint: {vehicle.FrontPosition.DistanceTo2D(waypoint.Position)}, collector radius: {waypoint.CollectorRadius}");
-                        GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, Path, this));
+                        GameFiber AssignTasksFiber = new GameFiber(() => newCollectedVehicle.AssignWaypointTasks(Path, this));
+                        //GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, Path, this));
                         AssignTasksFiber.Start();
                     }
                 }
