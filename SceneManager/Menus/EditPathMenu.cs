@@ -35,6 +35,10 @@ namespace SceneManager
 
         private static void EditPathWaypoints()
         {
+            if (!SettingsMenu.threeDWaypoints.Checked)
+            {
+                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~You have 3D waypoints disabled in your settings.  It's recommended to enable 3D waypoints while working with waypoints.");
+            }
             EditWaypointMenu.BuildEditWaypointMenu();
         }
 
