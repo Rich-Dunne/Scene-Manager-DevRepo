@@ -186,7 +186,7 @@ namespace SceneManager
                     {
                         Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(cv.Vehicle, 1f, 1, true);
                     }
-                    cv.StoppedAtWaypoint = false;
+                    //cv.StoppedAtWaypoint = false;
                     if (cv.Driver.GetAttachedBlip())
                     {
                         cv.Driver.GetAttachedBlip().Delete();
