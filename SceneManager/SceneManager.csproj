@@ -50,7 +50,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AITasking.cs" />
+    <Compile Include="ConsoleCommands.cs" />
     <Compile Include="Object Classes\CollectedVehicle.cs" />
     <Compile Include="Object Classes\Barrier.cs" />
     <Compile Include="Hints.cs" />
