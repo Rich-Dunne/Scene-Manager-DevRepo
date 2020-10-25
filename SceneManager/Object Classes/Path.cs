@@ -83,7 +83,7 @@ namespace SceneManager
             {
                 while(true)
                 {
-                    if (Settings.Enable3DWaypoints && (State == State.Finished && MenuManager.menuPool.IsAnyMenuOpen()) || (State == State.Creating && PathCreationMenu.pathCreationMenu.Visible))
+                    if (SettingsMenu.threeDWaypoints.Checked && (State == State.Finished && MenuManager.menuPool.IsAnyMenuOpen()) || (State == State.Creating && PathCreationMenu.pathCreationMenu.Visible))
                     {
                         for (int i = 0; i < Waypoints.Count; i++)
                         {
