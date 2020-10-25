@@ -6,16 +6,16 @@ namespace SceneManager
 {
     internal class CollectedVehicle
     {
-        internal Ped Driver { get; set; }
-        internal Vehicle Vehicle { get; set; }
-        internal Path Path { get; set; }
-        internal Waypoint CurrentWaypoint { get; set; }
+        internal Ped Driver { get; private set; }
+        internal Vehicle Vehicle { get; private set; }
+        internal Path Path { get; private set; }
+        internal Waypoint CurrentWaypoint { get; private set; }
         internal Waypoint NextWaypoint { get; private set; }
-        internal bool StoppedAtWaypoint { get; set; } = false;
-        internal bool Dismissed { get; set; } = false;
+        internal bool StoppedAtWaypoint { get; private set; } = false;
+        internal bool Dismissed { get; private set; } = false;
         internal bool Directed { get; set; } = false;
-        internal bool SkipWaypoint { get; set; } = false;
-        internal bool ReadyForDirectTasks { get; set; } = true;
+        internal bool SkipWaypoint { get; private set; } = false;
+        internal bool ReadyForDirectTasks { get; private set; } = true;
 
         internal CollectedVehicle(Vehicle vehicle, Path path, Waypoint currentWaypoint)
         {
@@ -212,6 +212,12 @@ namespace SceneManager
                         if (oldPosition != Path.Waypoints[currentWaypointTask].Position)
                         {
                             oldPosition = Path.Waypoints[currentWaypointTask].Position;
+                            Driver.Tasks.DriveToPosition(Path.Waypoints[currentWaypointTask].Position, Path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)Path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
+                        }
+                        if(Driver.Tasks.CurrentTaskStatus == TaskStatus.NoTask)
+                        {
+                            //Game.DisplayNotification($"~o~Scene Manager ~r~[Error]\n{Vehicle.Model.Name} [{Vehicle.Handle}] driver [{Driver.Handle}] has no task.  Reassiging current waypoint task.");
+                            Game.LogTrivial($"{Vehicle.Model.Name} [{Vehicle.Handle}] driver [{Driver.Handle}] has no task.  Reassiging current waypoint task.");
                             Driver.Tasks.DriveToPosition(Path.Waypoints[currentWaypointTask].Position, Path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)Path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
                         }
                         GameFiber.Sleep(100);
