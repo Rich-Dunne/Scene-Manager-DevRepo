@@ -23,13 +23,21 @@ namespace SceneManager
         Direct = 17040259
     }
 
-    public enum DismissOption
+    internal enum DismissOption
     {
         FromPath = 0,
         FromWaypoint = 1,
         FromWorld = 2,
         FromPlayer = 3,
         FromDirected = 4
+    }
+
+    internal enum TrafficLight
+    {
+        Green = 0,
+        Red = 1,
+        Yellow = 2,
+        None = 3
     }
 
     internal static class Settings
@@ -41,18 +49,22 @@ namespace SceneManager
         internal static Keys ModifierKey = Keys.LShiftKey;
         internal static ControllerButtons ToggleButton = ControllerButtons.Y;
         internal static ControllerButtons ModifierButton = ControllerButtons.A;
+
         // Plugin Settings
         internal static bool Enable3DWaypoints = true;
         internal static bool EnableMapBlips = true;
         internal static bool EnableHints = true;
         internal static SpeedUnits SpeedUnit = SpeedUnits.MPH;
         internal static float BarrierPlacementDistance = 30f;
+        internal static bool EnableAdvancedBarricadeOptions = false;
+
         // Default Waypoint Settings
         internal static int CollectorRadius = 1;
         internal static int SpeedZoneRadius = 5;
         internal static bool StopWaypoint = false;
         internal static bool DirectDrivingBehavior = false;
         internal static int WaypointSpeed = 5;
+
         // Barriers
         internal static List<string> barrierKeys = new List<string>();
         internal static List<string> barrierValues = new List<string>();
@@ -74,6 +86,7 @@ namespace SceneManager
             EnableHints = ini.ReadBoolean("Plugin Settings", "EnableHints", true);
             SpeedUnit = ini.ReadEnum("Plugin Settings", "SpeedUnits", SpeedUnits.MPH);
             BarrierPlacementDistance = ini.ReadInt32("Plugin Settings", "BarrierPlacementDistance", 30);
+            EnableAdvancedBarricadeOptions = ini.ReadBoolean("Plugin Settings", "EnableAdvancedBarricadeOptions", false);
             
             // Default Waypoint Settings
             CollectorRadius = ini.ReadInt32("Default Waypoint Settings", "CollectorRadius", 1);
@@ -89,7 +102,13 @@ namespace SceneManager
                 barrierKeys.Add(key.Trim());
                 var m = new Model(ini.ReadString("Barriers", key));
                 if (m.IsValid)
+                {
                     barrierValues.Add(m.Name);
+                }
+                else
+                {
+                    Game.LogTrivial($"{m.Name} is not valid.");
+                }
             }
 
             void CheckForValidWaypointSettings()
