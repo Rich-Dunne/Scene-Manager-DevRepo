@@ -2,6 +2,7 @@
 using RAGENativeUI;
 using RAGENativeUI.Elements;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -24,7 +25,7 @@ namespace SceneManager
             settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
             settingsMenu.OnScrollerChange += SettingsMenu_OnScrollerChange;
             settingsMenu.OnItemSelect += SettingsMenu_OnItemSelected;
-            settingsMenu.OnMenuOpen += SettingsMenu_OnMouseDown;
+            settingsMenu.OnMenuOpen += SettingsMenu_OnMenuOpen;
         }
 
         internal static void BuildSettingsMenu()
@@ -38,7 +39,7 @@ namespace SceneManager
             saveSettings.ForeColor = System.Drawing.Color.Gold;
         }
         
-        internal static void ToggleMapBlips()
+        private static void ToggleMapBlips()
         {
             if (mapBlips.Checked)
             {
@@ -60,6 +61,17 @@ namespace SceneManager
                     }
                 }
             }
+        }
+
+        private static void ToggleHints()
+        {
+            Hints.Enabled = hints.Checked ? true : false;
+        }
+
+        private static void ToggleSettings()
+        {
+            Settings.UpdateSettings(threeDWaypoints.Checked, mapBlips.Checked, hints.Checked, speedUnits.SelectedItem);
+            Game.DisplayHelp($"Scene Manager settings saved");
         }
 
         private static void SettingsMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
@@ -94,99 +106,21 @@ namespace SceneManager
             }
         }
 
-        private static void SettingsMenu_OnMouseDown(UIMenu menu)
+        private static void SettingsMenu_OnMenuOpen(UIMenu menu)
         {
-            GameFiber.StartNew(() =>
+            var scrollerItems = new List<UIMenuScrollerItem> { speedUnits };
+            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>()
             {
-                while (menu.Visible)
-                {
-                    var selectedScroller = menu.MenuItems.Where(x => x == speedUnits && x.Selected).FirstOrDefault();
-                    if (selectedScroller != null)
-                    {
-                        HandleScrollerItemsWithMouseWheel(selectedScroller);
-                    }
-
-                    // Add waypoint if menu item is selected and user left clicks
-                    if (Game.IsKeyDown(Keys.LButton))
-                    {
-                        OnCheckboxItemClicked();
-                        OnMenuItemClicked();
-                    }
-                    GameFiber.Yield();
-                }
-            });
-
-            void OnCheckboxItemClicked()
+                { threeDWaypoints, null},
+                { mapBlips, ToggleMapBlips},
+                { hints, ToggleHints}
+            };
+            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
             {
-                if (threeDWaypoints.Selected && threeDWaypoints.Enabled)
-                {
-                    threeDWaypoints.Checked = !threeDWaypoints.Checked;
-                }
-                else if (mapBlips.Selected)
-                {
-                    mapBlips.Checked = !mapBlips.Checked;
-                    ToggleMapBlips();
-                }
-                else if (hints.Selected)
-                {
-                    hints.Checked = !hints.Checked;
-                    Hints.Enabled = hints.Checked ? true : false;
-                }
-            }
+                { saveSettings, ToggleSettings }
+            };
 
-            void OnMenuItemClicked()
-            {
-                if (saveSettings.Selected)
-                {
-                    Settings.UpdateSettings(threeDWaypoints.Checked, mapBlips.Checked, hints.Checked, speedUnits.SelectedItem);
-                    Game.DisplayHelp($"Scene Manager settings saved");
-                }
-            }
-
-            void HandleScrollerItemsWithMouseWheel(UIMenuItem selectedScroller)
-            {
-                var menuScrollingDisabled = false;
-                var menuItems = menu.MenuItems.Where(x => x != selectedScroller);
-                while (Game.IsShiftKeyDownRightNow)
-                {
-                    menu.ResetKey(Common.MenuControls.Up);
-                    menu.ResetKey(Common.MenuControls.Down);
-                    menuScrollingDisabled = true;
-                    ScrollMenuItem();
-                    GameFiber.Yield();
-                }
-
-                if (menuScrollingDisabled)
-                {
-                    menuScrollingDisabled = false;
-                    menu.SetKey(Common.MenuControls.Up, GameControl.CursorScrollUp);
-                    menu.SetKey(Common.MenuControls.Up, GameControl.CellphoneUp);
-                    menu.SetKey(Common.MenuControls.Down, GameControl.CursorScrollDown);
-                    menu.SetKey(Common.MenuControls.Down, GameControl.CellphoneDown);
-                }
-
-                void ScrollMenuItem()
-                {
-                    if (Game.GetMouseWheelDelta() > 0)
-                    {
-                        if (selectedScroller == speedUnits)
-                        {
-                            speedUnits.ScrollToNextOption();
-                            PathCreationMenu.pathCreationMenu.Clear();
-                            PathCreationMenu.BuildPathCreationMenu();
-                        }
-                    }
-                    else if (Game.GetMouseWheelDelta() < 0)
-                    {
-                        if (selectedScroller == speedUnits)
-                        {
-                            speedUnits.ScrollToPreviousOption();
-                            PathCreationMenu.pathCreationMenu.Clear();
-                            PathCreationMenu.BuildPathCreationMenu();
-                        }
-                    }
-                }
-            }
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
         }
     }
 }

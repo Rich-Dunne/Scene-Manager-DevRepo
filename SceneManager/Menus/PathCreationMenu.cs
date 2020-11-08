@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Net.Configuration;
 using System.Windows.Forms;
 using Rage;
 using RAGENativeUI;
@@ -28,7 +29,7 @@ namespace SceneManager
             pathCreationMenu.OnItemSelect += PathCreation_OnItemSelected;
             pathCreationMenu.OnCheckboxChange += PathCreation_OnCheckboxChanged;
             pathCreationMenu.OnScrollerChange += PathCreation_OnScrollerChanged;
-            pathCreationMenu.OnMenuOpen += PathCreation_OnMouseDown;
+            pathCreationMenu.OnMenuOpen += PathCreation_OnMenuOpen;
         }
 
         internal static void BuildPathCreationMenu()
@@ -67,200 +68,24 @@ namespace SceneManager
             pathCreationMenu.RefreshIndex();
         }
 
-        private static void PathCreation_OnCheckboxChanged(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
+        private static void UpdateCollectorMenuOptionsStatus()
         {
-            if(checkboxItem == collectorWaypoint)
+            if (collectorWaypoint.Checked)
             {
-                collectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
-                speedZoneRadius.Enabled = collectorWaypoint.Checked ? true : false;
+                collectorRadius.Enabled = true;
+                speedZoneRadius.Enabled = true;
+            }
+            else
+            {
+                collectorRadius.Enabled = false;
+                speedZoneRadius.Enabled = false;
             }
         }
 
-        private static void PathCreation_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
-        {
-            if (selectedItem == trafficAddWaypoint)
-            {
-                AddNewWaypoint(GetMousePositionInWorld());
-            }
-
-            if (selectedItem == trafficRemoveWaypoint)
-            {
-                RemoveWaypoint();
-            }
-
-            if (selectedItem == trafficEndPath)
-            {
-                EndPath();
-            }
-        }
-
-        private static void PathCreation_OnScrollerChanged(UIMenu sender, UIMenuScrollerItem scrollerItem, int first, int last)
-        {
-            if (scrollerItem == collectorRadius)
-            {
-                if (collectorRadius.Value > speedZoneRadius.Value)
-                {
-                    while (collectorRadius.Value > speedZoneRadius.Value)
-                    {
-                        speedZoneRadius.ScrollToNextOption();
-                    }
-                }
-            }
-
-            if (scrollerItem == speedZoneRadius)
-            {
-                if (speedZoneRadius.Value < collectorRadius.Value)
-                {
-                    collectorRadius.Value = speedZoneRadius.Value;
-                }
-            }
-        }
-
-        private static void PathCreation_OnMouseDown(UIMenu menu)
-        {
-            GameFiber.StartNew(() =>
-            {
-                while (menu.Visible)
-                {
-                    var selectedScroller = menu.MenuItems.Where(x => (x == collectorRadius || x == speedZoneRadius || x == waypointSpeed) && x.Selected).FirstOrDefault();
-                    if (selectedScroller != null)
-                    {
-                        HandleScrollerItemsWithMouseWheel(selectedScroller);
-                    }
-
-                    // Draw marker at mouse position
-                    DrawWaypointMarker(GetMousePositionInWorld());
-
-                    // Add waypoint if menu item is selected and user left clicks
-                    if (Game.IsKeyDown(Keys.LButton))
-                    {
-                        OnCheckboxItemClicked();
-                        OnMenuItemClicked();
-                    }
-                    GameFiber.Yield();
-                }
-            });
-
-            void OnCheckboxItemClicked()
-            {
-                if (collectorWaypoint.Selected && collectorWaypoint.Enabled)
-                {
-                    collectorWaypoint.Checked = !collectorWaypoint.Checked;
-                    if (collectorWaypoint.Checked)
-                    {
-                        collectorRadius.Enabled = true;
-                        speedZoneRadius.Enabled = true;
-                    }
-                    else
-                    {
-                        collectorRadius.Enabled = false;
-                        speedZoneRadius.Enabled = false;
-                    }
-                }
-                else if (stopWaypointType.Selected)
-                {
-                    stopWaypointType.Checked = !stopWaypointType.Checked;
-                }
-                else if (directWaypointBehavior.Selected)
-                {
-                    directWaypointBehavior.Checked = !directWaypointBehavior.Checked;
-                }
-            }
-
-            void OnMenuItemClicked()
-            {
-                if (trafficAddWaypoint.Selected)
-                {
-                    AddNewWaypoint(GetMousePositionInWorld());
-                }
-                else if (trafficRemoveWaypoint.Selected)
-                {
-                    RemoveWaypoint();
-                }
-                else if (trafficEndPath.Selected)
-                {
-                    EndPath();
-                }
-            }
-
-            void HandleScrollerItemsWithMouseWheel(UIMenuItem selectedScroller)
-            {
-                var menuScrollingDisabled = false;
-                var menuItems = menu.MenuItems.Where(x => x != selectedScroller);
-                while (Game.IsShiftKeyDownRightNow)
-                {
-                    menu.ResetKey(Common.MenuControls.Up);
-                    menu.ResetKey(Common.MenuControls.Down);
-                    menuScrollingDisabled = true;
-                    ScrollMenuItem();
-                    CompareScrollerValues();
-                    DrawWaypointMarker(GetMousePositionInWorld());
-                    GameFiber.Yield();
-                }
-
-                if (menuScrollingDisabled)
-                {
-                    menuScrollingDisabled = false;
-                    menu.SetKey(Common.MenuControls.Up, GameControl.CursorScrollUp);
-                    menu.SetKey(Common.MenuControls.Up, GameControl.CellphoneUp);
-                    menu.SetKey(Common.MenuControls.Down, GameControl.CursorScrollDown);
-                    menu.SetKey(Common.MenuControls.Down, GameControl.CellphoneDown);
-                }
-
-                void ScrollMenuItem()
-                {
-                    if (Game.GetMouseWheelDelta() > 0)
-                    {
-                        if (selectedScroller == collectorRadius)
-                        {
-                            collectorRadius.ScrollToNextOption();
-                        }
-                        else if (selectedScroller == speedZoneRadius)
-                        {
-                            speedZoneRadius.ScrollToNextOption();
-                        }
-                        else if (selectedScroller == waypointSpeed)
-                        {
-                            waypointSpeed.ScrollToNextOption();
-                        }
-                    }
-                    else if (Game.GetMouseWheelDelta() < 0)
-                    {
-                        if (selectedScroller == collectorRadius)
-                        {
-                            collectorRadius.ScrollToPreviousOption();
-                        }
-                        else if (selectedScroller == speedZoneRadius)
-                        {
-                            speedZoneRadius.ScrollToPreviousOption();
-                        }
-                        else if (selectedScroller == waypointSpeed)
-                        {
-                            waypointSpeed.ScrollToPreviousOption();
-                        }
-                    }
-                }
-
-                void CompareScrollerValues()
-                {
-                    if (selectedScroller == collectorRadius && collectorRadius.Value > speedZoneRadius.Value)
-                    {
-                        while (collectorRadius.Value > speedZoneRadius.Value)
-                        {
-                            speedZoneRadius.ScrollToNextOption();
-                        }
-                    }
-                    if (selectedScroller == speedZoneRadius && speedZoneRadius.Value < collectorRadius.Value)
-                    {
-                        collectorRadius.Value = speedZoneRadius.Value;
-                    }
-                }
-            }
-        }
-
-        private static void AddNewWaypoint(Vector3 waypointPosition)
+        private static void AddNewWaypoint()
         {
             var anyPathsExist = PathMainMenu.paths.Count > 0;
+            var waypointPosition = MousePositionInWorld.GetPosition;
 
             if (!anyPathsExist)
             {
@@ -426,7 +251,7 @@ namespace SceneManager
             }
         }
 
-        internal static void AddNewPathToPathsCollection(List<Path> paths, int pathIndex)
+        private static void AddNewPathToPathsCollection(List<Path> paths, int pathIndex)
         {
             var pathNum = pathIndex + 1;
             Game.LogTrivial($"Creating path {pathNum}");
@@ -436,52 +261,72 @@ namespace SceneManager
             trafficEndPath.Enabled = false;
         }
 
-        private static void DrawWaypointMarker(Vector3 waypointPosition)
+        private static void PathCreation_OnCheckboxChanged(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
         {
-            if (SettingsMenu.threeDWaypoints.Checked && collectorWaypoint.Checked)
+            if(checkboxItem == collectorWaypoint)
             {
-                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.collectorRadius.Value * 2, (float)PathCreationMenu.collectorRadius.Value * 2, 1f, 80, 130, 255, 80, false, false, 2, false, 0, 0, false);
-                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.speedZoneRadius.Value * 2, (float)PathCreationMenu.speedZoneRadius.Value * 2, 1f, 255, 185, 80, 80, false, false, 2, false, 0, 0, false);
-            }
-            else if (stopWaypointType.Checked)
-            {
-                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 80, false, false, 2, false, 0, 0, false);
-            }
-            else
-            {
-                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 80, false, false, 2, false, 0, 0, false);
+                collectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
+                speedZoneRadius.Enabled = collectorWaypoint.Checked ? true : false;
             }
         }
 
-        private static Vector3 GetMousePositionInWorld()
+        private static void PathCreation_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            HitResult TracePlayerView(float maxTraceDistance = 100f, TraceFlags flags = TraceFlags.IntersectWorld) => TracePlayerView2(out Vector3 v1, out Vector3 v2, maxTraceDistance, flags);
-
-            HitResult TracePlayerView2(out Vector3 start, out Vector3 end, float maxTraceDistance, TraceFlags flags)
+            if (selectedItem == trafficAddWaypoint)
             {
-                Vector3 direction = GetPlayerLookingDirection(out start);
-                end = start + (maxTraceDistance * direction);
-                return World.TraceLine(start, end, flags);
+                AddNewWaypoint();
             }
 
-            Vector3 GetPlayerLookingDirection(out Vector3 camPosition)
+            if (selectedItem == trafficRemoveWaypoint)
             {
-                if (Camera.RenderingCamera)
-                {
-                    camPosition = Camera.RenderingCamera.Position;
-                    return Camera.RenderingCamera.Direction;
-                }
-                else
-                {
-                    float pitch = Rage.Native.NativeFunction.Natives.GET_GAMEPLAY_CAM_RELATIVE_PITCH<float>();
-                    float heading = Rage.Native.NativeFunction.Natives.GET_GAMEPLAY_CAM_RELATIVE_HEADING<float>();
+                RemoveWaypoint();
+            }
 
-                    camPosition = Rage.Native.NativeFunction.Natives.GET_GAMEPLAY_CAM_COORD<Vector3>();
-                    return (Game.LocalPlayer.Character.Rotation + new Rotator(pitch, 0, heading)).ToVector().ToNormalized();
+            if (selectedItem == trafficEndPath)
+            {
+                EndPath();
+            }
+        }
+
+        private static void PathCreation_OnScrollerChanged(UIMenu sender, UIMenuScrollerItem scrollerItem, int first, int last)
+        {
+            if (scrollerItem == collectorRadius)
+            {
+                if (collectorRadius.Value > speedZoneRadius.Value)
+                {
+                    while (collectorRadius.Value > speedZoneRadius.Value)
+                    {
+                        speedZoneRadius.ScrollToNextOption();
+                    }
                 }
             }
 
-            return TracePlayerView(100f, TraceFlags.IntersectWorld).HitPosition;
+            if (scrollerItem == speedZoneRadius)
+            {
+                if (speedZoneRadius.Value < collectorRadius.Value)
+                {
+                    collectorRadius.Value = speedZoneRadius.Value;
+                }
+            }
+        }
+
+        private static void PathCreation_OnMenuOpen(UIMenu menu)
+        {
+            var scrollerItems = new List<UIMenuScrollerItem> { collectorRadius, speedZoneRadius, waypointSpeed };
+            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>() 
+            {
+                { collectorWaypoint, UpdateCollectorMenuOptionsStatus},
+                { stopWaypointType, null},
+                { directWaypointBehavior, null}
+            };
+            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
+            {
+                { trafficAddWaypoint, AddNewWaypoint },
+                { trafficRemoveWaypoint, RemoveWaypoint },
+                { trafficEndPath, EndPath }
+            };
+
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
         }
     }
 }

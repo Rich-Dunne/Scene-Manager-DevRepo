@@ -38,7 +38,7 @@ namespace SceneManager
             MenuManager.menuPool.Add(pathMainMenu);
             pathMainMenu.OnItemSelect += PathMenu_OnItemSelected;
             pathMainMenu.OnCheckboxChange += PathMenu_OnCheckboxChange;
-            pathMainMenu.OnMenuOpen += PathMenu_OnMouseDown;
+            pathMainMenu.OnMenuOpen += PathMenu_OnMenuOpen;
         }
 
         internal static void BuildPathMenu()
@@ -90,6 +90,12 @@ namespace SceneManager
             }
         }
 
+        private static void GoToEditPathMenu()
+        {
+            pathMainMenu.Visible = false;
+            EditPathMenu.editPathMenu.Visible = true;
+        }
+
         private static void GoToPathCreationMenu()
         {
             if (createNewPath.Text.Contains("Continue"))
@@ -103,7 +109,6 @@ namespace SceneManager
                 PathCreationMenu.BuildPathCreationMenu();
                 pathMainMenu.Visible = false;
                 PathCreationMenu.pathCreationMenu.Visible = true;
-                //Draw3DWaypointOnPlayer();
 
                 // For each element in paths, determine if the element exists but is not finished yet, or if it doesn't exist, create it.
                 for (int i = 0; i <= paths.Count; i++)
@@ -413,157 +418,24 @@ namespace SceneManager
             }
         }
 
-        private static void PathMenu_OnMouseDown(UIMenu menu)
+        private static void PathMenu_OnMenuOpen(UIMenu menu)
         {
-            GameFiber.StartNew(() =>
+            var scrollerItems = new List<UIMenuScrollerItem> { directOptions, directDriver, dismissDriver, editPath };
+            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>()
             {
-                while (menu.Visible)
-                {
-                    var selectedScroller = menu.MenuItems.Where(x => (x == directOptions || x == directDriver || x == dismissDriver || x == editPath) && x.Selected).FirstOrDefault();
-                    if (selectedScroller != null)
-                    {
-                        HandleScrollerItemsWithMouseWheel(selectedScroller);
-                    }
-
-                    // Add waypoint if menu item is selected and user left clicks
-                    if (Game.IsKeyDown(Keys.LButton))
-                    {
-                        OnCheckboxItemClicked();
-                        OnMenuItemClicked();
-                    }
-                    GameFiber.Yield();
-                }
-            });
-
-            void OnCheckboxItemClicked()
+                { disableAllPaths, DisableAllPaths }
+            };
+            
+            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
             {
-                if (disableAllPaths.Selected && disableAllPaths.Enabled)
-                {
-                    disableAllPaths.Checked = !disableAllPaths.Checked;
-                    DisableAllPaths();
-                }
-            }
+                { createNewPath, GoToPathCreationMenu },
+                { editPath, GoToEditPathMenu },
+                { deleteAllPaths, DeleteAllPaths },
+                { directDriver, DirectDriver },
+                { dismissDriver, DismissDriver }
+            };
 
-            void OnMenuItemClicked()
-            {
-                if (createNewPath.Selected)
-                {
-                    GoToPathCreationMenu();
-                }
-                else if (editPath.Selected)
-                {
-                    menu.Visible = false;
-                    EditPathMenu.editPathMenu.Visible = true;
-                }
-                else if (deleteAllPaths.Selected)
-                {
-                    DeleteAllPaths();
-                }
-                else if (directDriver.Selected)
-                {
-                    DirectDriver();
-                }
-                else if (dismissDriver.Selected)
-                {
-                    DismissDriver();
-                }
-            }
-
-            void HandleScrollerItemsWithMouseWheel(UIMenuItem selectedScroller)
-            {
-                var menuScrollingDisabled = false;
-                var menuItems = menu.MenuItems.Where(x => x != selectedScroller);
-                while (Game.IsShiftKeyDownRightNow)
-                {
-                    menu.ResetKey(Common.MenuControls.Up);
-                    menu.ResetKey(Common.MenuControls.Down);
-                    menuScrollingDisabled = true;
-                    ScrollMenuItem();
-                    GameFiber.Yield();
-                }
-
-                if (menuScrollingDisabled)
-                {
-                    menuScrollingDisabled = false;
-                    menu.SetKey(Common.MenuControls.Up, GameControl.CursorScrollUp);
-                    menu.SetKey(Common.MenuControls.Up, GameControl.CellphoneUp);
-                    menu.SetKey(Common.MenuControls.Down, GameControl.CursorScrollDown);
-                    menu.SetKey(Common.MenuControls.Down, GameControl.CellphoneDown);
-                }
-
-                void ScrollMenuItem()
-                {
-                    if (Game.GetMouseWheelDelta() > 0)
-                    {
-                        if (selectedScroller == editPath)
-                        {
-                            editPath.ScrollToNextOption();
-                        }
-                        else if (selectedScroller == directOptions)
-                        {
-                            directOptions.ScrollToNextOption();
-                        }
-                        else if (selectedScroller == directDriver)
-                        {
-                            directDriver.ScrollToNextOption();
-                        }
-                        else if (selectedScroller == dismissDriver)
-                        {
-                            dismissDriver.ScrollToNextOption();
-                        }
-                    }
-                    else if (Game.GetMouseWheelDelta() < 0)
-                    {
-                        if (selectedScroller == editPath)
-                        {
-                            editPath.ScrollToPreviousOption();
-                        }
-                        else if (selectedScroller == directOptions)
-                        {
-                            directOptions.ScrollToPreviousOption();
-                        }
-                        else if (selectedScroller == directDriver)
-                        {
-                            directDriver.ScrollToPreviousOption();
-                        }
-                        else if (selectedScroller == dismissDriver)
-                        {
-                            dismissDriver.ScrollToPreviousOption();
-                        }
-                    }
-                }
-            }
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
         }
-        
-        //private static void Draw3DWaypointOnPlayer()
-        //{
-        //    GameFiber.StartNew(() =>
-        //    {
-        //        while (SettingsMenu.threeDWaypoints.Checked)
-        //        {
-        //            if (PathCreationMenu.pathCreationMenu.Visible)
-        //            {
-        //                if (PathCreationMenu.collectorWaypoint.Checked)
-        //                {
-        //                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.collectorRadius.Value * 2, (float)PathCreationMenu.collectorRadius.Value * 2, 1f, 80, 130, 255, 80, false, false, 2, false, 0, 0, false);
-        //                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.speedZoneRadius.Value * 2, (float)PathCreationMenu.speedZoneRadius.Value * 2, 1f, 255, 185, 80, 80, false, false, 2, false, 0, 0, false);
-        //                }
-        //                else if (PathCreationMenu.stopWaypointType.Checked)
-        //                {
-        //                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 80, false, false, 2, false, 0, 0, false);
-        //                }
-        //                else
-        //                {
-        //                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Game.LocalPlayer.Character.Position.X, Game.LocalPlayer.Character.Position.Y, Game.LocalPlayer.Character.Position.Z - 1, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 80, false, false, 2, false, 0, 0, false);
-        //                }
-        //            }
-        //            else
-        //            {
-        //                break;
-        //            }
-        //            GameFiber.Yield();
-        //        }
-        //    });
-        //}
     }
 }

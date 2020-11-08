@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using Rage;
@@ -19,7 +20,7 @@ namespace SceneManager
             MenuManager.menuPool.Add(editPathMenu);
             editPathMenu.OnItemSelect += EditPath_OnItemSelected;
             editPathMenu.OnCheckboxChange += EditPath_OnCheckboxChange;
-            editPathMenu.OnMenuOpen += EditPath_OnMouseDown;
+            editPathMenu.OnMenuOpen += EditPath_OnMenuOpen;
         }
 
         internal static void BuildEditPathMenu()
@@ -84,42 +85,17 @@ namespace SceneManager
             }
         }
 
-        private static void EditPath_OnMouseDown(UIMenu menu)
+        private static void EditPath_OnMenuOpen(UIMenu menu)
         {
-            GameFiber.StartNew(() =>
+            var scrollerItems = new List<UIMenuScrollerItem> {  };
+            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>() { { disablePath, DisablePath } };
+            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
             {
-                while (menu.Visible)
-                {
-                    // Add waypoint if menu item is selected and user left clicks
-                    if (Game.IsKeyDown(Keys.LButton))
-                    {
-                        OnCheckboxItemClicked();
-                        OnMenuItemClicked();
-                    }
-                    GameFiber.Yield();
-                }
-            });
+                { editPathWaypoints, EditPathWaypoints },
+                { deletePath, DeletePath }
+            };
 
-            void OnCheckboxItemClicked()
-            {
-                if (disablePath.Selected && disablePath.Enabled)
-                {
-                    disablePath.Checked = !disablePath.Checked;
-                    DisablePath();
-                }
-            }
-
-            void OnMenuItemClicked()
-            {
-                if (editPathWaypoints.Selected)
-                {
-                    EditPathWaypoints();
-                }
-                else if (deletePath.Selected)
-                {
-                    DeletePath();
-                }
-            }
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
         }
     }
 }

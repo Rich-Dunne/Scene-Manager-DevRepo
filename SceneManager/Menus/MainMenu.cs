@@ -1,6 +1,7 @@
 ﻿using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -18,7 +19,7 @@ namespace SceneManager
             MenuManager.menuPool.Add(mainMenu);
         }
 
-        public static void BuildMainMenu()
+        internal static void BuildMainMenu()
         {
             mainMenu.AddItem(navigateToPathMenu = new UIMenuItem("Path Menu"));
             navigateToPathMenu.ForeColor = Color.Gold;
@@ -31,49 +32,36 @@ namespace SceneManager
             mainMenu.BindMenuToItem(SettingsMenu.settingsMenu, navigateToSettingsMenu);
 
             mainMenu.RefreshIndex();
-            mainMenu.OnItemSelect += MainMenu_OnItemSelected;
-            mainMenu.OnMenuOpen += MainMenu_OnMouseDown;
+            mainMenu.OnMenuOpen += MainMenu_OnMenuOpen;
         }
 
-        private static void MainMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
+        private static void ShowPathMainMenu()
         {
-            if (selectedItem == navigateToBarrierMenu)
-            {
-                BarrierMenu.CreateShadowBarrier(BarrierMenu.barrierMenu);
-            }
+            PathMainMenu.pathMainMenu.Visible = true;
         }
 
-        private static void MainMenu_OnMouseDown(UIMenu menu)
+        private static void ShowBarrierMenu()
         {
-            GameFiber.StartNew(() =>
-            {
-                while (menu.Visible)
-                {
-                    if (Game.IsKeyDown(Keys.LButton))
-                    {
-                        menu.Visible = false;
-                        OnMenuItemClicked();
-                    }
-                    GameFiber.Yield();
-                }
-            });
+            BarrierMenu.barrierMenu.Visible = true;
+        }
 
-            void OnMenuItemClicked()
+        private static void ShowSettingsMenu()
+        {
+            SettingsMenu.settingsMenu.Visible = true;
+        }
+
+        private static void MainMenu_OnMenuOpen(UIMenu menu)
+        {
+            var scrollerItems = new List<UIMenuScrollerItem> { };
+            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>() { };
+            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
             {
-                if (navigateToPathMenu.Selected)
-                {
-                    PathMainMenu.pathMainMenu.Visible = true;
-                }
-                else if (navigateToBarrierMenu.Selected)
-                {
-                    BarrierMenu.barrierMenu.Visible = true;
-                    BarrierMenu.CreateShadowBarrier(BarrierMenu.barrierMenu);
-                }
-                else if (navigateToSettingsMenu.Selected)
-                {
-                    SettingsMenu.settingsMenu.Visible = true;
-                }
-            }
+                { navigateToPathMenu, ShowPathMainMenu },
+                { navigateToBarrierMenu, ShowBarrierMenu },
+                { navigateToSettingsMenu, ShowSettingsMenu }
+            };
+
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
         }
     }
 }
