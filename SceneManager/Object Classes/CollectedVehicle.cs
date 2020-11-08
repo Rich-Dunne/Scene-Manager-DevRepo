@@ -256,7 +256,7 @@ namespace SceneManager
                 {
                     GameFiber.Yield();
                 }
-                if (Vehicle && Driver)
+                if (Driver && Driver.CurrentVehicle)
                 {
                     Game.LogTrivial($"{Vehicle.Model.Name} releasing from stop waypoint.");
                     Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
