@@ -125,12 +125,13 @@ namespace SceneManager
                 DisableBarrierMenuOptionsIfShadowConeTooFar();
                 if (shadowBarrier)
                 {
-                    shadowBarrier.Delete();
-                    CreateShadowBarrier();
-                    //shadowBarrier.Heading = rotateBarrier.Value;
-                    //shadowBarrier.Position = MousePositionInWorld.GetPositionForBarrier;
-                    //Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
-                    //Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(shadowBarrier, setBarrierTrafficLight.Index);
+                    // Delete and re-create for testing purposes.. Parks' stop light prop
+                    //shadowBarrier.Delete();
+                    //CreateShadowBarrier();
+                    shadowBarrier.Heading = rotateBarrier.Value;
+                    shadowBarrier.Position = MousePositionInWorld.GetPositionForBarrier;
+                    Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
+                    Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(shadowBarrier, setBarrierTrafficLight.Index);
                 }
 
                 void DisableBarrierMenuOptionsIfShadowConeTooFar()
