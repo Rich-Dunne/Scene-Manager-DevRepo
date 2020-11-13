@@ -218,7 +218,15 @@ namespace SceneManager
                         {
                             //Game.DisplayNotification($"~o~Scene Manager ~r~[Error]\n{Vehicle.Model.Name} [{Vehicle.Handle}] driver [{Driver.Handle}] has no task.  Reassiging current waypoint task.");
                             Game.LogTrivial($"{Vehicle.Model.Name} [{Vehicle.Handle}] driver [{Driver.Handle}] has no task.  Reassiging current waypoint task.");
-                            Driver.Tasks.DriveToPosition(Path.Waypoints[currentWaypointTask].Position, Path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)Path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
+                            if (Driver.CurrentVehicle)
+                            {
+                                Driver.Tasks.DriveToPosition(Path.Waypoints[currentWaypointTask].Position, Path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)Path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
+                            }
+                            else
+                            {
+                                Game.LogTrivial($"{Vehicle.Model.Name} [{Vehicle.Handle}] driver [{Driver.Handle}] is not in a vehicle.  Exiting loop.");
+                                return;
+                            }
                         }
                         GameFiber.Sleep(100);
                     }
@@ -277,7 +285,7 @@ namespace SceneManager
                     Dismiss();
                     return false;
                 }
-                if (Driver == null || !Driver || !Driver.IsAlive && !Dismissed)
+                if (!Driver || !Driver.IsAlive)
                 {
                     Dismiss();
                     return false;
@@ -309,17 +317,17 @@ namespace SceneManager
                 if (Vehicle)
                 {
                     Vehicle.Dismiss();
+                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
                 }
-                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
                 Path.CollectedVehicles.Remove(this);
                 return;
             }
 
-            if(StoppedAtWaypoint)
+            if(Vehicle && StoppedAtWaypoint)
             {
                 StoppedAtWaypoint = false;
-                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
-                if (Driver.CurrentVehicle)
+                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Driver.CurrentVehicle, 0f, 1, true);
+                if (Driver?.CurrentVehicle)
                 {
                     Driver.Tasks.CruiseWithVehicle(5f);
                 }
@@ -360,11 +368,13 @@ namespace SceneManager
             {
                 if (CurrentWaypoint == null || Path == null)
                 {
-                    Game.LogTrivial($"CurrentWaypoint or Path are null");
+                    Game.LogTrivial($"CurrentWaypoint or Path is null");
+                    return;
                 }
-                else if (CurrentWaypoint?.Number != Path?.Waypoints.Count)
+                
+                if (CurrentWaypoint?.Number != Path?.Waypoints.Count)
                 {
-                    Game.LogTrivial($"{Vehicle.Model.Name} [{Vehicle.Handle}] dismissed from waypoint.");
+                    Game.LogTrivial($"{Vehicle?.Model.Name} [{Vehicle?.Handle}] dismissed from waypoint.");
                     SkipWaypoint = true;
                 }
                 else if (CurrentWaypoint?.Number == Path?.Waypoints.Count)
@@ -375,29 +385,28 @@ namespace SceneManager
 
             void DismissFromPath()
             {
-                Game.LogTrivial($"Dismissing from path");
+                Game.LogTrivial($"Dismissing {Vehicle?.Model.Name} [{Vehicle?.Handle}] from path");
                 Dismissed = true;
 
                 // Check if the vehicle is near any of the path's collector waypoints
                 GameFiber.StartNew(() =>
                 {
                     var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector).OrderBy(wp => Vehicle.DistanceTo2D(wp.Position)).FirstOrDefault();
-                    if (nearestCollectorWaypoint != null)
+                    if(nearestCollectorWaypoint == null)
                     {
-                        // Enabling this will keep the menu, but the dismissed vehicle is immediately re - collected
-                        while (nearestCollectorWaypoint != null && Vehicle && Vehicle.HasDriver && Driver && Driver.IsAlive && Vehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius)
-                        {
-                            //Game.LogTrivial($"{Vehicle.Model.Name} is within 2x collector radius, cannot be fully dismissed yet.");
-                            GameFiber.Yield();
-                        }
+                        Game.LogTrivial($"Nearest collector is null");
                     }
                     else
                     {
-                        Game.LogTrivial($"Nearest collector is null");
+                        while (nearestCollectorWaypoint != null && Vehicle && Vehicle.HasDriver && Driver && Driver.IsAlive && Vehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius)
+                        {
+                            GameFiber.Yield();
+                        }
                     }
 
                     if (!Vehicle || !Driver)
                     {
+                        Game.LogTrivial($"Vehicle or driver is null");
                         return;
                     }
 
@@ -416,12 +425,12 @@ namespace SceneManager
                         }
                         if (Vehicle)
                         {
+                            Vehicle.Dismiss();
                             Vehicle.IsSirenOn = false;
                             Vehicle.IsSirenSilent = true;
-                            Vehicle.Dismiss();
                         }
                     }
-                });
+                }, "DismissFromPath Fiber");
                 
             }
 
