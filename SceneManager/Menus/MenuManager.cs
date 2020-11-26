@@ -34,20 +34,8 @@ namespace SceneManager
             MainMenu.BuildMainMenu();
             SettingsMenu.BuildSettingsMenu();
             PathMainMenu.BuildPathMenu();
-            PathCreationMenu.BuildPathCreationMenu();
             EditPathMenu.BuildEditPathMenu();
             BarrierMenu.BuildBarrierMenu();
-        }
-
-        private static void AddMenusToMenuPool()
-        {
-            menuPool.Add(MainMenu.mainMenu);
-            menuPool.Add(SettingsMenu.settingsMenu);
-            menuPool.Add(PathMainMenu.pathMainMenu);
-            menuPool.Add(BarrierMenu.barrierMenu);
-            menuPool.Add(PathCreationMenu.pathCreationMenu);
-            menuPool.Add(EditPathMenu.editPathMenu);
-            menuPool.Add(EditWaypointMenu.editWaypointMenu);
         }
     }
 }

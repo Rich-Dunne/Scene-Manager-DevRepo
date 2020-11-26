@@ -9,214 +9,198 @@ namespace SceneManager
 {
     class BarrierMenu
     {
+        private static List<TrafficLight> trafficLightList = new List<TrafficLight>() { TrafficLight.Green, TrafficLight.Red, TrafficLight.Yellow, TrafficLight.None };
         internal static UIMenu barrierMenu = new UIMenu("Scene Manager", "~o~Barrier Management");
         internal static List<Barrier> barriers = new List<Barrier>();
         private static UIMenuListScrollerItem<string> barrierList = new UIMenuListScrollerItem<string>("Spawn Barrier", "", Settings.barrierKeys);
         private static UIMenuNumericScrollerItem<int> rotateBarrier = new UIMenuNumericScrollerItem<int>("Rotate Barrier", "", 0, 350, 10);
+        private static UIMenuCheckboxItem invincible = new UIMenuCheckboxItem("Indestructible", false);
+        private static UIMenuNumericScrollerItem<int> barrierTexture = new UIMenuNumericScrollerItem<int>("Change Texture", "", 0, 15, 1);
+        private static UIMenuCheckboxItem setBarrierLights = new UIMenuCheckboxItem("Enable Barrier Lights", false);
+        private static UIMenuListScrollerItem<TrafficLight> setBarrierTrafficLight = new UIMenuListScrollerItem<TrafficLight>("Set Barrier Traffic Light", "", trafficLightList);
         private static UIMenuListScrollerItem<string> removeBarrierOptions = new UIMenuListScrollerItem<string>("Remove Barrier", "", new[] { "Last Barrier", "Nearest Barrier", "All Barriers" });
         private static UIMenuItem resetBarriers = new UIMenuItem("Reset Barriers", "Reset all spawned barriers to their original position and rotation");
-        internal static Rage.Object shadowBarrier;
+        internal static Object shadowBarrier;
 
         internal static void InstantiateMenu()
         {
             barrierMenu.ParentMenu = MainMenu.mainMenu;
             MenuManager.menuPool.Add(barrierMenu);
+
+            barrierMenu.OnItemSelect += BarrierMenu_OnItemSelected;
+            barrierMenu.OnScrollerChange += BarrierMenu_OnScrollerChanged;
+            barrierMenu.OnCheckboxChange += BarrierMenu_OnCheckboxChanged;
+            barrierMenu.OnMenuOpen += BarrierMenu_OnMenuOpen;
         }
 
         internal static void BuildBarrierMenu()
         {
-            barrierMenu.AddItem(resetBarriers);
-            resetBarriers.ForeColor = Color.Gold;
-            resetBarriers.Enabled = false;
+            barrierMenu.AddItem(barrierList);
+            barrierList.ForeColor = Color.Gold;
 
-            barrierMenu.AddItem(removeBarrierOptions, 0);
+            barrierMenu.AddItem(rotateBarrier);
+
+            barrierMenu.AddItem(invincible);
+
+            if (Settings.EnableAdvancedBarricadeOptions)
+            {
+                barrierMenu.AddItem(barrierTexture);
+                barrierTexture.Index = 0;
+
+                barrierMenu.AddItem(setBarrierLights);
+
+                barrierMenu.AddItem(setBarrierTrafficLight);
+                setBarrierTrafficLight.Index = 3;
+            }
+
+            barrierMenu.AddItem(removeBarrierOptions);
             removeBarrierOptions.ForeColor = Color.Gold;
             removeBarrierOptions.Enabled = false;
 
-            barrierMenu.AddItem(rotateBarrier, 0);
-
-            barrierMenu.AddItem(barrierList, 0);
-            barrierList.ForeColor = Color.Gold;
-
-            barrierMenu.OnItemSelect += BarrierMenu_OnItemSelected;
-            barrierMenu.OnScrollerChange += BarrierMenu_OnScrollerChange;
+            barrierMenu.AddItem(resetBarriers);
+            resetBarriers.ForeColor = Color.Gold;
+            resetBarriers.Enabled = false;    
         }
 
-        internal static void CreateShadowBarrier(UIMenu barrierMenu)
+        internal static void CreateShadowBarrier()
         {
-            Hints.Display($"~o~Scene Manager ~y~[Hint]\n~y~ ~w~The shadow cone will disappear if you aim too far away.");
-
             if (shadowBarrier)
+            {
                 shadowBarrier.Delete();
+            }
 
-            shadowBarrier = new Rage.Object(Settings.barrierValues[barrierList.Index], TracePlayerView(Settings.BarrierPlacementDistance, TraceFlags.IntersectWorld).HitPosition, rotateBarrier.Value);
+            shadowBarrier = new Object(Settings.barrierValues[barrierList.Index], MousePositionInWorld.GetPosition, rotateBarrier.Value);
             if (!shadowBarrier)
             {
                 barrierMenu.Close();
-                Game.DisplayNotification($"~o~Scene Manager ~red~[Error]\n~w~ Something went wrong creating the shadow barrier.  Please try again.");
+                Game.DisplayNotification($"~o~Scene Manager ~r~[Error]\n~w~Something went wrong creating the shadow barrier.  Please try again.");
                 return;
             }
+            Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(shadowBarrier, setBarrierTrafficLight.Index);
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
             shadowBarrier.IsGravityDisabled = true;
             shadowBarrier.IsCollisionEnabled = false;
             shadowBarrier.Opacity = 0.7f;
 
-            GameFiber ShadowConeLoopFiber = new GameFiber(() => LoopToDisplayShadowBarrier());
-            ShadowConeLoopFiber.Start();
-
-            void LoopToDisplayShadowBarrier()
+            // Start with lights off for Parks's objects
+            if (Settings.EnableAdvancedBarricadeOptions)
             {
-                while (barrierMenu.Visible && shadowBarrier)
+                Rage.Native.NativeFunction.Natives.x971DA0055324D033(shadowBarrier, barrierTexture.Value);
+                SetBarrierLights();
+            }
+        }
+
+        private static void LoopToDisplayShadowBarrier()
+        {
+            while (barrierMenu.Visible)
+            {
+                if (barrierList.Selected || rotateBarrier.Selected || invincible.Selected || barrierTexture.Selected || setBarrierLights.Selected || setBarrierTrafficLight.Selected)
                 {
-                    if (barrierList.Selected || rotateBarrier.Selected)
+                    if (shadowBarrier)
                     {
-                        shadowBarrier.IsVisible = true;
                         UpdateShadowBarrierPosition();
+                    }
+                    else if(MousePositionInWorld.GetPositionForBarrier.DistanceTo2D(Game.LocalPlayer.Character.Position) <= Settings.BarrierPlacementDistance)
+                    {
+                        CreateShadowBarrier();
+                    }
+                }
+                else
+                {
+                    if (shadowBarrier)
+                    {
+                        shadowBarrier.Delete();
+                    }
+                }
+                GameFiber.Yield();
+            }
+
+            if (shadowBarrier)
+            {
+                shadowBarrier.Delete();
+            }
+
+            void UpdateShadowBarrierPosition()
+            {
+                DisableBarrierMenuOptionsIfShadowConeTooFar();
+                if (shadowBarrier)
+                {
+                    // Delete and re-create for testing purposes.. Parks' stop light prop
+                    //shadowBarrier.Delete();
+                    //CreateShadowBarrier();
+                    shadowBarrier.Heading = rotateBarrier.Value;
+                    shadowBarrier.Position = MousePositionInWorld.GetPositionForBarrier;
+                    Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
+                    Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(shadowBarrier, setBarrierTrafficLight.Index);
+                }
+
+                void DisableBarrierMenuOptionsIfShadowConeTooFar()
+                {
+                    if (!shadowBarrier && MousePositionInWorld.GetPositionForBarrier.DistanceTo2D(Game.LocalPlayer.Character.Position) <= Settings.BarrierPlacementDistance)
+                    {
+                        CreateShadowBarrier();
+
+                    }
+                    else if (shadowBarrier && shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) > Settings.BarrierPlacementDistance)
+                    {
+                        barrierList.Enabled = false;
+                        rotateBarrier.Enabled = false;
+                        shadowBarrier.Delete();
+                    }
+                    else if (shadowBarrier && shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) <= Settings.BarrierPlacementDistance && barrierList.SelectedItem == "Flare")
+                    {
+                        barrierList.Enabled = true;
+                        rotateBarrier.Enabled = false;
                     }
                     else
                     {
-                        shadowBarrier.IsVisible = false;
-                    }
-                    GameFiber.Yield();
-                }
-
-                if (shadowBarrier)
-                    shadowBarrier.Delete();
-
-                void UpdateShadowBarrierPosition()
-                {
-                    DisableBarrierMenuOptionsIfShadowConeTooFar();
-                    shadowBarrier.SetPositionWithSnap(TracePlayerView(Settings.BarrierPlacementDistance, TraceFlags.IntersectWorld).HitPosition);
-
-                    void DisableBarrierMenuOptionsIfShadowConeTooFar()
-                    {
-                        if (shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) > Settings.BarrierPlacementDistance)
-                        {
-                            barrierList.Enabled = false;
-                            rotateBarrier.Enabled = false;
-                        }
-                        else if (shadowBarrier.Position.DistanceTo2D(Game.LocalPlayer.Character.Position) <= Settings.BarrierPlacementDistance && barrierList.SelectedItem == "Flare")
-                        {
-                            barrierList.Enabled = true;
-                            rotateBarrier.Enabled = false;
-                        }
-                        else
-                        {
-                            barrierList.Enabled = true;
-                            rotateBarrier.Enabled = true;
-                        }
+                        barrierList.Enabled = true;
+                        rotateBarrier.Enabled = true;
                     }
                 }
-            }
-
-            //------------ CREDIT PNWPARKS FOR THESE FUNCTIONS ------------\\
-            // Implement Parks's 'Get Point Player is Looking At' script for better placement in 3rd person https://bitbucket.org/snippets/gtaparks/MeBKxX
-
-            HitResult TracePlayerView(float maxTraceDistance = 30f, TraceFlags flags = TraceFlags.IntersectWorld) => TracePlayerView2(out Vector3 v1, out Vector3 v2, maxTraceDistance, flags);
-
-            HitResult TracePlayerView2(out Vector3 start, out Vector3 end, float maxTraceDistance, TraceFlags flags)
-            {
-                Vector3 direction = GetPlayerLookingDirection(out start);
-                end = start + (maxTraceDistance * direction);
-                var barrierObjects = barriers.Where(b => b.Object).Select(b => b.Object).ToArray();
-                return World.TraceLine(start, end, flags, barrierObjects);
-            }
-
-            Vector3 GetPlayerLookingDirection(out Vector3 camPosition)
-            {
-                if (Camera.RenderingCamera)
-                {
-                    camPosition = Camera.RenderingCamera.Position;
-                    return Camera.RenderingCamera.Direction;
-                }
-                else
-                {
-                    float pitch = Rage.Native.NativeFunction.Natives.GET_GAMEPLAY_CAM_RELATIVE_PITCH<float>();
-                    float heading = Rage.Native.NativeFunction.Natives.GET_GAMEPLAY_CAM_RELATIVE_HEADING<float>();
-
-                    camPosition = Rage.Native.NativeFunction.Natives.GET_GAMEPLAY_CAM_COORD<Vector3>();
-                    return (Game.LocalPlayer.Character.Rotation + new Rotator(pitch, 0, heading)).ToVector().ToNormalized();
-                }
-            } 
-            //------------ CREDIT PNWPARKS FOR THESE FUNCTIONS ------------\\
-        }
-
-        private static void BarrierMenu_OnScrollerChange(UIMenu sender, UIMenuScrollerItem scrollerItem, int oldIndex, int newIndex)
-        {
-            if (scrollerItem == barrierList)
-            {
-                CreateShadowBarrier(barrierMenu);
-
-                if(barrierList.SelectedItem == "Flare")
-                {
-                    rotateBarrier.Enabled = false;
-                }
-                else
-                {
-                    rotateBarrier.Enabled = true;
-                }
-
-                barrierMenu.Width = SetMenuWidth();
-            }
-
-            if (scrollerItem == rotateBarrier)
-            {
-                shadowBarrier.Heading = rotateBarrier.Value;
             }
         }
 
-        private static void BarrierMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
+        private static void SpawnBarrier()
         {
-            if (selectedItem == barrierList as UIMenuItem)
+            if(barrierList.SelectedItem == "Flare")
             {
-                // Attach some invisible object to the cone which the AI try to drive around
-                // Barrier rotates with cone and becomes invisible similar to ASC when created
-                if(barrierList.SelectedItem == "Flare")
-                {
-                    SpawnFlare();
-                }
-                else
-                {
-                    SpawnBarrier();
-                }
-
+                SpawnFlare();
             }
-
-            if (selectedItem == removeBarrierOptions as UIMenuItem)
+            else
             {
-                RemoveBarrier();
-            }
-            
-            if (selectedItem == resetBarriers)
-            {
-                var currentBarriers = barriers.Where(b => b.Model.Name != "0xa2c44e80").ToList(); // 0xa2c44e80 is the flare weapon hash
-                foreach (Barrier barrier in currentBarriers)
-                {
-                    var newBarrier = new Rage.Object(barrier.Model, barrier.Position, barrier.Rotation);
-                    newBarrier.SetPositionWithSnap(barrier.Position);
-                    Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(newBarrier, true);
-                    newBarrier.IsPositionFrozen = false;
-                    Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(newBarrier, true);
-                    barriers.Add(new Barrier(newBarrier, newBarrier.Position, newBarrier.Heading));
-
-
-                    if (barrier.Object)
-                    {
-                        barrier.Object.Delete();
-                    }
-                    barriers.Remove(barrier);
-                }
-                currentBarriers.Clear();
-            }
-
-            void SpawnBarrier()
-            {
-                var barrier = new Rage.Object(shadowBarrier.Model, shadowBarrier.Position, rotateBarrier.Value);
+                var barrier = new Object(shadowBarrier.Model, shadowBarrier.Position, rotateBarrier.Value);
                 barrier.SetPositionWithSnap(shadowBarrier.Position);
                 Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(barrier, true);
                 barrier.IsPositionFrozen = false;
-                Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(barrier, true);
+                if (invincible.Checked)
+                {
+                    Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(barrier, true);
+                    if(barrier.Model.Name != "prop_barrier_wat_03a")
+                    {
+                        Rage.Native.NativeFunction.Natives.SET_DISABLE_BREAKING(barrier, true);
+                    }
+                }
+                if (Settings.EnableAdvancedBarricadeOptions)
+                {
+                    Rage.Native.NativeFunction.Natives.x971DA0055324D033(barrier, barrierTexture.Value);
+                    if (setBarrierLights.Checked)
+                    {
+                        Rage.Native.NativeFunction.Natives.SET_ENTITY_LIGHTS(barrier, false);
+                    }
+                    else
+                    {
+                        Rage.Native.NativeFunction.Natives.SET_ENTITY_LIGHTS(barrier, true);
+                    }
 
+                    Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(barrier, setBarrierTrafficLight.Index);
+                    barrier.IsPositionFrozen = true;
+                    GameFiber.Sleep(50);
+                    if (barrier)
+                    {
+                        barrier.IsPositionFrozen = false;
+                    }
+                }
                 barriers.Add(new Barrier(barrier, barrier.Position, barrier.Heading));
                 removeBarrierOptions.Enabled = true;
                 resetBarriers.Enabled = true;
@@ -225,8 +209,8 @@ namespace SceneManager
             void SpawnFlare()
             {
                 var flare = new Weapon("weapon_flare", shadowBarrier.Position, 1);
-
                 Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(flare, true);
+                GameFiber.Sleep(1);
                 GameFiber.StartNew(() =>
                 {
                     while (flare && flare.HeightAboveGround > 0.05f)
@@ -243,44 +227,177 @@ namespace SceneManager
                 barriers.Add(new Barrier(flare, flare.Position, flare.Heading));
                 removeBarrierOptions.Enabled = true;
             }
+        }
 
-            void RemoveBarrier()
+        internal static void RotateBarrier()
+        {
+            shadowBarrier.Heading = rotateBarrier.Value;
+            shadowBarrier.Position = MousePositionInWorld.GetPositionForBarrier;
+            Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(shadowBarrier);
+        }
+
+        private static void RemoveBarrier()
+        {
+            switch (removeBarrierOptions.Index)
             {
-                switch (removeBarrierOptions.Index)
-                {
-                    case 0:
-                        barriers[barriers.Count - 1].Object.Delete();
-                        barriers.RemoveAt(barriers.Count - 1);
-                        break;
-                    case 1:
-                        var nearestBarrier = barriers.OrderBy(b => b.Object.DistanceTo2D(Game.LocalPlayer.Character)).FirstOrDefault();
-                        if(nearestBarrier != null)
-                        {
-                            nearestBarrier.Object.Delete();
-                            barriers.Remove(nearestBarrier);
-                        }
-                        break;
-                    case 2:
-                        foreach (Barrier b in barriers.Where(b => b.Object))
-                        {
-                            b.Object.Delete();
-                        }
-                        if (barriers.Count > 0)
-                        {
-                            barriers.Clear();
-                        }
-                        break;
-                }
+                case 0:
+                    barriers[barriers.Count - 1].Object.Delete();
+                    barriers.RemoveAt(barriers.Count - 1);
+                    break;
+                case 1:
+                    var nearestBarrier = barriers.OrderBy(b => b.Object.DistanceTo2D(Game.LocalPlayer.Character)).FirstOrDefault();
+                    if (nearestBarrier != null)
+                    {
+                        nearestBarrier.Object.Delete();
+                        barriers.Remove(nearestBarrier);
+                    }
+                    break;
+                case 2:
+                    foreach (Barrier b in barriers.Where(b => b.Object))
+                    {
+                        b.Object.Delete();
+                    }
+                    if (barriers.Count > 0)
+                    {
+                        barriers.Clear();
+                    }
+                    break;
+            }
 
-                removeBarrierOptions.Enabled = barriers.Count == 0 ? false : true;
-                resetBarriers.Enabled = barriers.Count == 0 ? false : true;
+            removeBarrierOptions.Enabled = barriers.Count == 0 ? false : true;
+            resetBarriers.Enabled = barriers.Count == 0 ? false : true;
+        }
+
+        private static void ResetBarriers()
+        {
+            var currentBarriers = barriers.Where(b => b.Model.Name != "0xa2c44e80").ToList(); // 0xa2c44e80 is the flare weapon hash
+            foreach (Barrier barrier in currentBarriers)
+            {
+                var newBarrier = new Rage.Object(barrier.Model, barrier.Position, barrier.Rotation);
+                newBarrier.SetPositionWithSnap(barrier.Position);
+                Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(newBarrier, true);
+                newBarrier.IsPositionFrozen = false;
+                Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(newBarrier, true);
+                Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(newBarrier, setBarrierTrafficLight.Index);
+                newBarrier.IsPositionFrozen = true;
+                GameFiber.Sleep(50);
+                if (newBarrier)
+                {
+                    newBarrier.IsPositionFrozen = false;
+                }
+                barriers.Add(new Barrier(newBarrier, newBarrier.Position, newBarrier.Heading));
+
+
+                if (barrier.Object)
+                {
+                    barrier.Object.Delete();
+                }
+                barriers.Remove(barrier);
+            }
+            currentBarriers.Clear();
+        }
+
+        private static void SetBarrierLights()
+        {
+            if (setBarrierLights.Checked)
+            {
+                Rage.Native.NativeFunction.Natives.SET_ENTITY_LIGHTS(shadowBarrier, false);
+            }
+            else
+            {
+                Rage.Native.NativeFunction.Natives.SET_ENTITY_LIGHTS(shadowBarrier, true);
+            }
+
+            Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(shadowBarrier, setBarrierTrafficLight.Index);
+        }
+
+        private static void BarrierMenu_OnCheckboxChanged(UIMenu sender, UIMenuCheckboxItem checkbox, bool @checked)
+        {
+            if(checkbox == setBarrierLights)
+            {
+                SetBarrierLights();
             }
         }
 
-        private static float SetMenuWidth()
+        private static void BarrierMenu_OnScrollerChanged(UIMenu sender, UIMenuScrollerItem scrollerItem, int oldIndex, int newIndex)
+        {
+            if (scrollerItem == barrierList)
+            {
+                if (shadowBarrier)
+                {
+                    shadowBarrier.Delete();
+                }
+                barrierTexture.Index = 0;
+
+                if(barrierList.SelectedItem == "Flare")
+                {
+                    rotateBarrier.Enabled = false;
+                }
+                else
+                {
+                    rotateBarrier.Enabled = true;
+                }
+
+                barrierMenu.Width = SetMenuWidth();
+            }
+
+            if (scrollerItem == barrierTexture)
+            {
+                Rage.Native.NativeFunction.Natives.x971DA0055324D033(shadowBarrier, barrierTexture.Value);
+            }
+
+            if (scrollerItem == setBarrierTrafficLight)
+            {
+                Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(shadowBarrier, setBarrierTrafficLight.Index);
+            }
+
+            if (scrollerItem == rotateBarrier)
+            {
+                RotateBarrier();
+            }
+        }
+
+        private static void BarrierMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
+        {
+            if (selectedItem == barrierList)
+            {
+                SpawnBarrier();
+            }
+
+            if (selectedItem == removeBarrierOptions)
+            {
+                RemoveBarrier();
+            }
+            
+            if (selectedItem == resetBarriers)
+            {
+                ResetBarriers();
+            }
+        }
+
+        private static void BarrierMenu_OnMenuOpen(UIMenu menu)
+        {
+            var scrollerItems = new List<UIMenuScrollerItem> { barrierList, barrierTexture, setBarrierTrafficLight, rotateBarrier, removeBarrierOptions };
+            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>() { { invincible, null }, {setBarrierLights, SetBarrierLights} };
+            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
+            {
+                { barrierList, SpawnBarrier },
+                { removeBarrierOptions, RemoveBarrier },
+                { resetBarriers, ResetBarriers },
+            };
+
+            Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~The shadow barrier will disappear if you aim too far away.");
+            CreateShadowBarrier();
+
+            GameFiber ShadowConeLoopFiber = new GameFiber(() => LoopToDisplayShadowBarrier());
+            ShadowConeLoopFiber.Start();
+
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);      
+        }
+
+        internal static float SetMenuWidth()
         {
             float defaultWidth = UIMenu.DefaultWidth;
-            float width = barrierMenu.Width;
 
             barrierList.TextStyle.Apply();
             Rage.Native.NativeFunction.Natives.x54CE8AC98E120CAB("STRING"); // _BEGIN_TEXT_COMMAND_GET_WIDTH

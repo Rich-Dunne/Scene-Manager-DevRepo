@@ -50,9 +50,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="AITasking.cs" />
+    <Compile Include="ConsoleCommands.cs" />
+    <Compile Include="MousePositionInWorld.cs" />
     <Compile Include="Object Classes\CollectedVehicle.cs" />
-    <Compile Include="Logger.cs" />
     <Compile Include="Object Classes\Barrier.cs" />
     <Compile Include="Hints.cs" />
     <Compile Include="Menus\BarrierMenu.cs" />
@@ -67,6 +67,7 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Menus\PathMainMenu.cs" />
     <Compile Include="Menus\SettingsMenu.cs" />
+    <Compile Include="RNUIMouseInputHandler.cs" />
     <Compile Include="Settings.cs" />
     <Compile Include="Object Classes\Waypoint.cs" />
   </ItemGroup>

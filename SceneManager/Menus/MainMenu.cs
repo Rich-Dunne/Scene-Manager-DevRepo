@@ -1,6 +1,10 @@
-﻿using RAGENativeUI;
+﻿using Rage;
+using RAGENativeUI;
 using RAGENativeUI.Elements;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 
 namespace SceneManager
 {
@@ -15,7 +19,7 @@ namespace SceneManager
             MenuManager.menuPool.Add(mainMenu);
         }
 
-        public static void BuildMainMenu()
+        internal static void BuildMainMenu()
         {
             mainMenu.AddItem(navigateToPathMenu = new UIMenuItem("Path Menu"));
             navigateToPathMenu.ForeColor = Color.Gold;
@@ -28,15 +32,36 @@ namespace SceneManager
             mainMenu.BindMenuToItem(SettingsMenu.settingsMenu, navigateToSettingsMenu);
 
             mainMenu.RefreshIndex();
-            mainMenu.OnItemSelect += MainMenu_OnItemSelected;
+            mainMenu.OnMenuOpen += MainMenu_OnMenuOpen;
         }
 
-        private static void MainMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
+        private static void ShowPathMainMenu()
         {
-            if (selectedItem == navigateToBarrierMenu)
+            PathMainMenu.pathMainMenu.Visible = true;
+        }
+
+        private static void ShowBarrierMenu()
+        {
+            BarrierMenu.barrierMenu.Visible = true;
+        }
+
+        private static void ShowSettingsMenu()
+        {
+            SettingsMenu.settingsMenu.Visible = true;
+        }
+
+        private static void MainMenu_OnMenuOpen(UIMenu menu)
+        {
+            var scrollerItems = new List<UIMenuScrollerItem> { };
+            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>() { };
+            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
             {
-                BarrierMenu.CreateShadowBarrier(BarrierMenu.barrierMenu);
-            }
+                { navigateToPathMenu, ShowPathMainMenu },
+                { navigateToBarrierMenu, ShowBarrierMenu },
+                { navigateToSettingsMenu, ShowSettingsMenu }
+            };
+
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
         }
     }
 }

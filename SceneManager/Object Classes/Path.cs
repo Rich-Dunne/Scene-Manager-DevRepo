@@ -81,9 +81,9 @@ namespace SceneManager
         {
             GameFiber.StartNew(() =>
             {
-                while (SettingsMenu.threeDWaypoints.Checked)
+                while(true)
                 {
-                    if (MenuManager.menuPool.IsAnyMenuOpen())
+                    if (SettingsMenu.threeDWaypoints.Checked && (State == State.Finished && MenuManager.menuPool.IsAnyMenuOpen()) || (State == State.Creating && PathCreationMenu.pathCreationMenu.Visible))
                     {
                         for (int i = 0; i < Waypoints.Count; i++)
                         {
@@ -133,7 +133,6 @@ namespace SceneManager
         internal void LoopWaypointCollection()
         {
             uint lastProcessTime = Game.GameTime; // Store the last time the full loop finished; this is a value in ms
-            int timeBetweenChecks = 1000; // How many ms to wait between outer loops
             int yieldAfterChecks = 50; // How many calculations to do before yielding
             while (PathMainMenu.paths.Contains(this))
             {
@@ -148,10 +147,11 @@ namespace SceneManager
                             {
                                 foreach (Vehicle v in World.GetAllVehicles())
                                 {
-                                    if (IsNearWaypoint(v, waypoint) && IsValidForCollection(v))
+                                    if (VehicleIsNearWaypoint(v, waypoint) && VehicleIsValidForCollection(v))
                                     {
                                         CollectedVehicle newCollectedVehicle = AddVehicleToCollection(v);
-                                        GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, this, waypoint));
+                                        GameFiber AssignTasksFiber = new GameFiber(() => newCollectedVehicle.AssignWaypointTasks(this, waypoint));
+                                        //GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, this, waypoint));
                                         AssignTasksFiber.Start();
                                     }
 
@@ -177,18 +177,18 @@ namespace SceneManager
             {
                 var collectedVehicle = new CollectedVehicle(vehicle, this);
                 CollectedVehicles.Add(collectedVehicle);
-                Logger.Log($"Added {vehicle.Model.Name} to collection from path {Number} waypoint {1}.");
+                Game.LogTrivial($"Added {vehicle.Model.Name} to collection from path {Number} waypoint {1}.");
                 return collectedVehicle;
             }
 
-            bool IsNearWaypoint(Vehicle v, Waypoint wp)
+            bool VehicleIsNearWaypoint(Vehicle v, Waypoint wp)
             {
                 return v.FrontPosition.DistanceTo2D(wp.Position) <= wp.CollectorRadius && Math.Abs(wp.Position.Z - v.Position.Z) < 3;
             }
 
-            bool IsValidForCollection(Vehicle v)
+            bool VehicleIsValidForCollection(Vehicle v)
             {
-                if (v && v != Game.LocalPlayer.Character.CurrentVehicle && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && v.IsEngineOn && v.IsOnAllWheels && v.Speed > 1 && !CollectedVehicles.Any(cv => cv?.Vehicle == v))
+                if (v && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && v.IsEngineOn && v.IsOnAllWheels && v.Speed > 1 && !CollectedVehicles.Any(cv => cv?.Vehicle == v))
                 {
                     var vehicleCollectedOnAnotherPath = PathMainMenu.paths.Any(p => p.Number != Number && p.CollectedVehicles.Any(cv => cv.Vehicle == v));
                     if (vehicleCollectedOnAnotherPath)

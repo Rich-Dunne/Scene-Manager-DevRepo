@@ -1,4 +1,7 @@
-﻿using System.Drawing;
+﻿using System.Collections.Generic;
+using System.Drawing;
+using System.Linq;
+using System.Windows.Forms;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
@@ -15,6 +18,9 @@ namespace SceneManager
         {
             editPathMenu.ParentMenu = PathMainMenu.pathMainMenu;
             MenuManager.menuPool.Add(editPathMenu);
+            editPathMenu.OnItemSelect += EditPath_OnItemSelected;
+            editPathMenu.OnCheckboxChange += EditPath_OnCheckboxChange;
+            editPathMenu.OnMenuOpen += EditPath_OnMenuOpen;
         }
 
         internal static void BuildEditPathMenu()
@@ -26,22 +32,48 @@ namespace SceneManager
             deletePath.ForeColor = Color.Gold;
 
             editPathMenu.RefreshIndex();
-            editPathMenu.OnItemSelect += EditPath_OnItemSelected;
-            editPathMenu.OnCheckboxChange += EditPath_OnCheckboxChange;
+        }
+
+        private static void EditPathWaypoints()
+        {
+            if (!SettingsMenu.threeDWaypoints.Checked)
+            {
+                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~You have 3D waypoints disabled in your settings.  It's recommended to enable 3D waypoints while working with waypoints.");
+            }
+            EditWaypointMenu.BuildEditWaypointMenu();
+        }
+
+        private static void DeletePath()
+        {
+            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
+            PathMainMenu.DeletePath(currentPath, PathMainMenu.Delete.Single);
+        }
+
+        private static void DisablePath()
+        {
+            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
+            if (disablePath.Checked)
+            {
+                currentPath.DisablePath();
+                Game.LogTrivial($"Path {currentPath.Number} disabled.");
+            }
+            else
+            {
+                currentPath.EnablePath();
+                Game.LogTrivial($"Path {currentPath.Number} enabled.");
+            }
         }
 
         private static void EditPath_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
-
             if (selectedItem == editPathWaypoints)
             {
-                EditWaypointMenu.BuildEditWaypointMenu();
+                EditPathWaypoints();
             }
 
             if (selectedItem == deletePath)
             {
-                PathMainMenu.DeletePath(currentPath, PathMainMenu.Delete.Single);
+                DeletePath();
             }
         }
 
@@ -49,18 +81,21 @@ namespace SceneManager
         {
             if (checkboxItem == disablePath)
             {
-                var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
-                if (disablePath.Checked)
-                {
-                    currentPath.DisablePath();
-                    Logger.Log($"Path {currentPath.Number} disabled.");
-                }
-                else
-                {
-                    currentPath.EnablePath();
-                    Logger.Log($"Path {currentPath.Number} enabled.");
-                }
+                DisablePath();
             }
+        }
+
+        private static void EditPath_OnMenuOpen(UIMenu menu)
+        {
+            var scrollerItems = new List<UIMenuScrollerItem> {  };
+            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>() { { disablePath, DisablePath } };
+            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
+            {
+                { editPathWaypoints, EditPathWaypoints },
+                { deletePath, DeletePath }
+            };
+
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
         }
     }
 }
