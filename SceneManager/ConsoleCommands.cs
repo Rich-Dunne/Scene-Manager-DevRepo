@@ -16,6 +16,8 @@ namespace SceneManager
                 if(collectedVehicle != null)
                 {
                     Game.LogTrivial($"Vehicle: {collectedVehicle.Vehicle.Model.Name} [{collectedVehicle.Vehicle.Handle}]");
+                    Rage.Native.NativeFunction.Natives.xA6E9C38DB51D7748(collectedVehicle.Vehicle, out uint script);
+                    Game.LogTrivial($"Vehicle spawned by: {script}");
                     Game.LogTrivial($"Driver handle: {collectedVehicle.Driver.Handle}");
                     Game.LogTrivial($"Path: {collectedVehicle.Path.Number}");
                     Game.LogTrivial($"Current waypoint: {collectedVehicle.CurrentWaypoint.Number}");
