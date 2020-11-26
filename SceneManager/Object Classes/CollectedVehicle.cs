@@ -211,6 +211,7 @@ namespace SceneManager
                     {
                         if (oldPosition != Path.Waypoints[currentWaypointTask].Position)
                         {
+                            Game.LogTrivial($"Waypoint position has changed, updating drive task.");
                             oldPosition = Path.Waypoints[currentWaypointTask].Position;
                             Driver.Tasks.DriveToPosition(Path.Waypoints[currentWaypointTask].Position, Path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)Path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
                         }
