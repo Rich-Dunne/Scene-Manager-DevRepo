@@ -398,7 +398,6 @@ namespace SceneManager
         internal static float SetMenuWidth()
         {
             float defaultWidth = UIMenu.DefaultWidth;
-            float width = barrierMenu.Width;
 
             barrierList.TextStyle.Apply();
             Rage.Native.NativeFunction.Natives.x54CE8AC98E120CAB("STRING"); // _BEGIN_TEXT_COMMAND_GET_WIDTH
