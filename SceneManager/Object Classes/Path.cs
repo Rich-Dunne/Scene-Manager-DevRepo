@@ -13,6 +13,7 @@ namespace SceneManager
         internal State State { get; set; }
         internal List<Waypoint> Waypoints = new List<Waypoint>();
         internal List<CollectedVehicle> CollectedVehicles = new List<CollectedVehicle>();
+        private List<Vehicle> _blacklistedVehicles = new List<Vehicle>();
 
         internal Path(int pathNum, State pathState)
         {
@@ -125,6 +126,7 @@ namespace SceneManager
                     }
 
                     CollectedVehicles.RemoveAll(cv => !cv.Vehicle);
+                    _blacklistedVehicles.RemoveAll(v => !v);
                     GameFiber.Sleep(60000);
                 }
             });
@@ -188,16 +190,34 @@ namespace SceneManager
 
             bool VehicleIsValidForCollection(Vehicle v)
             {
-                if (v && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && v.IsEngineOn && v.IsOnAllWheels && v.Speed > 1 && !CollectedVehicles.Any(cv => cv?.Vehicle == v))
+                if (v && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && v.IsEngineOn && v.IsOnAllWheels && v.Speed > 1 && !CollectedVehicles.Any(cv => cv?.Vehicle == v) && !_blacklistedVehicles.Contains(v))
                 {
                     var vehicleCollectedOnAnotherPath = PathMainMenu.paths.Any(p => p.Number != Number && p.CollectedVehicles.Any(cv => cv.Vehicle == v));
                     if (vehicleCollectedOnAnotherPath)
                     {
                         return false;
                     }
-                    if (v.HasDriver && v.Driver && !v.Driver.IsAlive)
+                    if (v.HasDriver && v.Driver)
                     {
-                        return false;
+                        //Game.LogTrivial($"Driver task status: {v.Driver.Tasks.CurrentTaskStatus}");
+                        if(!v.Driver.IsAlive)
+                        {
+                            Game.LogTrivial($"Vehicle's driver is dead.");
+                            _blacklistedVehicles.Add(v);
+                            return false;
+                        }
+                        if(v.Driver.IsPersistent) // Persistent drivers are likely spawned from another script and doing something important.
+                        {
+                            Game.LogTrivial($"Vehicle's driver is already persistent and probably being handled by another plugin.");
+                            _blacklistedVehicles.Add(v);
+                            return false;
+                        }
+                        if (v.Driver.Tasks.CurrentTaskStatus == TaskStatus.InProgress && !Rage.Native.NativeFunction.Natives.GET_IS_TASK_ACTIVE(v.Driver, 151)) // Drivers with a non-wander task are probably doing something important
+                        {
+                            Game.LogTrivial($"Vehicle's driver is already tasked and probably being handled by another plugin.");
+                            _blacklistedVehicles.Add(v);
+                            return false;
+                        }
                     }
                     if (!v.HasDriver)
                     {
