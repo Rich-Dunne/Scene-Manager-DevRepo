@@ -57,7 +57,7 @@ namespace SceneManager
             }
             else
             {
-                Game.DisplayNotification($"~o~Scene Manager~r~[Error]\n~w~ Your RAGENativeUI.dll version is below 1.7, please update RAGENativeUI and try again.");
+                Game.DisplayNotification($"~o~Scene Manager~r~[Error]\n~w~Your RAGENativeUI.dll version is below 1.7.  Please update RAGENativeUI and try again.");
                 return false;
             }
             
