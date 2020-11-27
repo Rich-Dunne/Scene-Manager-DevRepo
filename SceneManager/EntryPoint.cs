@@ -13,23 +13,21 @@ namespace SceneManager
     {
         internal static void Main()
         {
-            if (CheckRNUIVersion())
-            {
-                AppDomain.CurrentDomain.DomainUnload += MyTerminationHandler;
-                Settings.LoadSettings();
-                GetAssemblyVersion();
-                MenuManager.InstantiateMenus();
-
-                DisplayHintsToOpenMenu();
-
-                GameFiber UserInputFiber = new GameFiber(() => GetUserInput.LoopForUserInput());
-                UserInputFiber.Start();
-            }
-            else
+            if(!InputManagerChecker() || !CheckRNUIVersion())
             {
                 Game.UnloadActivePlugin();
                 return;
             }
+
+            AppDomain.CurrentDomain.DomainUnload += MyTerminationHandler;
+            Settings.LoadSettings();
+            GetAssemblyVersion();
+            MenuManager.InstantiateMenus();
+
+            DisplayHintsToOpenMenu();
+
+            GameFiber UserInputFiber = new GameFiber(() => GetUserInput.LoopForUserInput());
+            UserInputFiber.Start();
 
             void GetAssemblyVersion()
             {
@@ -61,6 +59,19 @@ namespace SceneManager
                 return false;
             }
             
+        }
+
+        private static bool InputManagerChecker()
+        {
+            var directory = Directory.GetCurrentDirectory();
+            var exists = File.Exists(directory + @"\InputManager.dll");
+            if (!exists)
+            {
+                Game.LogTrivial($"InputManager was not found in the user's GTA V directory.");
+                Game.DisplayNotification($"~o~Scene Manager ~r~[Error]\n~w~InputManager.dll was not found in your GTA V directory.  Please install InputManager.dll and try again.");
+                return false;
+            }
+            return true;
         }
         private static void DisplayHintsToOpenMenu()
         {
