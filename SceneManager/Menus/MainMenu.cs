@@ -61,7 +61,7 @@ namespace SceneManager
                 { navigateToSettingsMenu, ShowSettingsMenu }
             };
 
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
         }
     }
 }

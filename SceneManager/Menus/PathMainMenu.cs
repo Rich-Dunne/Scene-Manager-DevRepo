@@ -435,7 +435,7 @@ namespace SceneManager
                 { dismissDriver, DismissDriver }
             };
 
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
         }
     }
 }

@@ -120,7 +120,7 @@ namespace SceneManager
                 { saveSettings, ToggleSettings }
             };
 
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
         }
     }
 }

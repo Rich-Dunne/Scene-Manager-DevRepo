@@ -392,7 +392,7 @@ namespace SceneManager
             GameFiber ShadowConeLoopFiber = new GameFiber(() => LoopToDisplayShadowBarrier());
             ShadowConeLoopFiber.Start();
 
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);      
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems);      
         }
 
         internal static float SetMenuWidth()

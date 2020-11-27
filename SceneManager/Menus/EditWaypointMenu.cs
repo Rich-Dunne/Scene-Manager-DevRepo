@@ -305,7 +305,7 @@ namespace SceneManager
                 { addAsNewWaypoint, AddAsNewWaypoint }
             };
 
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
         }
 
         private static float SetDriveSpeedForWaypoint()
