@@ -1,6 +1,4 @@
 ﻿using Rage;
-using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 
@@ -21,7 +19,6 @@ namespace SceneManager
         internal float SpeedZoneRadius { get; set; }
         internal uint SpeedZone { get; set; }
         internal bool EnableWaypointMarker { get; set; } = true;
-        internal bool EnableEditMarker { get; set; }
 
         internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, DrivingFlagType drivingFlag, bool stopWaypoint, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 5)
         {
@@ -280,103 +277,6 @@ namespace SceneManager
             if (CollectorRadiusBlip)
             {
                 CollectorRadiusBlip.Alpha = 0;
-            }
-        }
-
-        internal void CollectVehicles(List<Path> paths)
-        {
-            var sleepInterval = 1000;
-            Game.LogTrivial($"Starting collection loop on waypoint {Number}");
-            while (paths.Contains(Path) && Path.Waypoints.Contains(this))
-            {
-                if (Path.IsEnabled && IsCollector)
-                {
-                    sleepInterval = 100;
-                    LoopForNearbyValidVehicles();
-                }
-                else
-                {
-                    sleepInterval = 1000;
-                }
-
-                var collectedVehiclePlayerIsIn = Path.CollectedVehicles.Where(x => x.Vehicle == Game.LocalPlayer.Character.CurrentVehicle).FirstOrDefault();
-                if (collectedVehiclePlayerIsIn != null)
-                {
-                    collectedVehiclePlayerIsIn.Dismiss(DismissOption.FromPlayer);
-                    Game.LogTrivial($"Dismissed a collected vehicle the player was in.");
-                }
-                GameFiber.Sleep(sleepInterval);
-            }
-
-            void LoopForNearbyValidVehicles()
-            {
-                foreach (Vehicle vehicle in GetNearbyVehiclesForCollection(Position, CollectorRadius))
-                {
-                    if (!vehicle)
-                    {
-                        break;
-                    }
-
-                    var collectedVehicle = Path.CollectedVehicles.Where(cv => cv.Vehicle == vehicle).FirstOrDefault();
-                    if (collectedVehicle == null)
-                    {
-                        CollectedVehicle newCollectedVehicle = AddVehicleToCollection(vehicle);
-                        GameFiber AssignTasksFiber = new GameFiber(() => newCollectedVehicle.AssignWaypointTasks(Path, this));
-                        //GameFiber AssignTasksFiber = new GameFiber(() => AITasking.AssignWaypointTasks(newCollectedVehicle, Path, this));
-                        AssignTasksFiber.Start();
-                    }
-                }
-
-                Vehicle[] GetNearbyVehiclesForCollection(Vector3 collectorWaypointPosition, float collectorRadius)
-                {
-                    return (from v in World.GetAllVehicles() where v.FrontPosition.DistanceTo2D(collectorWaypointPosition) <= collectorRadius && Math.Abs(collectorWaypointPosition.Z - v.Position.Z) < 3 && IsValidForCollection(v) select v).ToArray();
-                }
-            }
-
-            CollectedVehicle AddVehicleToCollection(Vehicle vehicle)
-            {
-                var collectedVehicle = new CollectedVehicle(vehicle, Path, this);
-                Path.CollectedVehicles.Add(collectedVehicle);
-                Game.LogTrivial($"Added {vehicle.Model.Name} to collection from path {Path.Number} waypoint {this.Number}.");
-                return collectedVehicle;
-            }
-
-            bool IsValidForCollection(Vehicle v)
-            {
-                if (v && v.Speed > 1 && v.IsOnAllWheels && v.IsEngineOn && v != Game.LocalPlayer.Character.CurrentVehicle && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && !Path.CollectedVehicles.Any(cv => cv?.Vehicle == v))
-                {
-                    var vehicleCollectedOnAnotherPath = paths.Any(p => p.Number != Path.Number && p.CollectedVehicles.Any(cv => cv.Vehicle == v));
-                    if (vehicleCollectedOnAnotherPath)
-                    {
-                        return false;
-                    }
-                    if (v.HasDriver && v.Driver && !v.Driver.IsAlive)
-                    {
-                        return false;
-                    }
-                    if (!v.HasDriver)
-                    {
-                        v.CreateRandomDriver();
-                        while (!v.HasDriver)
-                        {
-                            GameFiber.Yield();
-                        }
-                        if (v && v.Driver)
-                        {
-                            v.Driver.IsPersistent = true;
-                            v.Driver.BlockPermanentEvents = true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
             }
         }
 
