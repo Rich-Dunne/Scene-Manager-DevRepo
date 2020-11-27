@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
+using System.IO;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
@@ -11,7 +10,7 @@ namespace SceneManager
     class EditPathMenu
     {
         internal static UIMenu editPathMenu = new UIMenu("Scene Manager", "~o~Edit Path");
-        private static UIMenuItem editPathWaypoints, deletePath;
+        private static UIMenuItem editPathWaypoints, deletePath, savePath;
         internal static UIMenuCheckboxItem disablePath;
 
         internal static void InstantiateMenu()
@@ -30,7 +29,8 @@ namespace SceneManager
             editPathWaypoints.ForeColor = Color.Gold;
             editPathMenu.AddItem(deletePath = new UIMenuItem("Delete Path"));
             deletePath.ForeColor = Color.Gold;
-
+            editPathMenu.AddItem(savePath = new UIMenuItem("Export Path"));
+            savePath.ForeColor = Color.Gold;
             editPathMenu.RefreshIndex();
         }
 
@@ -64,6 +64,34 @@ namespace SceneManager
             }
         }
 
+        private static void ExportPath()
+        {
+            // Reference PNWParks's UserInput class from LiveLights
+            string filename = PNWUserInput.GetUserInput("Type the name you would like to save your file as", "Enter a filename", 100);
+
+            // If filename != null or empty, check if export directory exists (GTA V/Plugins/SceneManager/Saved Paths)
+            if(string.IsNullOrWhiteSpace(filename))
+            {
+                Game.LogTrivial($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
+                return;
+            }
+            Game.LogTrivial($"Filename: {filename}");
+
+            // If directory does not exist, create it
+            var gameDirectory = Directory.GetCurrentDirectory();
+            var pathDirectoryExists = Directory.Exists(gameDirectory + "/plugins/SceneManager/Saved Paths");
+            if (!pathDirectoryExists)
+            {
+                Directory.CreateDirectory(gameDirectory + "/plugins/SceneManager/Saved Paths");
+                Game.LogTrivial($"New directory created at '/plugins/SceneManager/Saved Paths'");
+            }
+
+            // Create XML in save directory with user's filename, saving all path information
+            //<Path>
+            //    <Waypoint number="1" pos="x,y,z" speed="5" drivingFlag="Normal" stop="false" collector="true" collectorRadius="3" speedZoneRadius="5"/>        
+            //</Path>
+        }
+
         private static void EditPath_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
             if (selectedItem == editPathWaypoints)
@@ -74,6 +102,11 @@ namespace SceneManager
             if (selectedItem == deletePath)
             {
                 DeletePath();
+            }
+
+            if(selectedItem == savePath)
+            {
+                ExportPath();
             }
         }
 
@@ -92,10 +125,11 @@ namespace SceneManager
             var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
             {
                 { editPathWaypoints, EditPathWaypoints },
-                { deletePath, DeletePath }
+                { deletePath, DeletePath },
+                { savePath, ExportPath }
             };
 
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
         }
     }
 }
