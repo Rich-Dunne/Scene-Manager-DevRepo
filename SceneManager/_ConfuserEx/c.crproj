@@ -1,0 +1,27 @@
+<project outputDir="C:\Users\Rich\Desktop\Mod Stuff\Mod Development\SceneManager\SceneManager\obj\Release" baseDir="C:\Users\Rich\Desktop\Mod Stuff\Mod Development\SceneManager\SceneManager\obj\Release" xmlns="http://confuser.codeplex.com">
+<rule pattern="true" />
+<module path="SceneManager.dll">
+<rule pattern="true">
+<protection id="anti ildasm" />
+<protection id="anti tamper" />
+<protection id="constants" />
+<protection id="ctrl flow" />
+<protection id="anti dump" />
+<protection id="anti debug" />
+<protection id="invalid metadata" />
+<protection id="ref proxy" />
+<protection id="resources" />
+<protection id = "rename" >
+<argument name = "mode" value = "decodable" />
+<argument name = "renPublic" value = "false" />
+<argument name = "renEnum" value = "false" />
+<argument name = "renameArgs" value = "false" />
+</protection >
+</rule>
+</module>
+<probePath>..\..\..\packages\InputManager.1.0.0\lib</probePath>
+<probePath>D:\Program Files\Rockstar Games\Grand Theft Auto V</probePath>
+<probePath>C:\Users\Rich\Desktop\Mod Stuff\Mod Development\Modding Resources\References</probePath>
+<probePath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8</probePath>
+<probePath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\Facades</probePath>
+</project>
