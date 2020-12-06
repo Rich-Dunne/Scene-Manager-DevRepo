@@ -2,7 +2,7 @@
 
 ## INSTALLATION
 Drag and drop the contents from within the downloaded GTA V folder into where your GTA V is installed.
-![How to drag and drop](https://i.imgur.com/nnxqgtn.jpg)
+![How to drag and drop](https://i.imgur.com/OzQWv2B.jpg)
 
 ## GET SUPPORT AND REPORT PROBLEMS
 For the fastest support, [join my Discord](https://discord.gg/cUQaTNQ) and ask your question in the **correct category/channel**.  For slower support, [use this thread on the LSPDFR forums](https://www.lcpdfr.com/forums/topic/107730-richs-plugin-support-thread/).
