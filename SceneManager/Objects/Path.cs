@@ -3,23 +3,44 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Xml.Serialization;
+using SceneManager.Utils;
+using System.IO;
 
-namespace SceneManager
+namespace SceneManager.Objects
 {
-    public class Path
+    internal class Path // Change this to Public for import/export
     {
         internal int Number { get; set; }
         internal bool IsEnabled { get; set; }
         internal State State { get; set; }
-        internal List<Waypoint> Waypoints = new List<Waypoint>();
+
+        [XmlArray("Waypoints")]
+        [XmlArrayItem("Waypoint")]
+        public List<Waypoint> Waypoints { get; set; } = new List<Waypoint>();
+
         internal List<CollectedVehicle> CollectedVehicles = new List<CollectedVehicle>();
         private List<Vehicle> _blacklistedVehicles = new List<Vehicle>();
+
+        private Path() { }
 
         internal Path(int pathNum, State pathState)
         {
             Number = pathNum;
             State = pathState;
             DrawLinesBetweenWaypoints();
+        }
+
+        internal void Save(string filename)
+        {
+            var GAME_DIRECTORY = Directory.GetCurrentDirectory();
+            var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "/plugins/SceneManager/Saved Paths/";
+            if (!Directory.Exists(SAVED_PATHS_DIRECTORY))
+            {
+                Directory.CreateDirectory(SAVED_PATHS_DIRECTORY);
+                Game.LogTrivial($"New directory created at '/plugins/SceneManager/Saved Paths'");
+            }
+            PathXMLManager.SaveItemToXML(this, SAVED_PATHS_DIRECTORY + filename);
         }
 
         private void LowerWaypointBlipsOpacity()
@@ -199,22 +220,14 @@ namespace SceneManager
                     }
                     if (v.HasDriver && v.Driver)
                     {
-                        //Game.LogTrivial($"Driver task status: {v.Driver.Tasks.CurrentTaskStatus}");
                         if(!v.Driver.IsAlive)
                         {
                             Game.LogTrivial($"Vehicle's driver is dead.");
                             _blacklistedVehicles.Add(v);
                             return false;
                         }
-                        if(v.Driver.IsPersistent) // Persistent drivers are likely spawned from another script and doing something important.
+                        if (v.IsPoliceVehicle && !v.Driver.IsAmbient())
                         {
-                            Game.LogTrivial($"Vehicle's driver is already persistent and probably being handled by another plugin.");
-                            _blacklistedVehicles.Add(v);
-                            return false;
-                        }
-                        if (v.Driver.Tasks.CurrentTaskStatus == TaskStatus.InProgress && !Rage.Native.NativeFunction.Natives.GET_IS_TASK_ACTIVE(v.Driver, 151)) // Drivers with a non-wander task are probably doing something important
-                        {
-                            Game.LogTrivial($"Vehicle's driver is already tasked and probably being handled by another plugin.");
                             _blacklistedVehicles.Add(v);
                             return false;
                         }

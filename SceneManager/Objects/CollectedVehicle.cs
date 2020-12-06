@@ -1,8 +1,9 @@
 ﻿using Rage;
 using System.Collections.Generic;
 using System.Linq;
+using SceneManager.Utils;
 
-namespace SceneManager
+namespace SceneManager.Objects
 {
     internal class CollectedVehicle
     {
@@ -64,7 +65,7 @@ namespace SceneManager
                 DriveToNextWaypoint();
             }
 
-            if (!VehicleAndDriverAreValid() || Directed)
+            if (!Dismissed && !VehicleAndDriverAreValid() || Directed)
             {
                 return;
             }
@@ -251,11 +252,6 @@ namespace SceneManager
 
             void StopAtWaypoint()
             {
-                if (!VehicleAndDriverAreValid())
-                {
-                    return;
-                }
-
                 var stoppingDistance = GetAcceptedStoppingDistance(currentWaypoint.Path.Waypoints, currentWaypoint.Path.Waypoints.IndexOf(currentWaypoint));
                 Game.LogTrivial($"{Vehicle.Model.Name} stopping at path {currentWaypoint.Path.Number} waypoint.");
                 Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, stoppingDistance, -1, true);
@@ -280,14 +276,15 @@ namespace SceneManager
                     Game.LogTrivial($"CollectedVehicle is null");
                     return false;
                 }
-                if (!Vehicle && !Dismissed)
+                if (!Vehicle)// && !Dismissed)
                 {
                     Game.LogTrivial($"Vehicle is null");
                     Dismiss();
                     return false;
                 }
-                if (!Driver || !Driver.IsAlive)
+                if (!Driver || !Driver.CurrentVehicle || !Driver.IsAlive)
                 {
+                    Game.LogTrivial($"Driver is null or dead or not in a vehicle");
                     Dismiss();
                     return false;
                 }
@@ -297,8 +294,14 @@ namespace SceneManager
 
         internal void Dismiss(DismissOption dismissOption = DismissOption.FromPath, Path newPath = null)
         {
-            if (!Vehicle || !Driver)
+            if (!Vehicle)
             {
+                Game.LogTrivial($"Vehicle is null.");
+                return;
+            }
+            if (!Driver)
+            {
+                Game.LogTrivial($"Driver is null.");
                 return;
             }
 
@@ -311,27 +314,27 @@ namespace SceneManager
             if (dismissOption == DismissOption.FromPlayer)
             {
                 Dismissed = true;
-                if (Driver)
-                {
+                //if (Driver)
+                //{
                     Driver.Dismiss();
-                }
-                if (Vehicle)
-                {
+                //}
+                //if (Vehicle)
+                //{
                     Vehicle.Dismiss();
                     Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
-                }
+                //}
                 Path.CollectedVehicles.Remove(this);
                 return;
             }
 
-            if(Vehicle && StoppedAtWaypoint)
+            if(Driver.CurrentVehicle && StoppedAtWaypoint)
             {
                 StoppedAtWaypoint = false;
-                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Driver.CurrentVehicle, 0f, 1, true);
-                if (Driver?.CurrentVehicle)
-                {
+                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Driver.LastVehicle, 0f, 1, true);
+                //if (Driver)
+                //{
                     Driver.Tasks.CruiseWithVehicle(5f);
-                }
+                //}
             }
             Driver.Tasks.Clear();
 

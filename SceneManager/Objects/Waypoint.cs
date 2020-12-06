@@ -1,24 +1,27 @@
 ﻿using Rage;
 using System.Drawing;
 using System.Linq;
+using SceneManager.Utils;
 
-namespace SceneManager
+namespace SceneManager.Objects
 {
-    public class Waypoint
+    internal class Waypoint // Change this to Public for import/export
     {
         internal Path Path { get; set; }
-        internal int Number { get; set; }
-        internal Vector3 Position { get; set; }
-        internal float Speed { get; set; }
-        internal DrivingFlagType DrivingFlagType { get; private set; }
-        internal bool IsStopWaypoint { get; set; }
+        public int Number { get; set; }
+        public Vector3 Position { get; set; }
+        public float Speed { get; set; }
+        public DrivingFlagType DrivingFlagType { get; set; }
+        public bool IsStopWaypoint { get; set; }
         internal Blip Blip { get; }
-        internal bool IsCollector { get; set; }
-        internal float CollectorRadius { get; set; }
+        public bool IsCollector { get; set; }
+        public float CollectorRadius { get; set; }
         internal Blip CollectorRadiusBlip { get; set; }
-        internal float SpeedZoneRadius { get; set; }
+        public float SpeedZoneRadius { get; set; }
         internal uint SpeedZone { get; set; }
         internal bool EnableWaypointMarker { get; set; } = true;
+
+        private Waypoint() { }
 
         internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, DrivingFlagType drivingFlag, bool stopWaypoint, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 5)
         {
