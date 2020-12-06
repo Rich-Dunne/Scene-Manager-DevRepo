@@ -1,12 +1,16 @@
 ﻿using RAGENativeUI;
+using RAGENativeUI.Elements;
+using System.Collections.Generic;
+using System.Drawing;
 
 namespace SceneManager
 {
-    public static class MenuManager
+    internal static class MenuManager
     {
-        public static MenuPool menuPool = new MenuPool();
+        internal static MenuPool menuPool = new MenuPool();
+        internal static Dictionary<UIMenu, List<UIMenuItem>> menus = new Dictionary<UIMenu, List<UIMenuItem>>();
 
-        public static void InstantiateMenus()
+        internal static void InstantiateMenus()
         {
             MainMenu.InstantiateMenu();
             SettingsMenu.InstantiateMenu();
