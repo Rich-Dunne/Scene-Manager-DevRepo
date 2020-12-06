@@ -7,6 +7,9 @@ Drag and drop the contents from within the downloaded GTA V folder into where yo
 ## GET SUPPORT AND REPORT PROBLEMS
 For the fastest support, [join my Discord](https://discord.gg/cUQaTNQ) and ask your question in the **correct category/channel**.  For slower support, [use this thread on the LSPDFR forums](https://www.lcpdfr.com/forums/topic/107730-richs-plugin-support-thread/).
 
+## GET SUPPORT AND REPORT PROBLEMS
+For the fastest support, [join my Discord](https://discord.gg/cUQaTNQ) and ask your question in the **correct category/channel**.  For slower support, [use this thread on the LSPDFR forums](https://www.lcpdfr.com/forums/topic/107730-richs-plugin-support-thread/).
+
 ## HOW TO USE SCENE MANAGER
 ### Using the Menus:
 Menu options with gold colored text are selectable, which means when you select these menu items, something will happen (opening a new menu, adding a waypoint, placing a barrier, etc).  Menu options with white colored text are interactable (can be scrolled through, for example), but nothing will happen if you try to select them.

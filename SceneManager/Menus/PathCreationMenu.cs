@@ -1,12 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Net.Configuration;
-using System.Windows.Forms;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
+using SceneManager.Utils;
+using SceneManager.Objects;
 
 namespace SceneManager
 {
@@ -313,20 +312,7 @@ namespace SceneManager
         private static void PathCreation_OnMenuOpen(UIMenu menu)
         {
             var scrollerItems = new List<UIMenuScrollerItem> { collectorRadius, speedZoneRadius, waypointSpeed };
-            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>() 
-            {
-                { collectorWaypoint, UpdateCollectorMenuOptionsStatus},
-                { stopWaypointType, null},
-                { directWaypointBehavior, null}
-            };
-            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
-            {
-                { trafficAddWaypoint, AddNewWaypoint },
-                { trafficRemoveWaypoint, RemoveWaypoint },
-                { trafficEndPath, EndPath }
-            };
-
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
         }
     }
 }

@@ -3,22 +3,44 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
+using System.Xml.Serialization;
+using SceneManager.Utils;
+using System.IO;
 
-namespace SceneManager
+namespace SceneManager.Objects
 {
-    public class Path
+    internal class Path // Change this to Public for import/export
     {
         internal int Number { get; set; }
         internal bool IsEnabled { get; set; }
         internal State State { get; set; }
-        internal List<Waypoint> Waypoints = new List<Waypoint>();
+
+        [XmlArray("Waypoints")]
+        [XmlArrayItem("Waypoint")]
+        public List<Waypoint> Waypoints { get; set; } = new List<Waypoint>();
+
         internal List<CollectedVehicle> CollectedVehicles = new List<CollectedVehicle>();
+        private List<Vehicle> _blacklistedVehicles = new List<Vehicle>();
+
+        private Path() { }
 
         internal Path(int pathNum, State pathState)
         {
             Number = pathNum;
             State = pathState;
             DrawLinesBetweenWaypoints();
+        }
+
+        internal void Save(string filename)
+        {
+            var GAME_DIRECTORY = Directory.GetCurrentDirectory();
+            var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "/plugins/SceneManager/Saved Paths/";
+            if (!Directory.Exists(SAVED_PATHS_DIRECTORY))
+            {
+                Directory.CreateDirectory(SAVED_PATHS_DIRECTORY);
+                Game.LogTrivial($"New directory created at '/plugins/SceneManager/Saved Paths'");
+            }
+            PathXMLManager.SaveItemToXML(this, SAVED_PATHS_DIRECTORY + filename);
         }
 
         private void LowerWaypointBlipsOpacity()
@@ -125,6 +147,7 @@ namespace SceneManager
                     }
 
                     CollectedVehicles.RemoveAll(cv => !cv.Vehicle);
+                    _blacklistedVehicles.RemoveAll(v => !v);
                     GameFiber.Sleep(60000);
                 }
             });
@@ -188,16 +211,26 @@ namespace SceneManager
 
             bool VehicleIsValidForCollection(Vehicle v)
             {
-                if (v && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && v.IsEngineOn && v.IsOnAllWheels && v.Speed > 1 && !CollectedVehicles.Any(cv => cv?.Vehicle == v))
+                if (v && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && v.IsEngineOn && v.IsOnAllWheels && v.Speed > 1 && !CollectedVehicles.Any(cv => cv?.Vehicle == v) && !_blacklistedVehicles.Contains(v))
                 {
                     var vehicleCollectedOnAnotherPath = PathMainMenu.paths.Any(p => p.Number != Number && p.CollectedVehicles.Any(cv => cv.Vehicle == v));
                     if (vehicleCollectedOnAnotherPath)
                     {
                         return false;
                     }
-                    if (v.HasDriver && v.Driver && !v.Driver.IsAlive)
+                    if (v.HasDriver && v.Driver)
                     {
-                        return false;
+                        if(!v.Driver.IsAlive)
+                        {
+                            Game.LogTrivial($"Vehicle's driver is dead.");
+                            _blacklistedVehicles.Add(v);
+                            return false;
+                        }
+                        if (v.IsPoliceVehicle && !v.Driver.IsAmbient())
+                        {
+                            _blacklistedVehicles.Add(v);
+                            return false;
+                        }
                     }
                     if (!v.HasDriver)
                     {

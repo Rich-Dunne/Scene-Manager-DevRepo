@@ -1,6 +1,6 @@
 ﻿using Rage;
 
-namespace SceneManager
+namespace SceneManager.Utils
 {
     class GetUserInput
     {
@@ -8,8 +8,16 @@ namespace SceneManager
         {
             while (true)
             {
-                GetKeyboardInput();
-                GetControllerInput();
+                bool isTextEntryOpen = (Rage.Native.NativeFunction.Natives.UPDATE_ONSCREEN_KEYBOARD<int>() == 0);
+                if (!isTextEntryOpen)
+                {
+                    GetKeyboardInput();
+                    GetControllerInput();
+                }
+                else
+                {
+                    Game.LogTrivial($"A text menu is open.");
+                }
 
 #if DEBUG
                 if (MenuManager.menuPool.IsAnyMenuOpen())

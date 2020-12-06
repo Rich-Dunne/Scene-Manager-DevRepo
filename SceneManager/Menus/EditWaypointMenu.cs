@@ -4,6 +4,8 @@ using System.Linq;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
+using SceneManager.Objects;
+using SceneManager.Utils;
 
 namespace SceneManager
 {
@@ -128,7 +130,7 @@ namespace SceneManager
             if (currentPath.Waypoints.Count == 1)
             {
                 Game.LogTrivial($"Deleting the last waypoint from the path.");
-                PathMainMenu.DeletePath(currentPath, PathMainMenu.Delete.Single);
+                PathMainMenu.DeletePath(currentPath, Delete.Single);
 
                 editWaypointMenu.Visible = false;
                 PathMainMenu.pathMainMenu.Visible = true;
@@ -291,21 +293,7 @@ namespace SceneManager
         private static void EditWaypoint_OnMenuOpen(UIMenu menu)
         {
             var scrollerItems = new List<UIMenuScrollerItem> { editWaypoint, changeWaypointSpeed, changeCollectorRadius, changeSpeedZoneRadius };
-            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>() 
-            { 
-                { collectorWaypoint, UpdateCollectorMenuOptionsStatus },
-                { stopWaypointType, null },
-                { directWaypointBehavior, null },
-                { updateWaypointPosition, null }
-            };
-            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
-            {
-                { updateWaypoint, UpdateWaypoint },
-                { removeWaypoint, RemoveWaypoint },
-                { addAsNewWaypoint, AddAsNewWaypoint }
-            };
-
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
         }
 
         private static float SetDriveSpeedForWaypoint()

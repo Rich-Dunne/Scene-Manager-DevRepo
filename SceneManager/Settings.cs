@@ -1,45 +1,11 @@
 ﻿using Rage;
 using System.Collections.Generic;
 using System.Windows.Forms;
+using SceneManager.Utils;
+using System.IO;
 
 namespace SceneManager
 {
-    internal enum State
-    {
-        Uninitialized,
-        Creating,
-        Finished
-    }
-
-    internal enum SpeedUnits
-    {
-        MPH,
-        KPH
-    }
-
-    internal enum DrivingFlagType
-    {
-        Normal = 263075,
-        Direct = 17040259
-    }
-
-    internal enum DismissOption
-    {
-        FromPath = 0,
-        FromWaypoint = 1,
-        FromWorld = 2,
-        FromPlayer = 3,
-        FromDirected = 4
-    }
-
-    internal enum TrafficLight
-    {
-        Green = 0,
-        Red = 1,
-        Yellow = 2,
-        None = 3
-    }
-
     internal static class Settings
     {
         internal static readonly InitializationFile ini = new InitializationFile("Plugins/SceneManager.ini");
@@ -57,6 +23,7 @@ namespace SceneManager
         internal static SpeedUnits SpeedUnit = SpeedUnits.MPH;
         internal static float BarrierPlacementDistance = 30f;
         internal static bool EnableAdvancedBarricadeOptions = false;
+        internal static bool EnableBarrierLightsDefaultOn = false;
 
         // Default Waypoint Settings
         internal static int CollectorRadius = 1;
@@ -66,8 +33,9 @@ namespace SceneManager
         internal static int WaypointSpeed = 5;
 
         // Barriers
-        internal static List<string> barrierKeys = new List<string>();
-        internal static List<string> barrierValues = new List<string>();
+        internal static Dictionary<string, Model> barriers = new Dictionary<string, Model>();
+        //internal static List<string> barrierKeys = new List<string>();
+        //internal static List<Model> barrierValues = new List<Model>();
 
         internal static void LoadSettings()
         {
@@ -87,7 +55,8 @@ namespace SceneManager
             SpeedUnit = ini.ReadEnum("Plugin Settings", "SpeedUnits", SpeedUnits.MPH);
             BarrierPlacementDistance = ini.ReadInt32("Plugin Settings", "BarrierPlacementDistance", 30);
             EnableAdvancedBarricadeOptions = ini.ReadBoolean("Plugin Settings", "EnableAdvancedBarricadeOptions", false);
-            
+            EnableBarrierLightsDefaultOn = ini.ReadBoolean("Plugin Settings", "EnableBarrierLightsDefaultOn", false);
+
             // Default Waypoint Settings
             CollectorRadius = ini.ReadInt32("Default Waypoint Settings", "CollectorRadius", 1);
             SpeedZoneRadius = ini.ReadInt32("Default Waypoint Settings", "SpeedZoneRadius", 5);
@@ -97,19 +66,22 @@ namespace SceneManager
             CheckForValidWaypointSettings();
             
             // Barriers
-            foreach(string key in ini.GetKeyNames("Barriers"))
+            foreach(string displayName in ini.GetKeyNames("Barriers"))
             {
-                barrierKeys.Add(key.Trim());
-                var m = new Model(ini.ReadString("Barriers", key));
-                if (m.IsValid)
+                var model = new Model(ini.ReadString("Barriers", displayName.Trim()));
+                if (model.IsValid)
                 {
-                    barrierValues.Add(m.Name);
+                    barriers.Add(displayName, model);
+                    //barrierKeys.Add(key.Trim());
+                    //barrierValues.Add(model);
                 }
                 else
                 {
-                    Game.LogTrivial($"{m.Name} is not valid.");
+                    Game.LogTrivial($"{model.Name} is not valid.");
                 }
             }
+
+            //ImportPaths();
 
             void CheckForValidWaypointSettings()
             {
@@ -133,6 +105,33 @@ namespace SceneManager
                 {
                     WaypointSpeed = 5;
                     Game.LogTrivial($"Invalid value for WaypointSpeed in user settings, resetting to default.");
+                }
+            }
+
+            void ImportPaths()
+            {
+                //read each file name in Saved Paths
+                var GAME_DIRECTORY = Directory.GetCurrentDirectory();
+                var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "/plugins/SceneManager/Saved Paths/";
+                if (!Directory.Exists(SAVED_PATHS_DIRECTORY))
+                {
+                    Game.LogTrivial($"Directory '/plugins/SceneManager/Saved Paths' does not exist.  No paths available to import.");
+                    return;
+                }
+
+                //add file name to PathMainMenu.importedPaths
+                var paths = Directory.GetFiles(SAVED_PATHS_DIRECTORY);
+                if (paths.Length == 0)
+                {
+                    Game.LogTrivial($"No saved paths found.");
+                    return;
+                }
+
+                foreach (string path in paths)
+                {
+                    Game.LogTrivial($"Path to import: {Path.GetFileName(path)}");
+
+                    // Check if XML is valid before actually importing
                 }
             }
         }

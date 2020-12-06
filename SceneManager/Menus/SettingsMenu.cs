@@ -3,8 +3,8 @@ using RAGENativeUI;
 using RAGENativeUI.Elements;
 using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Windows.Forms;
+using SceneManager.Objects;
+using SceneManager.Utils;
 
 namespace SceneManager
 {
@@ -109,18 +109,7 @@ namespace SceneManager
         private static void SettingsMenu_OnMenuOpen(UIMenu menu)
         {
             var scrollerItems = new List<UIMenuScrollerItem> { speedUnits };
-            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>()
-            {
-                { threeDWaypoints, null},
-                { mapBlips, ToggleMapBlips},
-                { hints, ToggleHints}
-            };
-            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
-            {
-                { saveSettings, ToggleSettings }
-            };
-
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
         }
     }
 }

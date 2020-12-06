@@ -1,17 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
-using System.Windows.Forms;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
+using SceneManager.Utils;
 
 namespace SceneManager
 {
     class EditPathMenu
     {
         internal static UIMenu editPathMenu = new UIMenu("Scene Manager", "~o~Edit Path");
-        private static UIMenuItem editPathWaypoints, deletePath;
+        private static UIMenuItem editPathWaypoints, deletePath, exportPath;
         internal static UIMenuCheckboxItem disablePath;
 
         internal static void InstantiateMenu()
@@ -30,7 +29,8 @@ namespace SceneManager
             editPathWaypoints.ForeColor = Color.Gold;
             editPathMenu.AddItem(deletePath = new UIMenuItem("Delete Path"));
             deletePath.ForeColor = Color.Gold;
-
+            //editPathMenu.AddItem(exportPath = new UIMenuItem("Export Path"));
+            //exportPath.ForeColor = Color.Gold;
             editPathMenu.RefreshIndex();
         }
 
@@ -46,7 +46,7 @@ namespace SceneManager
         private static void DeletePath()
         {
             var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
-            PathMainMenu.DeletePath(currentPath, PathMainMenu.Delete.Single);
+            PathMainMenu.DeletePath(currentPath, Delete.Single);
         }
 
         private static void DisablePath()
@@ -64,6 +64,23 @@ namespace SceneManager
             }
         }
 
+        private static void ExportPath()
+        {
+            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
+            // Reference PNWParks's UserInput class from LiveLights
+            var filename = PNWUserInput.GetUserInput("Type the name you would like to save your file as", "Enter a filename", 100) + ".xml";
+
+            // If filename != null or empty, check if export directory exists (GTA V/Plugins/SceneManager/Saved Paths)
+            if(string.IsNullOrWhiteSpace(filename))
+            {
+                Game.DisplayHelp($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
+                Game.LogTrivial($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
+                return;
+            }
+            Game.LogTrivial($"Filename: {filename}");
+            currentPath.Save(filename);
+        }
+
         private static void EditPath_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
             if (selectedItem == editPathWaypoints)
@@ -74,6 +91,11 @@ namespace SceneManager
             if (selectedItem == deletePath)
             {
                 DeletePath();
+            }
+
+            if(selectedItem == exportPath)
+            {
+                ExportPath();
             }
         }
 
@@ -88,14 +110,7 @@ namespace SceneManager
         private static void EditPath_OnMenuOpen(UIMenu menu)
         {
             var scrollerItems = new List<UIMenuScrollerItem> {  };
-            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>() { { disablePath, DisablePath } };
-            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
-            {
-                { editPathWaypoints, EditPathWaypoints },
-                { deletePath, DeletePath }
-            };
-
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems, checkboxItems, selectItems);
+            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
         }
     }
 }
