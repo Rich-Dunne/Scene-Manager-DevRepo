@@ -1,16 +1,16 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
-using System.IO;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
+using SceneManager.Utils;
 
 namespace SceneManager
 {
     class EditPathMenu
     {
         internal static UIMenu editPathMenu = new UIMenu("Scene Manager", "~o~Edit Path");
-        private static UIMenuItem editPathWaypoints, deletePath, savePath;
+        private static UIMenuItem editPathWaypoints, deletePath, exportPath;
         internal static UIMenuCheckboxItem disablePath;
 
         internal static void InstantiateMenu()
@@ -29,8 +29,8 @@ namespace SceneManager
             editPathWaypoints.ForeColor = Color.Gold;
             editPathMenu.AddItem(deletePath = new UIMenuItem("Delete Path"));
             deletePath.ForeColor = Color.Gold;
-            editPathMenu.AddItem(savePath = new UIMenuItem("Export Path"));
-            savePath.ForeColor = Color.Gold;
+            //editPathMenu.AddItem(exportPath = new UIMenuItem("Export Path"));
+            //exportPath.ForeColor = Color.Gold;
             editPathMenu.RefreshIndex();
         }
 
@@ -46,7 +46,7 @@ namespace SceneManager
         private static void DeletePath()
         {
             var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
-            PathMainMenu.DeletePath(currentPath, PathMainMenu.Delete.Single);
+            PathMainMenu.DeletePath(currentPath, Delete.Single);
         }
 
         private static void DisablePath()
@@ -66,30 +66,19 @@ namespace SceneManager
 
         private static void ExportPath()
         {
+            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
             // Reference PNWParks's UserInput class from LiveLights
-            string filename = PNWUserInput.GetUserInput("Type the name you would like to save your file as", "Enter a filename", 100);
+            var filename = PNWUserInput.GetUserInput("Type the name you would like to save your file as", "Enter a filename", 100) + ".xml";
 
             // If filename != null or empty, check if export directory exists (GTA V/Plugins/SceneManager/Saved Paths)
             if(string.IsNullOrWhiteSpace(filename))
             {
+                Game.DisplayHelp($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
                 Game.LogTrivial($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
                 return;
             }
             Game.LogTrivial($"Filename: {filename}");
-
-            // If directory does not exist, create it
-            var gameDirectory = Directory.GetCurrentDirectory();
-            var pathDirectoryExists = Directory.Exists(gameDirectory + "/plugins/SceneManager/Saved Paths");
-            if (!pathDirectoryExists)
-            {
-                Directory.CreateDirectory(gameDirectory + "/plugins/SceneManager/Saved Paths");
-                Game.LogTrivial($"New directory created at '/plugins/SceneManager/Saved Paths'");
-            }
-
-            // Create XML in save directory with user's filename, saving all path information
-            //<Path>
-            //    <Waypoint number="1" pos="x,y,z" speed="5" drivingFlag="Normal" stop="false" collector="true" collectorRadius="3" speedZoneRadius="5"/>        
-            //</Path>
+            currentPath.Save(filename);
         }
 
         private static void EditPath_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
@@ -104,7 +93,7 @@ namespace SceneManager
                 DeletePath();
             }
 
-            if(selectedItem == savePath)
+            if(selectedItem == exportPath)
             {
                 ExportPath();
             }
@@ -121,14 +110,6 @@ namespace SceneManager
         private static void EditPath_OnMenuOpen(UIMenu menu)
         {
             var scrollerItems = new List<UIMenuScrollerItem> {  };
-            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>() { { disablePath, DisablePath } };
-            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
-            {
-                { editPathWaypoints, EditPathWaypoints },
-                { deletePath, DeletePath },
-                { savePath, ExportPath }
-            };
-
             RNUIMouseInputHandler.Initialize(menu, scrollerItems);
         }
     }
