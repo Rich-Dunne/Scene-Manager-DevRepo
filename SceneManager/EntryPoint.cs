@@ -4,19 +4,28 @@ using System.Linq;
 using System.Reflection;
 using System.Windows.Forms;
 using Rage;
+using SceneManager.Objects;
+using SceneManager.Utils;
 
 [assembly: Rage.Attributes.Plugin("Scene Manager", Author = "Rich", Description = "Control your scenes with custom AI pathing and traffic barrier management.", PrefersSingleInstance = true)]
 
 namespace SceneManager
 {
+    [Obfuscation(Exclude = false, Feature = "-rename", ApplyToMembers = false)]
     public class EntryPoint
     {
+        [Obfuscation(Exclude = false, Feature = "-rename")]
         internal static void Main()
         {
             if(!InputManagerChecker() || !CheckRNUIVersion())
             {
                 Game.UnloadActivePlugin();
                 return;
+            }
+
+            while (Game.IsLoading)
+            {
+                GameFiber.Yield();
             }
 
             AppDomain.CurrentDomain.DomainUnload += MyTerminationHandler;
@@ -35,6 +44,7 @@ namespace SceneManager
                 Game.LogTrivial($"Scene Manager V{version} is ready.");
             }
         }
+
         private static bool CheckRNUIVersion()
         {
             var directory = Directory.GetCurrentDirectory();
@@ -73,6 +83,7 @@ namespace SceneManager
             }
             return true;
         }
+
         private static void DisplayHintsToOpenMenu()
         {
             if (Settings.ModifierKey == Keys.None && Settings.ModifierButton == ControllerButtons.None)
@@ -92,6 +103,7 @@ namespace SceneManager
                 Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~To open the menu, press the ~b~{Settings.ModifierKey} ~w~+ ~b~{Settings.ToggleKey} keys ~w~or ~b~{Settings.ModifierButton} ~w~+ ~b~{Settings.ToggleButton} buttons");
             }
         }
+
         private static void MyTerminationHandler(object sender, EventArgs e)
         {
             // Clean up cones
@@ -107,7 +119,7 @@ namespace SceneManager
             // Clean up paths
             for (int i = 0; i < PathMainMenu.paths.Count; i++)
             {
-                PathMainMenu.DeletePath(PathMainMenu.paths[i], PathMainMenu.Delete.All);
+                PathMainMenu.DeletePath(PathMainMenu.paths[i], Delete.All);
             }
 
             Game.LogTrivial($"Plugin has shut down.");
