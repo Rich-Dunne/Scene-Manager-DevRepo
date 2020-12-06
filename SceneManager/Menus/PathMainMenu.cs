@@ -1,36 +1,28 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Windows.Forms;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
+using SceneManager.Objects;
+using SceneManager.Utils;
 
 namespace SceneManager
 {
-
-
-    static class PathMainMenu
+    internal static class PathMainMenu
     {
-        internal static List<Path> paths = new List<Path>() { };
+        internal static List<Path> paths = new List<Path>();
+        internal static List<string> importedPaths = new List<string>();
         private static string[] dismissOptions = new string[] { "From path", "From waypoint", "From world" };
-        //private static List<string> dismissOptions = new List<string>() { "From path", "From waypoint", "From world" };
-
         internal static UIMenu pathMainMenu = new UIMenu("Scene Manager", "~o~Path Manager Main Menu");
         internal static UIMenuItem createNewPath;
+        internal static UIMenuListScrollerItem<string> importPath;
         internal static UIMenuItem deleteAllPaths = new UIMenuItem("Delete All Paths");
         internal static UIMenuNumericScrollerItem<int> editPath;
         internal static UIMenuListScrollerItem<string> directOptions = new UIMenuListScrollerItem<string>("Direct driver to path's", "", new[] { "First waypoint", "Nearest waypoint" });
         internal static UIMenuNumericScrollerItem<int> directDriver;
-        internal static UIMenuListScrollerItem<string> dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", $"~b~From path: ~w~AI will be released from the path{Environment.NewLine}~b~From waypoint: ~w~AI will skip their current waypoint task{Environment.NewLine}~b~From world: ~w~AI will be removed from the world.", dismissOptions);
+        internal static UIMenuListScrollerItem<string> dismissDriver = new UIMenuListScrollerItem<string>("Dismiss nearest driver", $"~b~From path: ~w~AI will be released from the path\n~b~From waypoint: ~w~AI will skip their current waypoint task\n~b~From world: ~w~AI will be removed from the world.", dismissOptions);
         internal static UIMenuCheckboxItem disableAllPaths = new UIMenuCheckboxItem("Disable All Paths", false);
-
-        internal enum Delete
-        {
-            Single,
-            All
-        }
 
         internal static void InstantiateMenu()
         {
@@ -48,8 +40,9 @@ namespace SceneManager
 
             pathMainMenu.AddItem(createNewPath = new UIMenuItem("Create New Path"));
             createNewPath.ForeColor = Color.Gold;
+            //pathMainMenu.AddItem(importPath = new UIMenuListScrollerItem<string>("Import Path", "Import a saved path", importedPaths));
+            //importPath.ForeColor = Color.Gold;
             pathMainMenu.AddItem(editPath = new UIMenuNumericScrollerItem<int>("Edit Path", "", 1, paths.Count, 1));
-            editPath.Index = 0;
             editPath.ForeColor = Color.Gold;
             pathMainMenu.AddItem(disableAllPaths);
             disableAllPaths.Enabled = true;
@@ -421,20 +414,6 @@ namespace SceneManager
         private static void PathMenu_OnMenuOpen(UIMenu menu)
         {
             var scrollerItems = new List<UIMenuScrollerItem> { directOptions, directDriver, dismissDriver, editPath };
-            var checkboxItems = new Dictionary<UIMenuCheckboxItem, RNUIMouseInputHandler.Function>()
-            {
-                { disableAllPaths, DisableAllPaths }
-            };
-            
-            var selectItems = new Dictionary<UIMenuItem, RNUIMouseInputHandler.Function>()
-            {
-                { createNewPath, GoToPathCreationMenu },
-                { editPath, GoToEditPathMenu },
-                { deleteAllPaths, DeleteAllPaths },
-                { directDriver, DirectDriver },
-                { dismissDriver, DismissDriver }
-            };
-
             RNUIMouseInputHandler.Initialize(menu, scrollerItems);
         }
     }
