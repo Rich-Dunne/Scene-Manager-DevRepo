@@ -11,7 +11,7 @@ namespace SceneManager.Utils
     internal static class ConsoleCommands
     {
         [ConsoleCommand]
-        internal static void Command_ShowCollectedVehicleInfo([ConsoleCommandParameter(AutoCompleterType = typeof(ConsoleCommandAutoCompleterVehicle), Name = "ShowCollectedVehicleInfo")] Vehicle vehicle)
+        internal static void Command_ShowCollectedVehicleInfo([ConsoleCommandParameter(AutoCompleterType = typeof(ConsoleCommandAutoCompleterVehicle))] Vehicle vehicle)
         {
             foreach(Path path in PathMainMenu.paths)
             {
@@ -37,7 +37,7 @@ namespace SceneManager.Utils
         }
 
         [ConsoleCommand]
-        internal static void Command_GetPedsActiveTasks([ConsoleCommandParameter(AutoCompleterType = typeof(ConsoleCommandAutoCompleterPedAliveOnly), Name = "GetPedsActiveTasks")] Ped ped)
+        internal static void Command_GetPedsActiveTasks([ConsoleCommandParameter(AutoCompleterType = typeof(ConsoleCommandAutoCompleterPedAliveOnly))] Ped ped)
         {
             var tasks = new List<PedTask>();
             foreach (PedTask task in (PedTask[])Enum.GetValues(typeof(PedTask)))
