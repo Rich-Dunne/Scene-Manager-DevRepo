@@ -8,7 +8,6 @@
 <protection id="ctrl flow" />
 <protection id="anti dump" />
 <protection id="anti debug" />
-<protection id="invalid metadata" />
 <protection id="ref proxy" />
 <protection id="resources" />
 <protection id = "rename" >
