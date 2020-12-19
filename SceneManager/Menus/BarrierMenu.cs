@@ -77,7 +77,10 @@ namespace SceneManager
 
             var barrierKey = Settings.barriers.Where(x => x.Key == barrierList.SelectedItem).FirstOrDefault().Key;
             var barrierValue = Settings.barriers[barrierKey].Name;
-            shadowBarrier = new Object(barrierValue, MousePositionInWorld.GetPosition, rotateBarrier.Value); // Settings.barrierValues[barrierList.Index]
+            shadowBarrier = new Object(barrierValue, MousePositionInWorld.GetPosition, rotateBarrier.Value);
+
+            // There arent enough available object handles in certain areas
+            // The object gets spawned(sometimes) but doesn't get assigned a handle, so it returns a handle of 0 - Parks
             if (!shadowBarrier)
             {
                 barrierMenu.Close();
@@ -90,7 +93,6 @@ namespace SceneManager
             shadowBarrier.IsCollisionEnabled = false;
             shadowBarrier.Opacity = 0.7f;
 
-            // Start with lights off for Parks's objects
             if (Settings.EnableAdvancedBarricadeOptions)
             {
                 Rage.Native.NativeFunction.Natives.x971DA0055324D033(shadowBarrier, barrierTexture.Value);
