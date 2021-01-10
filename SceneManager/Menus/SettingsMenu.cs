@@ -3,113 +3,67 @@ using RAGENativeUI;
 using RAGENativeUI.Elements;
 using System;
 using System.Collections.Generic;
-using SceneManager.Objects;
 using SceneManager.Utils;
 
-namespace SceneManager
+namespace SceneManager.Menus
 {
     class SettingsMenu
     {
-        internal static UIMenu settingsMenu = new UIMenu("Scene Manager", "~o~Plugin Settings");
-        internal static UIMenuCheckboxItem threeDWaypoints = new UIMenuCheckboxItem("Enable 3D Waypoints", Settings.Enable3DWaypoints),
-            mapBlips = new UIMenuCheckboxItem("Enable Map Blips", Settings.EnableMapBlips),
-            hints = new UIMenuCheckboxItem("Enable Hints", Settings.EnableHints);
-        private static SpeedUnits[] speedArray = {SpeedUnits.MPH, SpeedUnits.KPH };
-        internal static UIMenuListScrollerItem<SpeedUnits> speedUnits = new UIMenuListScrollerItem<SpeedUnits>("Speed Unit of Measure", "", new[] { SpeedUnits.MPH, SpeedUnits.KPH });
-        internal static UIMenuItem saveSettings = new UIMenuItem("Save settings to .ini", "Updates the plugin's .ini file with the current settings so the next time the plugin is loaded, it will use these settings.");
+        internal static UIMenu Menu { get; set; } = new UIMenu("Scene Manager", "~o~Plugin Settings");
+        internal static UIMenuCheckboxItem ThreeDWaypoints { get; } = new UIMenuCheckboxItem("Enable 3D Waypoints", Settings.Enable3DWaypoints);
+        internal static UIMenuCheckboxItem MapBlips { get; } = new UIMenuCheckboxItem("Enable Map Blips", Settings.EnableMapBlips);
+        internal static UIMenuCheckboxItem Hints { get; } = new UIMenuCheckboxItem("Enable Hints", Settings.EnableHints);
+        private static SpeedUnits[] SpeedUnitsArray { get; } = { Utils.SpeedUnits.MPH, Utils.SpeedUnits.KPH };
+        internal static UIMenuListScrollerItem<SpeedUnits> SpeedUnits { get; } = new UIMenuListScrollerItem<SpeedUnits>("Speed Unit of Measure", "", new[] { Utils.SpeedUnits.MPH, Utils.SpeedUnits.KPH });
+        internal static UIMenuItem SaveSettings { get; } = new UIMenuItem("Save settings to .ini", "Updates the plugin's .ini file with the current settings so the next time the plugin is loaded, it will use these settings.");
 
-        internal static void InstantiateMenu()
+        internal static void Initialize()
         {
-            settingsMenu.ParentMenu = MainMenu.mainMenu;
-            MenuManager.menuPool.Add(settingsMenu);
-            settingsMenu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
-            settingsMenu.OnScrollerChange += SettingsMenu_OnScrollerChange;
-            settingsMenu.OnItemSelect += SettingsMenu_OnItemSelected;
-            settingsMenu.OnMenuOpen += SettingsMenu_OnMenuOpen;
+            Menu.ParentMenu = MainMenu.Menu;
+            MenuManager.AddToMenuPool(Menu);
+
+            Menu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
+            Menu.OnItemSelect += SettingsMenu_OnItemSelected;
+            Menu.OnMenuOpen += SettingsMenu_OnMenuOpen;
         }
 
         internal static void BuildSettingsMenu()
         {
-            settingsMenu.AddItem(threeDWaypoints);
-            settingsMenu.AddItem(mapBlips);
-            settingsMenu.AddItem(hints);
-            settingsMenu.AddItem(speedUnits);
-            speedUnits.Index = Array.IndexOf(speedArray, Settings.SpeedUnit);
-            settingsMenu.AddItem(saveSettings);
-            saveSettings.ForeColor = System.Drawing.Color.Gold;
-        }
-        
-        private static void ToggleMapBlips()
-        {
-            if (mapBlips.Checked)
-            {
-                foreach (Path path in PathMainMenu.paths)
-                {
-                    foreach (Waypoint wp in path.Waypoints)
-                    {
-                        wp.EnableBlip();
-                    }
-                }
-            }
-            else
-            {
-                foreach (Path path in PathMainMenu.paths)
-                {
-                    foreach (Waypoint wp in path.Waypoints)
-                    {
-                        wp.DisableBlip();
-                    }
-                }
-            }
-        }
-
-        private static void ToggleHints()
-        {
-            Hints.Enabled = hints.Checked ? true : false;
-        }
-
-        private static void ToggleSettings()
-        {
-            Settings.UpdateSettings(threeDWaypoints.Checked, mapBlips.Checked, hints.Checked, speedUnits.SelectedItem);
-            Game.DisplayHelp($"Scene Manager settings saved");
+            Menu.AddItem(ThreeDWaypoints);
+            Menu.AddItem(MapBlips);
+            Menu.AddItem(Hints);
+            Menu.AddItem(SpeedUnits);
+            SpeedUnits.Index = Array.IndexOf(SpeedUnitsArray, Settings.SpeedUnit);
+            Menu.AddItem(SaveSettings);
+            SaveSettings.ForeColor = System.Drawing.Color.Gold;
         }
 
         private static void SettingsMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            if(selectedItem == saveSettings)
+            if(selectedItem == SaveSettings)
             {
-                Settings.UpdateSettings(threeDWaypoints.Checked, mapBlips.Checked, hints.Checked, speedUnits.SelectedItem);
+                Settings.UpdateSettings(ThreeDWaypoints.Checked, MapBlips.Checked, Hints.Checked, SpeedUnits.SelectedItem);
                 Game.DisplayHelp($"Scene Manager settings saved");
             }
         }
 
         private static void SettingsMenu_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
         {
-            if (checkboxItem == mapBlips)
+            if (checkboxItem == MapBlips)
             {
-                ToggleMapBlips();
+                PathManager.ToggleBlips(MapBlips.Checked);
             }
 
-            if (checkboxItem == hints)
+            if (checkboxItem == Hints)
             {
-                Hints.Enabled = hints.Checked ? true : false;
-            }
-        }
-
-        private static void SettingsMenu_OnScrollerChange(UIMenu sender, UIMenuScrollerItem scrollerItem, int oldIndex, int newIndex)
-        {
-            if (scrollerItem == speedUnits)
-            {
-                // Clear the menu and rebuild it to reflect the menu item text change
-                PathCreationMenu.pathCreationMenu.Clear();
-                PathCreationMenu.BuildPathCreationMenu();
+                SceneManager.Hints.Enabled = Hints.Checked ? true : false;
             }
         }
 
         private static void SettingsMenu_OnMenuOpen(UIMenu menu)
         {
-            var scrollerItems = new List<UIMenuScrollerItem> { speedUnits };
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
+            var scrollerItems = new List<UIMenuScrollerItem> { SpeedUnits };
+            GameFiber.StartNew(() => UserInput.InitializeMenuMouseControl(menu, scrollerItems), "RNUI Mouse Input Fiber");
         }
     }
 }

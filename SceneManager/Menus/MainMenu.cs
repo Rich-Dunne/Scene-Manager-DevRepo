@@ -3,42 +3,51 @@ using RAGENativeUI.Elements;
 using System.Collections.Generic;
 using System.Drawing;
 using SceneManager.Utils;
+using Rage;
 
-namespace SceneManager
+namespace SceneManager.Menus
 {
+    // The only reason this class should change is to modify the main menu
     class MainMenu
     {
-        internal static UIMenu mainMenu { get; private set; }
-        private static UIMenuItem navigateToPathMenu, navigateToBarrierMenu, navigateToSettingsMenu;
+        internal static UIMenu Menu { get; } = new UIMenu("Scene Manager", "~o~Main Menu");
 
-        internal static void InstantiateMenu()
+        internal static void Initialize()
         {
-            mainMenu = new UIMenu("Scene Manager", "~o~Main Menu");
-            MenuManager.menuPool.Add(mainMenu);
+            MenuManager.AddToMenuPool(Menu);
+
+            Menu.OnMenuOpen += MainMenu_OnMenuOpen;
         }
 
         internal static void BuildMainMenu()
         {
-            mainMenu.AddItem(navigateToPathMenu = new UIMenuItem("Path Menu"));
+            var navigateToPathMenu = new UIMenuItem("Path Menu");
+            Menu.AddItem(navigateToPathMenu);
             navigateToPathMenu.ForeColor = Color.Gold;
-            mainMenu.BindMenuToItem(PathMainMenu.pathMainMenu, navigateToPathMenu);
+            Menu.BindMenuToItem(PathMainMenu.Menu, navigateToPathMenu);
 
-            mainMenu.AddItem(navigateToBarrierMenu = new UIMenuItem("Barrier Menu"));
+            var navigateToBarrierMenu = new UIMenuItem("Barrier Menu");
+            Menu.AddItem(navigateToBarrierMenu);
             navigateToBarrierMenu.ForeColor = Color.Gold;
-            mainMenu.BindMenuToItem(BarrierMenu.barrierMenu, navigateToBarrierMenu);
+            Menu.BindMenuToItem(BarrierMenu.Menu, navigateToBarrierMenu);
 
-            mainMenu.AddItem(navigateToSettingsMenu = new UIMenuItem("Settings"));
+            var navigateToSettingsMenu = new UIMenuItem("Settings Menu");
+            Menu.AddItem(navigateToSettingsMenu);
             navigateToSettingsMenu.ForeColor = Color.Gold;
-            mainMenu.BindMenuToItem(SettingsMenu.settingsMenu, navigateToSettingsMenu);
+            Menu.BindMenuToItem(SettingsMenu.Menu, navigateToSettingsMenu);
 
-            mainMenu.RefreshIndex();
-            mainMenu.OnMenuOpen += MainMenu_OnMenuOpen;
+            Menu.RefreshIndex();
         }
 
         private static void MainMenu_OnMenuOpen(UIMenu menu)
         {
             var scrollerItems = new List<UIMenuScrollerItem> { };
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
+            GameFiber.StartNew(() => UserInput.InitializeMenuMouseControl(menu, scrollerItems), "RNUI Mouse Input Fiber");
+        }
+
+        internal static void DisplayMenu()
+        {
+            Menu.Visible = !Menu.Visible;
         }
     }
 }

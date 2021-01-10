@@ -1,318 +1,148 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
 using SceneManager.Utils;
 using SceneManager.Objects;
 
-namespace SceneManager
+namespace SceneManager.Menus
 {
     class PathCreationMenu
     {
-        internal static UIMenu pathCreationMenu = new UIMenu("Scene Manager", "~o~Path Creation Menu");
-        private static UIMenuItem trafficAddWaypoint = new UIMenuItem("Add waypoint"), trafficRemoveWaypoint = new UIMenuItem("Remove last waypoint"), trafficEndPath = new UIMenuItem("End path creation");
-        internal static UIMenuNumericScrollerItem<int> waypointSpeed;
-        internal static UIMenuCheckboxItem stopWaypointType = new UIMenuCheckboxItem("Is this a Stop waypoint?", false, "If checked, vehicles will drive to this waypoint, then stop.");
-        internal static UIMenuCheckboxItem directWaypointBehavior = new UIMenuCheckboxItem("Drive directly to waypoint?", false, "If checked, vehicles will ignore traffic rules and drive directly to this waypoint.");
-        internal static UIMenuCheckboxItem collectorWaypoint = new UIMenuCheckboxItem("Collector", true, "If checked, this waypoint will collect vehicles to follow the path.  Your path's first waypoint ~b~must~w~ be a collector.");
-        internal static UIMenuNumericScrollerItem<int> collectorRadius = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint (in meters) vehicles will be collected", 1, 50, 1);
-        internal static UIMenuNumericScrollerItem<int> speedZoneRadius = new UIMenuNumericScrollerItem<int>("Speed Zone Radius", "The distance from this collector waypoint (in meters) non-collected vehicles will drive at this waypoint's speed", 5, 200, 5);
-        private static List<UIMenuItem> menuItems = new List<UIMenuItem> {collectorWaypoint, collectorRadius, speedZoneRadius, stopWaypointType, directWaypointBehavior, waypointSpeed, trafficAddWaypoint, trafficRemoveWaypoint, trafficEndPath };
+        internal static UIMenu Menu { get; } = new UIMenu("Scene Manager", "~o~Path Creation Menu");
+        private static Path CurrentPath { get; set; }
+        private static UIMenuItem AddWaypoint { get; } = new UIMenuItem("Add waypoint");
+        internal static UIMenuItem RemoveLastWaypoint { get; } = new UIMenuItem("Remove last waypoint");
+        internal static UIMenuItem EndPathCreation { get; } = new UIMenuItem("End path creation");
+        internal static UIMenuNumericScrollerItem<int> WaypointSpeed { get; private set; }
+        internal static UIMenuCheckboxItem StopWaypoint { get; } = new UIMenuCheckboxItem("Is this a Stop waypoint?", false, "If checked, vehicles will drive to this waypoint, then stop.");
+        internal static UIMenuCheckboxItem DirectWaypoint { get; } = new UIMenuCheckboxItem("Drive directly to waypoint?", false, "If checked, vehicles will ignore traffic rules and drive directly to this waypoint.");
+        internal static UIMenuCheckboxItem CollectorWaypoint { get; } = new UIMenuCheckboxItem("Collector", true, "If checked, this waypoint will collect vehicles to follow the path.  Your path's first waypoint ~b~must~w~ be a collector.");
+        internal static UIMenuNumericScrollerItem<int> CollectorRadius { get; } = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint (in meters) vehicles will be collected", 1, 50, 1);
+        internal static UIMenuNumericScrollerItem<int> SpeedZoneRadius { get; } = new UIMenuNumericScrollerItem<int>("Speed Zone Radius", "The distance from this collector waypoint (in meters) non-collected vehicles will drive at this waypoint's speed", 5, 200, 5);
+        internal static State PathCreationState { get; set; } = State.Uninitialized;
 
-        internal static void InstantiateMenu()
+        internal static void Initialize()
         {
-            pathCreationMenu.ParentMenu = PathMainMenu.pathMainMenu;
-            MenuManager.menuPool.Add(pathCreationMenu);
-            pathCreationMenu.OnItemSelect += PathCreation_OnItemSelected;
-            pathCreationMenu.OnCheckboxChange += PathCreation_OnCheckboxChanged;
-            pathCreationMenu.OnScrollerChange += PathCreation_OnScrollerChanged;
-            pathCreationMenu.OnMenuOpen += PathCreation_OnMenuOpen;
+            Menu.ParentMenu = PathMainMenu.Menu;
+            MenuManager.MenuPool.Add(Menu);
+
+            Menu.OnItemSelect += PathCreation_OnItemSelected;
+            Menu.OnCheckboxChange += PathCreation_OnCheckboxChanged;
+            Menu.OnScrollerChange += PathCreation_OnScrollerChanged;
+            Menu.OnMenuOpen += PathCreation_OnMenuOpen;
         }
 
         internal static void BuildPathCreationMenu()
         {
-            pathCreationMenu.AddItem(collectorWaypoint);
-            collectorWaypoint.Enabled = false;
-            collectorWaypoint.Checked = true;
+            Menu.MenuItems.Clear();
 
-            pathCreationMenu.AddItem(collectorRadius);
-            collectorRadius.Index = Settings.CollectorRadius - 1;
-            collectorRadius.Enabled = true;
+            Menu.AddItem(CollectorWaypoint);
+            CollectorWaypoint.Enabled = false;
+            CollectorWaypoint.Checked = true;
 
-            pathCreationMenu.AddItem(speedZoneRadius);
-            speedZoneRadius.Index = (Settings.SpeedZoneRadius / 5) - 1;
-            speedZoneRadius.Enabled = true;
+            Menu.AddItem(CollectorRadius);
+            CollectorRadius.Index = Settings.CollectorRadius - 1;
+            CollectorRadius.Enabled = true;
 
-            pathCreationMenu.AddItem(stopWaypointType);
-            stopWaypointType.Checked = Settings.StopWaypoint;
-            pathCreationMenu.AddItem(directWaypointBehavior);
-            directWaypointBehavior.Checked = Settings.DirectDrivingBehavior;
+            Menu.AddItem(SpeedZoneRadius);
+            SpeedZoneRadius.Index = (Settings.SpeedZoneRadius / 5) - 1;
+            SpeedZoneRadius.Enabled = true;
 
-            pathCreationMenu.AddItem(waypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to this waypoint in ~b~{SettingsMenu.speedUnits.SelectedItem}", 5, 100, 5));
-            waypointSpeed.Index = (Settings.WaypointSpeed / 5) - 1;
+            Menu.AddItem(StopWaypoint);
+            StopWaypoint.Checked = Settings.StopWaypoint;
+            Menu.AddItem(DirectWaypoint);
+            DirectWaypoint.Checked = Settings.DirectDrivingBehavior;
 
-            pathCreationMenu.AddItem(trafficAddWaypoint);
-            trafficAddWaypoint.ForeColor = Color.Gold;
+            Menu.AddItem(WaypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to this waypoint in ~b~{SettingsMenu.SpeedUnits.SelectedItem}", 5, 100, 5));
+            WaypointSpeed.Index = (Settings.WaypointSpeed / 5) - 1;
 
-            pathCreationMenu.AddItem(trafficRemoveWaypoint);
-            trafficRemoveWaypoint.ForeColor = Color.Gold;
-            trafficRemoveWaypoint.Enabled = false;
+            Menu.AddItem(AddWaypoint);
+            AddWaypoint.ForeColor = Color.Gold;
 
-            pathCreationMenu.AddItem(trafficEndPath);
-            trafficEndPath.ForeColor = Color.Gold;
-            trafficEndPath.Enabled = false;
+            Menu.AddItem(RemoveLastWaypoint);
+            RemoveLastWaypoint.ForeColor = Color.Gold;
+            RemoveLastWaypoint.Enabled = false;
 
-            pathCreationMenu.RefreshIndex();
+            Menu.AddItem(EndPathCreation);
+            EndPathCreation.ForeColor = Color.Gold;
+            EndPathCreation.Enabled = false;
+
+            Menu.RefreshIndex();
         }
 
-        private static void UpdateCollectorMenuOptionsStatus()
+        private static void ValidateCollectorRadiusSettings()
         {
-            if (collectorWaypoint.Checked)
+            if (CollectorRadius.Value > SpeedZoneRadius.Value)
             {
-                collectorRadius.Enabled = true;
-                speedZoneRadius.Enabled = true;
-            }
-            else
-            {
-                collectorRadius.Enabled = false;
-                speedZoneRadius.Enabled = false;
-            }
-        }
-
-        private static void AddNewWaypoint()
-        {
-            var anyPathsExist = PathMainMenu.paths.Count > 0;
-            var waypointPosition = MousePositionInWorld.GetPosition;
-
-            if (!anyPathsExist)
-            {
-                AddNewPathToPathsCollection(PathMainMenu.paths, 0);
-            }
-            else if (anyPathsExist && !PathMainMenu.paths.Any(p => p != null && p.State == State.Creating))
-            {
-                AddNewPathToPathsCollection(PathMainMenu.paths, PathMainMenu.paths.IndexOf(PathMainMenu.paths.Where(p => p.State == State.Finished).Last()) + 1);
-            }
-
-            var firstNonNullPath = PathMainMenu.paths.Where(p => p != null && p.State == State.Creating).First();
-            var pathIndex = PathMainMenu.paths.IndexOf(firstNonNullPath);
-            var pathNumber = firstNonNullPath.Number;
-            var waypointNumber = PathMainMenu.paths[pathIndex].Waypoints.Count + 1;
-            DrivingFlagType drivingFlag = directWaypointBehavior.Checked ? DrivingFlagType.Direct : DrivingFlagType.Normal;
-
-            if (collectorWaypoint.Checked)
-            {
-                PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, waypointPosition, SetDriveSpeedForWaypoint(), drivingFlag, stopWaypointType.Checked, CreateWaypointBlip(), true, collectorRadius.Value, speedZoneRadius.Value));
-            }
-            else
-            {
-                PathMainMenu.paths[pathIndex].Waypoints.Add(new Waypoint(firstNonNullPath, waypointNumber, waypointPosition, SetDriveSpeedForWaypoint(), drivingFlag, stopWaypointType.Checked, CreateWaypointBlip()));
-            }
-            Game.LogTrivial($"Path {pathNumber} Waypoint {waypointNumber} added [Driving style: {drivingFlag} | Stop waypoint: {stopWaypointType.Checked} | Speed: {waypointSpeed.Value} | Collector: {collectorWaypoint.Checked}]");
-
-            ToggleTrafficEndPathMenuItem(pathIndex);
-            collectorWaypoint.Enabled = true;
-            collectorWaypoint.Checked = false;
-            if (collectorWaypoint.Checked)
-            {
-                collectorRadius.Enabled = true;
-                speedZoneRadius.Enabled = true;
-            }
-            else
-            {
-                collectorRadius.Enabled = false;
-                speedZoneRadius.Enabled = false;
-            }
-            trafficRemoveWaypoint.Enabled = true;
-            PathMainMenu.createNewPath.Text = $"Continue Creating Path {pathNumber}";
-
-            float SetDriveSpeedForWaypoint()
-            {
-                float convertedSpeed;
-                if (SettingsMenu.speedUnits.SelectedItem == SpeedUnits.MPH)
+                while (CollectorRadius.Value > SpeedZoneRadius.Value)
                 {
-                    //Logger.Log($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
-                    convertedSpeed = MathHelper.ConvertMilesPerHourToMetersPerSecond(waypointSpeed.Value);
-                    //Logger.Log($"Converted speed: {convertedSpeed}m/s");
-                }
-                else
-                {
-                    //Logger.Log($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
-                    convertedSpeed = MathHelper.ConvertKilometersPerHourToMetersPerSecond(waypointSpeed.Value);
-                    //Logger.Log($"Converted speed: {convertedSpeed}m/s");
-                }
-
-                return convertedSpeed;
-            }
-
-            Blip CreateWaypointBlip()
-            {
-                var spriteNumericalEnum = pathIndex + 17; // 17 because the numerical value of these sprites are always 17 more than the path index
-                var blip = new Blip(waypointPosition)
-                {
-                    Scale = 0.5f,
-                    Sprite = (BlipSprite)spriteNumericalEnum
-                };
-
-                if (collectorWaypoint.Checked)
-                {
-                    blip.Color = Color.Blue;
-                }
-                else if (stopWaypointType.Checked)
-                {
-                    blip.Color = Color.Red;
-                }
-                else
-                {
-                    blip.Color = Color.Green;
-                }
-
-                if (!SettingsMenu.mapBlips.Checked)
-                {
-                    blip.Alpha = 0f;
-                }
-
-                return blip;
-            }
-        }
-
-        private static void RemoveWaypoint()
-        {
-            for (int i = 0; i < PathMainMenu.paths.Count; i++)
-            {
-                if (PathMainMenu.paths.ElementAtOrDefault(i) != null && PathMainMenu.paths[i].State == State.Creating)
-                {
-                    Game.LogTrivial($"[Path {i + 1}] {PathMainMenu.paths[i].Waypoints.Last().DrivingFlagType} waypoint removed");
-                    PathMainMenu.paths[i].Waypoints.Last().Blip.Delete();
-                    PathMainMenu.paths[i].Waypoints.Last().RemoveSpeedZone();
-
-                    if (PathMainMenu.paths[i].Waypoints.Last().CollectorRadiusBlip)
-                    {
-                        PathMainMenu.paths[i].Waypoints.Last().CollectorRadiusBlip.Delete();
-                    }
-                    PathMainMenu.paths[i].Waypoints.RemoveAt(PathMainMenu.paths[i].Waypoints.IndexOf(PathMainMenu.paths[i].Waypoints.Last()));
-
-                    ToggleTrafficEndPathMenuItem(i);
-
-                    // If the path has no waypoints, disable the menu option to remove a waypoint
-                    if (PathMainMenu.paths[i].Waypoints.Count == 0)
-                    {
-                        collectorWaypoint.Checked = true;
-                        collectorWaypoint.Enabled = false;
-                        speedZoneRadius.Enabled = true;
-                        collectorRadius.Enabled = true;
-                        trafficRemoveWaypoint.Enabled = false;
-                        trafficEndPath.Enabled = false;
-                    }
+                    SpeedZoneRadius.ScrollToNextOption();
                 }
             }
         }
-
-        private static void EndPath()
+        
+        private static void ValidateSpeedZoneRadiusSettings()
         {
-            for (int i = 0; i < PathMainMenu.paths.Count; i++)
+            if (SpeedZoneRadius.Value < CollectorRadius.Value)
             {
-                var currentPath = PathMainMenu.paths[i];
-                if (PathMainMenu.paths.ElementAtOrDefault(i) != null && currentPath.State == State.Creating)
-                {
-                    Game.LogTrivial($"[Path Creation] Path {currentPath.Number} finished with {currentPath.Waypoints.Count} waypoints.");
-                    Game.DisplayNotification($"~o~Scene Manager ~g~[Success]\n~w~Path {i + 1} complete.");
-                    currentPath.State = State.Finished;
-                    currentPath.IsEnabled = true;
-                    currentPath.Number = i + 1;
-                    currentPath.LoopForVehiclesToBeDismissed();
-
-                    GameFiber.StartNew(() =>
-                    {
-                        currentPath.LoopWaypointCollection();
-                    });
-
-                    PathMainMenu.createNewPath.Text = "Create New Path";
-                    PathMainMenu.BuildPathMenu();
-                    PathMainMenu.pathMainMenu.RefreshIndex();
-                    pathCreationMenu.Clear();
-                    PathMainMenu.pathMainMenu.Visible = true;
-                    break;
-                }
+                CollectorRadius.Value = SpeedZoneRadius.Value;
             }
-        }
-
-        private static void ToggleTrafficEndPathMenuItem(int pathIndex)
-        {
-            if (PathMainMenu.paths[pathIndex].Waypoints.Count > 0)
-            {
-                trafficEndPath.Enabled = true;
-            }
-            else
-            {
-                trafficEndPath.Enabled = false;
-            }
-        }
-
-        private static void AddNewPathToPathsCollection(List<Path> paths, int pathIndex)
-        {
-            var pathNum = pathIndex + 1;
-            Game.LogTrivial($"Creating path {pathNum}");
-            Game.DisplayNotification($"~o~Scene Manager\n~y~[Creating]~w~ Path {pathNum} started.");
-            paths.Insert(pathIndex, new Path(pathNum, State.Creating));
-            trafficRemoveWaypoint.Enabled = false;
-            trafficEndPath.Enabled = false;
         }
 
         private static void PathCreation_OnCheckboxChanged(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
         {
-            if(checkboxItem == collectorWaypoint)
+            if(checkboxItem == CollectorWaypoint)
             {
-                collectorRadius.Enabled = collectorWaypoint.Checked ? true : false;
-                speedZoneRadius.Enabled = collectorWaypoint.Checked ? true : false;
+                CollectorRadius.Enabled = CollectorWaypoint.Checked ? true : false;
+                SpeedZoneRadius.Enabled = CollectorWaypoint.Checked ? true : false;
             }
         }
 
         private static void PathCreation_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            if (selectedItem == trafficAddWaypoint)
+            if (selectedItem == AddWaypoint)
             {
-                AddNewWaypoint();
+                if (PathCreationState != State.Creating)
+                {
+                    CurrentPath = PathManager.InitializeNewPath();
+                }
+
+                PathManager.AddWaypoint(CurrentPath);
+                PathManager.TogglePathCreationMenuItems(CurrentPath);
             }
 
-            if (selectedItem == trafficRemoveWaypoint)
+            if (selectedItem == RemoveLastWaypoint)
             {
-                RemoveWaypoint();
+                PathManager.RemoveWaypoint(CurrentPath);
+                PathManager.TogglePathCreationMenuItems(CurrentPath);
             }
 
-            if (selectedItem == trafficEndPath)
+            if (selectedItem == EndPathCreation)
             {
-                EndPath();
+                PathCreationState = State.Finished;
+                PathManager.EndPath(CurrentPath);
             }
         }
 
         private static void PathCreation_OnScrollerChanged(UIMenu sender, UIMenuScrollerItem scrollerItem, int first, int last)
         {
-            if (scrollerItem == collectorRadius)
+            if (scrollerItem == CollectorRadius)
             {
-                if (collectorRadius.Value > speedZoneRadius.Value)
-                {
-                    while (collectorRadius.Value > speedZoneRadius.Value)
-                    {
-                        speedZoneRadius.ScrollToNextOption();
-                    }
-                }
+                ValidateCollectorRadiusSettings();   
             }
 
-            if (scrollerItem == speedZoneRadius)
+            if (scrollerItem == SpeedZoneRadius)
             {
-                if (speedZoneRadius.Value < collectorRadius.Value)
-                {
-                    collectorRadius.Value = speedZoneRadius.Value;
-                }
+                ValidateSpeedZoneRadiusSettings();  
             }
         }
 
         private static void PathCreation_OnMenuOpen(UIMenu menu)
         {
-            var scrollerItems = new List<UIMenuScrollerItem> { collectorRadius, speedZoneRadius, waypointSpeed };
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
+            var scrollerItems = new List<UIMenuScrollerItem> { CollectorRadius, SpeedZoneRadius, WaypointSpeed };
+            GameFiber.StartNew(() => UserInput.InitializeMenuMouseControl(menu, scrollerItems), "RNUI Mouse Input Fiber");
         }
     }
 }
