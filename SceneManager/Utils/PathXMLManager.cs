@@ -22,7 +22,8 @@ namespace SceneManager.Utils
             {
                 Game.LogTrivialDebug("Adding " + typeof(T).Name + " to serializer cache");
                 Game.LogTrivialDebug("Overrides specified: " + (overrides != null));
-                var s = new XmlSerializer(typeof(T), overrides);
+                var s = new XmlSerializer(typeof(T), new XmlRootAttribute("Path"));
+                //var s = new XmlSerializer(typeof(T), overrides);
                 _serializerCache.Add(typeof(T), s);
                 return s;
             }
