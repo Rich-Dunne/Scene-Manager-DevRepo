@@ -6,36 +6,36 @@ using System.IO;
 
 namespace SceneManager
 {
+    // The only reason this class should change is to modify any plugin settings
     internal static class Settings
     {
         internal static readonly InitializationFile ini = new InitializationFile("Plugins/SceneManager.ini");
 
         // Keybindings
-        internal static Keys ToggleKey = Keys.T;
-        internal static Keys ModifierKey = Keys.LShiftKey;
-        internal static ControllerButtons ToggleButton = ControllerButtons.Y;
-        internal static ControllerButtons ModifierButton = ControllerButtons.A;
+        internal static Keys ToggleKey { get; private set; } = Keys.T;
+        internal static Keys ModifierKey { get; private set; } = Keys.LShiftKey;
+        internal static ControllerButtons ToggleButton { get; private set; } = ControllerButtons.Y;
+        internal static ControllerButtons ModifierButton { get; private set; } = ControllerButtons.A;
 
         // Plugin Settings
-        internal static bool Enable3DWaypoints = true;
-        internal static bool EnableMapBlips = true;
-        internal static bool EnableHints = true;
-        internal static SpeedUnits SpeedUnit = SpeedUnits.MPH;
-        internal static float BarrierPlacementDistance = 30f;
-        internal static bool EnableAdvancedBarricadeOptions = false;
-        internal static bool EnableBarrierLightsDefaultOn = false;
+        internal static bool Enable3DWaypoints { get; private set; } = true;
+        internal static bool EnableMapBlips { get; private set; } = true;
+        internal static bool EnableHints { get; private set; } = true;
+        internal static SpeedUnits SpeedUnit { get; private set; } = SpeedUnits.MPH;
+        internal static float BarrierPlacementDistance { get; private set; } = 30f;
+        internal static bool EnableAdvancedBarricadeOptions { get; private set; } = false;
+        internal static bool EnableBarrierLightsDefaultOn { get; private set; } = false;
 
         // Default Waypoint Settings
-        internal static int CollectorRadius = 1;
-        internal static int SpeedZoneRadius = 5;
-        internal static bool StopWaypoint = false;
-        internal static bool DirectDrivingBehavior = false;
-        internal static int WaypointSpeed = 5;
+        internal static int CollectorRadius { get; set; } = 1;
+        internal static int SpeedZoneRadius { get; set; } = 5;
+        internal static bool StopWaypoint { get; set; } = false;
+        internal static bool DirectDrivingBehavior { get; set; } = false;
+        internal static int WaypointSpeed { get; set; } = 5;
 
         // Barriers
-        internal static Dictionary<string, Model> barriers = new Dictionary<string, Model>();
-        //internal static List<string> barrierKeys = new List<string>();
-        //internal static List<Model> barrierValues = new List<Model>();
+        internal static Dictionary<string, Model> Barriers { get; private set; } = new Dictionary<string, Model>();
+        internal static List<Objects.Path> ImportedPaths { get; private set; } = new List<Objects.Path>();
 
         internal static void LoadSettings()
         {
@@ -63,77 +63,47 @@ namespace SceneManager
             StopWaypoint = ini.ReadBoolean("Default Waypoint Settings", "StopWaypoint", false);
             DirectDrivingBehavior = ini.ReadBoolean("Default Waypoint Settings", "DirectDrivingBehavior", false);
             WaypointSpeed = ini.ReadInt32("Default Waypoint Settings", "WaypointSpeed", 5);
-            CheckForValidWaypointSettings();
             
-            // Barriers
-            foreach(string displayName in ini.GetKeyNames("Barriers"))
+            SettingsValidator.ValidateWaypointSettings();
+            SettingsValidator.ValidateBarrierSettings(ini);
+            ImportPaths();
+        }
+
+        // This will need to be moved to a different class
+        internal static void ImportPaths()
+        {
+            ImportedPaths.Clear();
+
+            // Check if Saved Paths directory exists
+            var GAME_DIRECTORY = Directory.GetCurrentDirectory();
+            var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "\\plugins\\SceneManager\\Saved Paths\\";
+            if (!Directory.Exists(SAVED_PATHS_DIRECTORY))
             {
-                var model = new Model(ini.ReadString("Barriers", displayName.Trim()));
-                if (model.IsValid)
-                {
-                    barriers.Add(displayName, model);
-                    //barrierKeys.Add(key.Trim());
-                    //barrierValues.Add(model);
-                }
-                else
-                {
-                    Game.LogTrivial($"{model.Name} is not valid.");
-                }
+                Game.LogTrivial($"Directory '\\plugins\\SceneManager\\Saved Paths' does not exist.  No paths available to import.");
+                return;
             }
 
-            //ImportPaths();
-
-            void CheckForValidWaypointSettings()
+            // Check if any XML files are available to import from Saved Paths
+            var savedPaths = Directory.GetFiles(SAVED_PATHS_DIRECTORY, "*.xml");
+            if (savedPaths.Length == 0)
             {
-                if(CollectorRadius > 50 || CollectorRadius < 1)
-                {
-                    CollectorRadius = 1;
-                    Game.LogTrivial($"Invalid value for CollectorRadius in user settings, resetting to default.");
-                }
-                if(SpeedZoneRadius > 200 || SpeedZoneRadius < 5)
-                {
-                    SpeedZoneRadius = 5;
-                    Game.LogTrivial($"Invalid value for SpeedZoneRadius in user settings, resetting to default.");
-                }
-                if (CollectorRadius > SpeedZoneRadius)
-                {
-                    CollectorRadius = 1;
-                    SpeedZoneRadius = 5;
-                    Game.LogTrivial($"CollectorRadius is greater than SpeedZoneRadius in user settings, resetting to defaults.");
-                }
-                if (WaypointSpeed > 100 || WaypointSpeed < 5)
-                {
-                    WaypointSpeed = 5;
-                    Game.LogTrivial($"Invalid value for WaypointSpeed in user settings, resetting to default.");
-                }
+                Game.LogTrivial($"No saved paths found.");
+                return;
+            }
+            else
+            {
+                Game.LogTrivial($"{savedPaths.Length} path(s) available to import.");
             }
 
-            void ImportPaths()
+            // Import paths
+            foreach (string file in savedPaths)
             {
-                //read each file name in Saved Paths
-                var GAME_DIRECTORY = Directory.GetCurrentDirectory();
-                var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "/plugins/SceneManager/Saved Paths/";
-                if (!Directory.Exists(SAVED_PATHS_DIRECTORY))
-                {
-                    Game.LogTrivial($"Directory '/plugins/SceneManager/Saved Paths' does not exist.  No paths available to import.");
-                    return;
-                }
-
-                //add file name to PathMainMenu.importedPaths
-                var paths = Directory.GetFiles(SAVED_PATHS_DIRECTORY);
-                if (paths.Length == 0)
-                {
-                    Game.LogTrivial($"No saved paths found.");
-                    return;
-                }
-
-                foreach (string path in paths)
-                {
-                    Game.LogTrivial($"Path to import: {Path.GetFileName(path)}");
-
-                    // Check if XML is valid before actually importing
-                }
+                Game.LogTrivial($"File: {Path.GetFileName(file)}");
+                var importedPath = PathXMLManager.LoadItemFromXML<Objects.Path>(SAVED_PATHS_DIRECTORY + Path.GetFileName(file));
+                importedPath.Name = Path.GetFileNameWithoutExtension(file);
+                ImportedPaths.Add(importedPath);
             }
+            Game.LogTrivial($"Successfully imported {ImportedPaths.Count} path(s).");
         }
 
         internal static void UpdateSettings(bool threeDWaypointsEnabled, bool mapBlipsEnabled, bool hintsEnabled, SpeedUnits unit)
