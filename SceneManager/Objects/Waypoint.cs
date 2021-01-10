@@ -2,10 +2,11 @@
 using System.Drawing;
 using System.Linq;
 using SceneManager.Utils;
+using SceneManager.Menus;
 
 namespace SceneManager.Objects
 {
-    internal class Waypoint // Change this to Public for import/export
+    public class Waypoint // Change this and select properties to Public for import/export
     {
         internal Path Path { get; set; }
         public int Number { get; set; }
@@ -13,7 +14,7 @@ namespace SceneManager.Objects
         public float Speed { get; set; }
         public DrivingFlagType DrivingFlagType { get; set; }
         public bool IsStopWaypoint { get; set; }
-        internal Blip Blip { get; }
+        internal Blip Blip { get; private set; }
         public bool IsCollector { get; set; }
         public float CollectorRadius { get; set; }
         internal Blip CollectorRadiusBlip { get; set; }
@@ -23,26 +24,26 @@ namespace SceneManager.Objects
 
         private Waypoint() { }
 
-        internal Waypoint(Path path, int waypointNum, Vector3 waypointPos, float speed, DrivingFlagType drivingFlag, bool stopWaypoint, Blip waypointBlip, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 5)
+        internal Waypoint(Path path, int waypointNumber, Vector3 waypointPosition, float speed, DrivingFlagType drivingFlag, bool stopWaypoint, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 5)
         {
             Path = path;
-            Number = waypointNum;
-            Position = waypointPos;
+            Number = waypointNumber;
+            Position = waypointPosition;
             Speed = speed;
             DrivingFlagType = drivingFlag;
             IsStopWaypoint = stopWaypoint;
-            Blip = waypointBlip;
             IsCollector = collector;
             CollectorRadius = collectorRadius;
             SpeedZoneRadius = speedZoneRadius;
+            CreateBlip();
             if (collector)
             {
                 AddSpeedZone();
-                CollectorRadiusBlip = new Blip(waypointBlip.Position, collectorRadius)
+                CollectorRadiusBlip = new Blip(Blip.Position, collectorRadius)
                 {
-                    Color = waypointBlip.Color,
+                    Color = Blip.Color,
                 };
-                if (SettingsMenu.mapBlips.Checked)
+                if (SettingsMenu.MapBlips.Checked)
                 {
                     CollectorRadiusBlip.Alpha = 0.5f;
                 }
@@ -51,6 +52,7 @@ namespace SceneManager.Objects
                     CollectorRadiusBlip.Alpha = 0f;
                 }
             }
+
             DrawWaypointMarker();
         }
 
@@ -76,7 +78,7 @@ namespace SceneManager.Objects
                     foreach(CollectedVehicle cv in Path.CollectedVehicles.Where(cv => cv.Vehicle && cv.Path == Path && cv.CurrentWaypoint == this && cv.StoppedAtWaypoint))
                     {
                        // Logger.Log($"Setting StoppedAtWaypoint to false for {cv.Vehicle.Model.Name}");
-                        cv.Dismiss(DismissOption.FromWaypoint);
+                        cv.Dismiss(Dismiss.FromWaypoint);
                     }
                 }
                 else if(stopWaypoint && !IsStopWaypoint)
@@ -155,19 +157,6 @@ namespace SceneManager.Objects
             }
         }
 
-        internal void Remove()
-        {
-            if (Blip)
-            {
-                Blip.Delete();
-            }
-            if (CollectorRadiusBlip)
-            {
-                CollectorRadiusBlip.Delete();
-            }
-            RemoveSpeedZone();
-        }
-
         internal void AddSpeedZone()
         {
             SpeedZone = World.AddSpeedZone(Position, SpeedZoneRadius, Speed);
@@ -185,23 +174,23 @@ namespace SceneManager.Objects
             {
                 while (true)
                 {
-                    if(SettingsMenu.threeDWaypoints.Checked && EnableWaypointMarker && Path.Waypoints.Contains(this))
+                    if(SettingsMenu.ThreeDWaypoints.Checked && EnableWaypointMarker && Path.Waypoints.Contains(this))
                     {
-                        if (EditWaypointMenu.editWaypointMenu.Visible && PathMainMenu.editPath.Value == Path.Number && EditWaypointMenu.editWaypoint.Value == Number)
+                        if (EditWaypointMenu.Menu.Visible && PathMainMenu.EditPath.Value == Path.Number && EditWaypointMenu.EditWaypoint.Value == Number)
                         {
-                            if (EditWaypointMenu.collectorWaypoint.Checked)
+                            if (EditWaypointMenu.CollectorWaypoint.Checked)
                             {
-                                if (EditWaypointMenu.updateWaypointPosition.Checked)
+                                if (EditWaypointMenu.UpdateWaypointPosition.Checked)
                                 {
-                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, GetMousePositionInWorld(), 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, 1f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
-                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, GetMousePositionInWorld(), 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, 1f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
+                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, GetMousePositionInWorld(), 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.ChangeCollectorRadius.Value * 2, (float)EditWaypointMenu.ChangeCollectorRadius.Value * 2, 1f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
+                                    Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, GetMousePositionInWorld(), 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.ChangeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.ChangeSpeedZoneRadius.Value * 2, 1f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
                                 }
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, (float)EditWaypointMenu.changeCollectorRadius.Value * 2, 2f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
-                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.changeSpeedZoneRadius.Value * 2, 2f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.ChangeCollectorRadius.Value * 2, (float)EditWaypointMenu.ChangeCollectorRadius.Value * 2, 2f, 80, 130, 255, 100, false, false, 2, false, 0, 0, false);
+                                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, (float)EditWaypointMenu.ChangeSpeedZoneRadius.Value * 2, (float)EditWaypointMenu.ChangeSpeedZoneRadius.Value * 2, 2f, 255, 185, 80, 100, false, false, 2, false, 0, 0, false);
                             }
-                            else if (EditWaypointMenu.stopWaypointType.Checked)
+                            else if (EditWaypointMenu.StopWaypointType.Checked)
                             {
-                                if (EditWaypointMenu.updateWaypointPosition.Checked)
+                                if (EditWaypointMenu.UpdateWaypointPosition.Checked)
                                 {
                                     Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, GetMousePositionInWorld(), 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 100, false, false, 2, false, 0, 0, false);
                                 }
@@ -209,17 +198,17 @@ namespace SceneManager.Objects
                             }
                             else
                             {
-                                if (EditWaypointMenu.updateWaypointPosition.Checked)
+                                if (EditWaypointMenu.UpdateWaypointPosition.Checked)
                                 {
                                     Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, GetMousePositionInWorld(), 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
                                 }
                                 Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, Position, 0, 0, 0, 0, 0, 0, 1f, 1f, 2f, 65, 255, 65, 100, false, false, 2, false, 0, 0, false);
                             }
                         }
-                        else if ((Path.State == State.Finished && MenuManager.menuPool.IsAnyMenuOpen()) || (Path.State == State.Creating && PathCreationMenu.pathCreationMenu.Visible))
+                        else if ((Path.State == State.Finished && MenuManager.MenuPool.IsAnyMenuOpen()) || (Path.State == State.Creating && PathCreationMenu.Menu.Visible))
                         {
                             float markerHeight = 1f;
-                            if ((PathMainMenu.directDriver.Selected && PathMainMenu.directDriver.Value == Path.Number) || PathMainMenu.editPath.Selected && PathMainMenu.editPath.Value == Path.Number && (PathMainMenu.pathMainMenu.Visible || EditPathMenu.editPathMenu.Visible))
+                            if ((PathMainMenu.DirectDriver.Selected && PathMainMenu.DirectDriver.Value == Path.Number) || PathMainMenu.EditPath.Selected && PathMainMenu.EditPath.Value == Path.Number && (PathMainMenu.Menu.Visible || EditPathMenu.Menu.Visible))
                             {
                                 markerHeight = 2f;
                             }
@@ -280,6 +269,85 @@ namespace SceneManager.Objects
             if (CollectorRadiusBlip)
             {
                 CollectorRadiusBlip.Alpha = 0;
+            }
+        }
+
+        internal void Delete()
+        {
+            if (Blip)
+            {
+                Blip.Delete();
+            }
+            if (CollectorRadiusBlip)
+            {
+                CollectorRadiusBlip.Delete();
+            }
+            RemoveSpeedZone();
+        }
+
+        internal void LoadFromImport(Path path)
+        {
+            Path = path;
+            CreateBlip();
+            Game.LogTrivial($"===== WAYPOINT DATA =====");
+            Game.LogTrivial($"Path: {Path.Name}");
+            Game.LogTrivial($"Number: {Number}");
+            Game.LogTrivial($"Position: {Position}");
+            Game.LogTrivial($"Speed: {Speed}");
+            Game.LogTrivial($"DrivingFlag: {DrivingFlagType}");
+            Game.LogTrivial($"Stop Waypoint: {IsStopWaypoint}");
+            Game.LogTrivial($"Blip: {Blip}");
+            Game.LogTrivial($"Collector: {IsCollector}");
+            Game.LogTrivial($"Collector Radius: {CollectorRadius}");
+            Game.LogTrivial($"SpeedZone Radius: {SpeedZoneRadius}");
+            if (IsCollector)
+            {
+                CollectorRadiusBlip = new Blip(Position, CollectorRadius)
+                {
+                    Color = Blip.Color,
+                };
+                if (SettingsMenu.MapBlips.Checked)
+                {
+                    CollectorRadiusBlip.Alpha = 0.5f;
+                }
+                else
+                {
+                    CollectorRadiusBlip.Alpha = 0f;
+                }
+            }
+            DrawWaypointMarker();
+        }
+
+        private void CreateBlip()
+        {
+            var spriteNumericalEnum = Path.Number + 16; // 16 because the numerical value of these sprites are always 16 more than the path index
+            Blip = new Blip(Position)
+            {
+                Scale = 0.5f,
+                Sprite = (BlipSprite)spriteNumericalEnum
+            };
+
+            if (IsCollector)
+            {
+                Blip.Color = Color.Blue;
+            }
+            else if (IsStopWaypoint)
+            {
+                Blip.Color = Color.Red;
+            }
+            else
+            {
+                Blip.Color = Color.Green;
+            }
+
+            if (!SettingsMenu.MapBlips.Checked)
+            {
+                Blip.Alpha = 0f;
+            }
+
+            if (!Path.IsEnabled)
+            {
+                Blip.Alpha = 0.5f;
             }
         }
 
