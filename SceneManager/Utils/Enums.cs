@@ -455,13 +455,13 @@
 		KPH
 	}
 
-	internal enum DrivingFlagType
+	public enum DrivingFlagType
 	{
 		Normal = 263075,
 		Direct = 17040259
-	} // Change this to Public for import/export?
+	} // Change this to Public for import/export
 
-	internal enum DismissOption
+	internal enum Dismiss
 	{
 		FromPath = 0,
 		FromWaypoint = 1,
