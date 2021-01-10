@@ -11,21 +11,11 @@ namespace SceneManager.Objects
         internal Vehicle Vehicle { get; private set; }
         internal Path Path { get; private set; }
         internal Waypoint CurrentWaypoint { get; private set; }
-        internal Waypoint NextWaypoint { get; private set; }
         internal bool StoppedAtWaypoint { get; private set; } = false;
         internal bool Dismissed { get; private set; } = false;
         internal bool Directed { get; set; } = false;
         internal bool SkipWaypoint { get; private set; } = false;
         internal bool ReadyForDirectTasks { get; private set; } = true;
-
-        internal CollectedVehicle(Vehicle vehicle, Path path, Waypoint currentWaypoint)
-        {
-            Vehicle = vehicle;
-            Driver = Vehicle.Driver;
-            Path = path;
-            CurrentWaypoint = currentWaypoint;
-            SetPersistence();
-        }
 
         internal CollectedVehicle(Vehicle vehicle, Path path)
         {
@@ -292,8 +282,17 @@ namespace SceneManager.Objects
             }
         }
 
-        internal void Dismiss(DismissOption dismissOption = DismissOption.FromPath, Path newPath = null)
+        internal void Dismiss(Dismiss dismissOption = Utils.Dismiss.FromPath, Path newPath = null)
         {
+            if(Vehicle)
+            {
+                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Driver.LastVehicle, 0f, 1, true);
+                Vehicle.Dismiss();
+            }
+            if (Driver)
+            {
+                Driver.Dismiss();
+            }
             if (!Vehicle)
             {
                 Game.LogTrivial($"Vehicle is null.");
@@ -305,25 +304,15 @@ namespace SceneManager.Objects
                 return;
             }
 
-            if (dismissOption == DismissOption.FromWorld)
+            if (dismissOption == Utils.Dismiss.FromWorld)
             {
                 DismissFromWorld();
                 return;
             }
 
-            if (dismissOption == DismissOption.FromPlayer)
+            if (dismissOption == Utils.Dismiss.FromPlayer)
             {
-                Dismissed = true;
-                //if (Driver)
-                //{
-                    Driver.Dismiss();
-                //}
-                //if (Vehicle)
-                //{
-                    Vehicle.Dismiss();
-                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
-                //}
-                Path.CollectedVehicles.Remove(this);
+                DismissFromPlayer();
                 return;
             }
 
@@ -331,26 +320,32 @@ namespace SceneManager.Objects
             {
                 StoppedAtWaypoint = false;
                 Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Driver.LastVehicle, 0f, 1, true);
-                //if (Driver)
-                //{
-                    Driver.Tasks.CruiseWithVehicle(5f);
-                //}
+                Driver.Tasks.CruiseWithVehicle(5f);
             }
             Driver.Tasks.Clear();
 
-            if (dismissOption == DismissOption.FromWaypoint)
+            if (dismissOption == Utils.Dismiss.FromWaypoint)
             {
                 DismissFromWaypoint();
             }
 
-            if (dismissOption == DismissOption.FromPath)
+            if (dismissOption == Utils.Dismiss.FromPath)
             {
                 DismissFromPath();
             }
 
-            if(dismissOption == DismissOption.FromDirected)
+            if(dismissOption == Utils.Dismiss.FromDirected)
             {
                 DismissFromDirect();
+            }
+
+            void DismissFromPlayer()
+            {
+                Dismissed = true;
+                Driver.Dismiss();
+                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(Vehicle, 0f, 1, true);
+                Vehicle.Dismiss();
+                Path.CollectedVehicles.Remove(this);
             }
 
             void DismissFromWorld()
