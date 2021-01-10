@@ -96,5 +96,19 @@ namespace SceneManager.Utils
             Game.LogTrivial($"Nothing else has returned true by this point. (non-ambient)");
             return false;
         }
+
+        /// <summary>Determines if a vehicle and driver are valid.
+        /// </summary>
+        internal static bool VehicleAndDriverValid(this Vehicle vehicle)
+        {
+            if (vehicle && vehicle.HasDriver && vehicle.Driver && vehicle.Driver.IsAlive)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
     }
 }
