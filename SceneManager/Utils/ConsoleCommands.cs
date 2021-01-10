@@ -13,7 +13,7 @@ namespace SceneManager.Utils
         [ConsoleCommand]
         internal static void Command_ShowCollectedVehicleInfo([ConsoleCommandParameter(AutoCompleterType = typeof(ConsoleCommandAutoCompleterVehicle), Name = "ShowCollectedVehicleInfo")] Vehicle vehicle)
         {
-            foreach(Path path in PathMainMenu.paths)
+            foreach(Path path in PathManager.Paths)
             {
                 var collectedVehicle = path.CollectedVehicles.Where(v => v.Vehicle == vehicle).FirstOrDefault();
                 if(collectedVehicle != null)
