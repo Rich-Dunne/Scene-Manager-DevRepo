@@ -175,9 +175,9 @@ namespace SceneManager.Menus
 
         internal static void Cleanup()
         {
-            foreach (Barrier barrier in BarrierManager.Barriers.Where(x => x.Object))
+            foreach (Barrier barrier in BarrierManager.Barriers)
             {
-                barrier.Object.Delete();
+                barrier.Delete();
             }
             if (BarrierManager.PlaceholderBarrier)
             {

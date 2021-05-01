@@ -21,7 +21,7 @@ namespace SceneManager.Utils
 
             var barrierKey = Settings.Barriers.Where(x => x.Key == BarrierMenu.BarrierList.SelectedItem).FirstOrDefault().Key;
             var barrierValue = Settings.Barriers[barrierKey].Name;
-            PlaceholderBarrier = new Rage.Object(barrierValue, UserInput.GetMousePositionForBarrier, BarrierMenu.RotateBarrier.Value);
+            PlaceholderBarrier = new Object(barrierValue, UserInput.GetMousePositionForBarrier, BarrierMenu.RotateBarrier.Value);
             if (!PlaceholderBarrier)
             {
                 BarrierMenu.Menu.Close();
@@ -39,7 +39,7 @@ namespace SceneManager.Utils
             // Start with lights off for Parks's objects
             if (Settings.EnableAdvancedBarricadeOptions)
             {
-                Rage.Native.NativeFunction.Natives.x971DA0055324D033(PlaceholderBarrier, BarrierMenu.BarrierTexture.Value);
+                Rage.Native.NativeFunction.Natives.x971DA0055324D033(PlaceholderBarrier, BarrierMenu.BarrierTexture.Value); // _SET_OBJECT_TEXTURE_VARIATION
                 SetBarrierLights();
             }
         }
@@ -136,47 +136,8 @@ namespace SceneManager.Utils
             }
             else
             {
-                var barrier = new Rage.Object(PlaceholderBarrier.Model, PlaceholderBarrier.Position, BarrierMenu.RotateBarrier.Value);
-                barrier.SetPositionWithSnap(PlaceholderBarrier.Position);
-                Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(barrier, true);
-                if (BarrierMenu.Invincible.Checked)
-                {
-                    Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(barrier, true);
-                    if (barrier.Model.Name != "prop_barrier_wat_03a")
-                    {
-                        Rage.Native.NativeFunction.Natives.SET_DISABLE_BREAKING(barrier, true);
-                    }
-                }
-                if (BarrierMenu.Immobile.Checked)
-                {
-                    barrier.IsPositionFrozen = true;
-                }
-                else
-                {
-
-                    barrier.IsPositionFrozen = false;
-                }
-                if (Settings.EnableAdvancedBarricadeOptions)
-                {
-                    Rage.Native.NativeFunction.Natives.x971DA0055324D033(barrier, BarrierMenu.BarrierTexture.Value);
-                    if (BarrierMenu.SetBarrierLights.Checked)
-                    {
-                        Rage.Native.NativeFunction.Natives.SET_ENTITY_LIGHTS(barrier, false);
-                    }
-                    else
-                    {
-                        Rage.Native.NativeFunction.Natives.SET_ENTITY_LIGHTS(barrier, true);
-                    }
-
-                    //Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(barrier, setBarrierTrafficLight.Index);
-                    barrier.IsPositionFrozen = true;
-                    GameFiber.Sleep(50);
-                    if (barrier && !BarrierMenu.Immobile.Checked)
-                    {
-                        barrier.IsPositionFrozen = false;
-                    }
-                }
-                Barriers.Add(new Barrier(barrier, barrier.Position, barrier.Heading, BarrierMenu.Invincible.Checked, BarrierMenu.Immobile.Checked));
+                var barrier = new Barrier(PlaceholderBarrier, PlaceholderBarrier.Position, BarrierMenu.RotateBarrier.Value, BarrierMenu.Invincible.Checked, BarrierMenu.Immobile.Checked, BarrierMenu.BarrierTexture.Value, BarrierMenu.SetBarrierLights.Checked);
+                Barriers.Add(barrier);
 
                 BarrierMenu.RemoveBarrierOptions.Enabled = true;
                 BarrierMenu.ResetBarriers.Enabled = true;
@@ -210,21 +171,21 @@ namespace SceneManager.Utils
             switch (removeBarrierOptionsIndex)
             {
                 case 0:
-                    Barriers[Barriers.Count - 1].Object.Delete();
+                    Barriers[Barriers.Count - 1].Delete();
                     Barriers.RemoveAt(Barriers.Count - 1);
                     break;
                 case 1:
-                    var nearestBarrier = Barriers.OrderBy(b => b.Object.DistanceTo2D(Game.LocalPlayer.Character)).FirstOrDefault();
+                    var nearestBarrier = Barriers.OrderBy(b => b.DistanceTo2D(Game.LocalPlayer.Character)).FirstOrDefault();
                     if (nearestBarrier != null)
                     {
-                        nearestBarrier.Object.Delete();
+                        nearestBarrier.Delete();
                         Barriers.Remove(nearestBarrier);
                     }
                     break;
                 case 2:
-                    foreach (Barrier b in Barriers.Where(b => b.Object))
+                    foreach (Barrier b in Barriers)
                     {
-                        b.Object.Delete();
+                        b.Delete();
                     }
                     if (Barriers.Count > 0)
                     {
@@ -244,30 +205,11 @@ namespace SceneManager.Utils
                 var currentBarriers = Barriers.Where(b => b.Model.Name != "0xa2c44e80").ToList(); // 0xa2c44e80 is the flare weapon hash
                 foreach (Barrier barrier in currentBarriers)
                 {
-                    var newBarrier = new Rage.Object(barrier.Model, barrier.Position, barrier.Rotation);
-                    newBarrier.SetPositionWithSnap(barrier.Position);
-                    Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(newBarrier, true);
-                    newBarrier.IsPositionFrozen = barrier.Immobile;
-                    if (barrier.Invincible)
-                    {
-                        Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(newBarrier, true);
-                        if (newBarrier.Model.Name != "prop_barrier_wat_03a")
-                        {
-                            Rage.Native.NativeFunction.Natives.SET_DISABLE_BREAKING(newBarrier, true);
-                        }
-                    }
-                    //Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(newBarrier, setBarrierTrafficLight.Index);
-                    newBarrier.IsPositionFrozen = true;
-                    GameFiber.Sleep(50);
-                    if (newBarrier && !barrier.Immobile)
-                    {
-                        newBarrier.IsPositionFrozen = false;
-                    }
-                    Barriers.Add(new Barrier(newBarrier, newBarrier.Position, newBarrier.Heading, barrier.Invincible, barrier.Immobile));
+                    Barriers.Add(new Barrier(barrier, barrier.SpawnPosition, barrier.SpawnHeading, barrier.Invincible, barrier.Immobile, barrier.TextureVariation, barrier.LightsEnabled));
 
-                    if (barrier.Object)
+                    if (barrier)
                     {
-                        barrier.Object.Delete();
+                        barrier.Delete();
                     }
                     Barriers.Remove(barrier);
                 }

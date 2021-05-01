@@ -56,7 +56,6 @@ namespace SceneManager
                     menuItem.HighlightedBackColor = menuItem.ForeColor;
                 }
             }
-
         }
 
         internal static bool AreMenusClosed()
