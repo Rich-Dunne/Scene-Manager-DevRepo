@@ -130,25 +130,5 @@ namespace SceneManager.Utils
         {
             ModifyItemInXML<List<T>>(path, t => t.Add(objectToAdd));
         }
-
-        ///// <summary>
-        ///// Creates folder in case it doesn't exist and checks file existance.
-        ///// </summary>
-        ///// <param name="path"></param>
-        ///// <returns>false when a file does not exist.</returns>
-        //private static bool ValidatePath(string path)
-        //{
-        //    //TODO: implement
-        //    // - check extension
-        //    // - bool param: createDir
-        //    string dir = Path.GetDirectoryName(path);
-        //    if (!Directory.Exists(dir))
-        //    {
-        //        Directory.CreateDirectory(dir);
-        //        return false;
-        //    }
-
-        //    return File.Exists(path);
-        //}
     }
 }
