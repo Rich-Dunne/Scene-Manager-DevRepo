@@ -49,14 +49,14 @@ namespace SceneManager.Utils
 
         internal static void Direct(Vehicle nearbyVehicle, Path path, Waypoint targetWaypoint)
         {
-            var nearbyVehiclesPath = PathManager.Paths.FirstOrDefault(p => p.CollectedVehicles.Any(v => v.Vehicle == nearbyVehicle));
+            var nearbyVehiclesPath = PathManager.Paths.FirstOrDefault(p => p.CollectedPeds.Any(v => v.CurrentVehicle == nearbyVehicle));
             if(nearbyVehiclesPath == null)
             {
                 Game.LogTrivial($"Nearby vehicle does not belong to any path.");
             }
 
-            var collectedVehicleOnThisPath = path.CollectedVehicles.FirstOrDefault(v => v.Vehicle == nearbyVehicle);
-            var nearbyCollectedVehicleOtherPath = nearbyVehiclesPath?.CollectedVehicles.FirstOrDefault(v => v.Vehicle == nearbyVehicle);
+            var collectedVehicleOnThisPath = path.CollectedPeds.FirstOrDefault(v => v.CurrentVehicle == nearbyVehicle);
+            var nearbyCollectedVehicleOtherPath = nearbyVehiclesPath?.CollectedPeds.FirstOrDefault(p => p.CurrentVehicle == nearbyVehicle);
             if (collectedVehicleOnThisPath == null)
             {
                 Game.LogTrivial($"Nearby vehicle does not belong to this path.");
@@ -66,12 +66,12 @@ namespace SceneManager.Utils
                     nearbyCollectedVehicleOtherPath.Dismiss(Dismiss.FromDirected, path);
                 }
                 Game.LogTrivial($"[Direct Driver] Adding {nearbyVehicle.Model.Name} to directed path.");
-                path.CollectedVehicles.Add(collectedVehicleOnThisPath = new CollectedVehicle(nearbyVehicle, path));
-                collectedVehicleOnThisPath.Directed = true;
-                collectedVehicleOnThisPath.Driver.Tasks.Clear();
+                path.CollectedPeds.Add(collectedVehicleOnThisPath = new CollectedPed(nearbyVehicle.Driver, path, targetWaypoint) { Directed = true });
+                //collectedVehicleOnThisPath.Directed = true;
+                collectedVehicleOnThisPath.Tasks.Clear();
             }
 
-            GameFiber.StartNew(() => collectedVehicleOnThisPath.AssignWaypointTasks(path, targetWaypoint));
+            //GameFiber.StartNew(() => collectedVehicleOnThisPath.AssignWaypointTasks(path, targetWaypoint));
         }
     }
 }

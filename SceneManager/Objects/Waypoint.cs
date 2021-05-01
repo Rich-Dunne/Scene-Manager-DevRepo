@@ -75,10 +75,10 @@ namespace SceneManager.Objects
                 if (IsStopWaypoint && !stopWaypoint)
                 {
                     Blip.Color = Color.Green;
-                    foreach(CollectedVehicle cv in Path.CollectedVehicles.Where(cv => cv.Vehicle && cv.Path == Path && cv.CurrentWaypoint == this && cv.StoppedAtWaypoint))
+                    foreach(CollectedPed cp in Path.CollectedPeds.Where(cp => cp.CurrentVehicle && cp.Path == Path && cp.CurrentWaypoint == this && cp.StoppedAtWaypoint))
                     {
                        // Logger.Log($"Setting StoppedAtWaypoint to false for {cv.Vehicle.Model.Name}");
-                        cv.Dismiss(Dismiss.FromWaypoint);
+                        cp.Dismiss(Dismiss.FromWaypoint);
                     }
                 }
                 else if(stopWaypoint && !IsStopWaypoint)
@@ -148,11 +148,11 @@ namespace SceneManager.Objects
             {
                 if (Blip)
                 {
-                    Blip.Position = Game.LocalPlayer.Character.Position;
+                    Blip.Position = newWaypointPosition;
                 }
                 if (CollectorRadiusBlip)
                 {
-                    CollectorRadiusBlip.Position = Game.LocalPlayer.Character.Position;
+                    CollectorRadiusBlip.Position = newWaypointPosition;
                 }
             }
         }

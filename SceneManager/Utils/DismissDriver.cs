@@ -8,7 +8,7 @@ namespace SceneManager.Utils
     {
         internal static void Dismiss(int dismissIndex)
         {
-            var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(16).FirstOrDefault(v => v != Game.LocalPlayer.Character.CurrentVehicle && v.VehicleAndDriverValid());
+            var nearbyVehicle = Game.LocalPlayer.Character.GetNearbyVehicles(16).FirstOrDefault(v => v.VehicleAndDriverValid() && v != Game.LocalPlayer.Character.CurrentVehicle);
             if (!nearbyVehicle)
             {
                 Game.LogTrivial($"Nearby vehicle is null.");
@@ -32,10 +32,10 @@ namespace SceneManager.Utils
             }
             else
             {
-                CollectedVehicle collectedVehicle = PathManager.Paths.SelectMany(x => x.CollectedVehicles).FirstOrDefault(x => x.Vehicle == nearbyVehicle);
-                if(collectedVehicle != null)
+                CollectedPed collectedPed = PathManager.Paths.SelectMany(x => x.CollectedPeds).FirstOrDefault(x => x.CurrentVehicle == nearbyVehicle);
+                if(collectedPed != null)
                 {
-                    collectedVehicle.Dismiss((Dismiss)dismissIndex);
+                    collectedPed.Dismiss((Dismiss)dismissIndex);
                 }
             }
         }

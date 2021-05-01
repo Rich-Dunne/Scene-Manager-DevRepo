@@ -21,7 +21,7 @@ namespace SceneManager.Objects
         [XmlArray("Waypoints")]
         [XmlArrayItem("Waypoint")]
         public List<Waypoint> Waypoints { get; set; } = new List<Waypoint>();
-        internal List<CollectedVehicle> CollectedVehicles { get; } = new List<CollectedVehicle>();
+        internal List<CollectedPed> CollectedPeds { get; } = new List<CollectedPed>();
         private List<Vehicle> BlacklistedVehicles { get; } = new List<Vehicle>();
 
         private Path() { }
@@ -138,24 +138,23 @@ namespace SceneManager.Objects
                     }
                     GameFiber.Yield();
                 }
-            });
+            }, "3D Waypoint Line Drawing Fiber");
         }
 
         internal void LoopForVehiclesToBeDismissed()
         {
             while (PathManager.Paths.Contains(this))
             {
-                //Logger.Log($"Dismissing unused vehicles for cleanup");
-                foreach (CollectedVehicle cv in CollectedVehicles.Where(cv => cv.Vehicle && (!cv.Vehicle.IsDriveable || cv.Vehicle.IsUpsideDown || !cv.Vehicle.HasDriver)))
+                foreach (CollectedPed cp in CollectedPeds.Where(x => x && x.CurrentVehicle && (!x.CurrentVehicle.IsDriveable || x.CurrentVehicle.IsUpsideDown || !x.CurrentVehicle.HasDriver)))
                 {
-                    if (cv.Vehicle.HasDriver)
+                    if (cp.CurrentVehicle.HasDriver)
                     {
-                        cv.Vehicle.Driver.Dismiss();
+                        cp.CurrentVehicle.Driver.Dismiss();
                     }
-                    cv.Vehicle.Dismiss();
+                    cp.CurrentVehicle.Dismiss();
                 }
 
-                CollectedVehicles.RemoveAll(cv => !cv.Vehicle);
+                CollectedPeds.RemoveAll(cp => !cp || !cp.CurrentVehicle);
                 BlacklistedVehicles.RemoveAll(v => !v);
                 GameFiber.Sleep(60000);
             }
@@ -174,13 +173,11 @@ namespace SceneManager.Objects
                     {
                         foreach (Waypoint waypoint in Waypoints.Where(x => x != null && x.IsCollector))
                         {
-                            foreach (Vehicle v in World.GetAllVehicles())
+                            foreach (Vehicle vehicle in World.GetAllVehicles())
                             {
-                                if (VehicleIsValidForCollection(v) && VehicleIsNearWaypoint(v, waypoint))
+                                if (VehicleIsValidForCollection(vehicle) && VehicleIsNearWaypoint(vehicle, waypoint))
                                 {
-                                    CollectedVehicle newCollectedVehicle = AddVehicleToCollection(v);
-                                    GameFiber AssignTasksFiber = new GameFiber(() => newCollectedVehicle.AssignWaypointTasks(this, waypoint));
-                                    AssignTasksFiber.Start();
+                                    CollectedPeds.Add(new CollectedPed(vehicle.Driver, this, waypoint));
                                 }
 
                                 checksDone++; // Increment the counter inside the vehicle loop
@@ -200,14 +197,6 @@ namespace SceneManager.Objects
                 lastProcessTime = Game.GameTime;
             }
 
-            CollectedVehicle AddVehicleToCollection(Vehicle vehicle)
-            {
-                var collectedVehicle = new CollectedVehicle(vehicle, this);
-                CollectedVehicles.Add(collectedVehicle);
-                Game.LogTrivial($"Added {vehicle.Model.Name} to collection from path {Number} waypoint {1}.");
-                return collectedVehicle;
-            }
-
             bool VehicleIsNearWaypoint(Vehicle v, Waypoint wp)
             {
                 return v.FrontPosition.DistanceTo2D(wp.Position) <= wp.CollectorRadius && Math.Abs(wp.Position.Z - v.Position.Z) < 3;
@@ -215,9 +204,13 @@ namespace SceneManager.Objects
 
             bool VehicleIsValidForCollection(Vehicle v)
             {
-                if (v && v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && v.IsEngineOn && v.IsOnAllWheels && v.Speed > 1 && !CollectedVehicles.Any(cv => cv?.Vehicle == v) && !BlacklistedVehicles.Contains(v))
+                if(!v)
                 {
-                    var vehicleCollectedOnAnotherPath = PathManager.Paths.Any(p => p.Number != Number && p.CollectedVehicles.Any(cv => cv.Vehicle == v));
+                    return false;
+                }
+                if (v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && v.IsEngineOn && v.IsOnAllWheels && v.Speed > 1 && !CollectedPeds.Any(cp => cp && cp.CurrentVehicle == v) && !BlacklistedVehicles.Contains(v))
+                {
+                    var vehicleCollectedOnAnotherPath = PathManager.Paths.Any(p => p.Number != Number && p.CollectedPeds.Any(cp => cp && cp.CurrentVehicle == v));
                     if (vehicleCollectedOnAnotherPath)
                     {
                         return false;
@@ -232,6 +225,7 @@ namespace SceneManager.Objects
                         }
                         if (v.IsPoliceVehicle && !v.Driver.IsAmbient())
                         {
+                            Game.LogTrivial($"Vehicle's driver not ambient.");
                             BlacklistedVehicles.Add(v);
                             return false;
                         }
@@ -271,23 +265,23 @@ namespace SceneManager.Objects
 
         private void DismissCollectedDrivers()
         {
-            List<CollectedVehicle> pathVehicles = CollectedVehicles.ToList(); // Have to enumerate over a copied list because you can't delete from the same list you're enumerating through
-            foreach (CollectedVehicle collectedVehicle in pathVehicles.Where(x => x != null && x.Vehicle && x.Driver))
+            List<CollectedPed> collectedPedsCopy = CollectedPeds.ToList(); // Have to enumerate over a copied list because you can't delete from the same list you're enumerating through
+            foreach (CollectedPed collectedPed in collectedPedsCopy.Where(x => x != null && x && x.CurrentVehicle))
             {
-                if (collectedVehicle.StoppedAtWaypoint)
+                if (collectedPed.StoppedAtWaypoint)
                 {
-                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedVehicle.Vehicle, 1f, 1, true);
+                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedPed.CurrentVehicle, 1f, 1, true);
                 }
-                if (collectedVehicle.Driver.GetAttachedBlip())
+                if (collectedPed.GetAttachedBlip())
                 {
-                    collectedVehicle.Driver.GetAttachedBlip().Delete();
+                    collectedPed.GetAttachedBlip().Delete();
                 }
-                collectedVehicle.Driver.Dismiss();
-                collectedVehicle.Vehicle.IsSirenOn = false;
-                collectedVehicle.Vehicle.IsSirenSilent = true;
-                collectedVehicle.Vehicle.Dismiss();
+                collectedPed.Dismiss();
+                collectedPed.CurrentVehicle.IsSirenOn = false;
+                collectedPed.CurrentVehicle.IsSirenSilent = true;
+                collectedPed.CurrentVehicle.Dismiss();
 
-                CollectedVehicles.Remove(collectedVehicle);
+                CollectedPeds.Remove(collectedPed);
             }
         }
 
