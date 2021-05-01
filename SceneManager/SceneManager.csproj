@@ -40,9 +40,8 @@
       <HintPath>D:\Program Files\Rockstar Games\Grand Theft Auto V\RAGENativeUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="RagePluginHook">
-      <HintPath>..\..\Modding Resources\References\RagePluginHook.dll</HintPath>
-      <Private>False</Private>
+    <Reference Include="RagePluginHook, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
+      <HintPath>..\packages\RagePluginHook.1.86.1\lib\net472\RagePluginHook.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Configuration" />
@@ -74,7 +73,7 @@
     <Compile Include="Utils\DismissDriver.cs" />
     <Compile Include="Utils\Enums.cs" />
     <Compile Include="Utils\Extensions.cs" />
-    <Compile Include="Objects\CollectedVehicle.cs" />
+    <Compile Include="Objects\CollectedPed.cs" />
     <Compile Include="Objects\Barrier.cs" />
     <Compile Include="Utils\Hints.cs" />
     <Compile Include="Menus\BarrierMenu.cs" />
