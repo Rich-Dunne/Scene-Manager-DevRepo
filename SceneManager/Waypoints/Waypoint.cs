@@ -3,8 +3,11 @@ using System.Drawing;
 using System.Linq;
 using SceneManager.Utils;
 using SceneManager.Menus;
+using SceneManager.Managers;
+using SceneManager.Paths;
+using SceneManager.CollectedPeds;
 
-namespace SceneManager.Objects
+namespace SceneManager.Waypoints
 {
     public class Waypoint // Change this and select properties to Public for import/export
     {
@@ -77,7 +80,6 @@ namespace SceneManager.Objects
                     Blip.Color = Color.Green;
                     foreach(CollectedPed cp in Path.CollectedPeds.Where(cp => cp.CurrentVehicle && cp.Path == Path && cp.CurrentWaypoint == this && cp.StoppedAtWaypoint))
                     {
-                       // Logger.Log($"Setting StoppedAtWaypoint to false for {cv.Vehicle.Model.Name}");
                         cp.Dismiss(Dismiss.FromWaypoint);
                     }
                 }
@@ -157,15 +159,9 @@ namespace SceneManager.Objects
             }
         }
 
-        internal void AddSpeedZone()
-        {
-            SpeedZone = World.AddSpeedZone(Position, SpeedZoneRadius, Speed);
-        }
+        internal void AddSpeedZone() => SpeedZone = World.AddSpeedZone(Position, SpeedZoneRadius, Speed);
 
-        internal void RemoveSpeedZone()
-        {
-            World.RemoveSpeedZone(SpeedZone);
-        }
+        internal void RemoveSpeedZone() => World.RemoveSpeedZone(SpeedZone);
 
         internal void DrawWaypointMarker()
         {
@@ -176,7 +172,7 @@ namespace SceneManager.Objects
                 {
                     if(SettingsMenu.ThreeDWaypoints.Checked && EnableWaypointMarker && Path.Waypoints.Contains(this))
                     {
-                        if (EditWaypointMenu.Menu.Visible && PathMainMenu.EditPath.Value == Path.Number && EditWaypointMenu.EditWaypoint.Value == Number)
+                        if (EditWaypointMenu.Menu.Visible && PathMainMenu.EditPath.OptionText == Path.Name && EditWaypointMenu.EditWaypoint.Value == Number)
                         {
                             if (EditWaypointMenu.CollectorWaypoint.Checked)
                             {
@@ -208,7 +204,7 @@ namespace SceneManager.Objects
                         else if ((Path.State == State.Finished && MenuManager.MenuPool.IsAnyMenuOpen()) || (Path.State == State.Creating && PathCreationMenu.Menu.Visible))
                         {
                             float markerHeight = 1f;
-                            if ((PathMainMenu.DirectDriver.Selected && PathMainMenu.DirectDriver.Value == Path.Number) || PathMainMenu.EditPath.Selected && PathMainMenu.EditPath.Value == Path.Number && (PathMainMenu.Menu.Visible || EditPathMenu.Menu.Visible))
+                            if ((DriverMenu.DirectDriver.Selected && DriverMenu.DirectDriver.OptionText == Path.Name) || PathMainMenu.EditPath.Selected && PathMainMenu.EditPath.OptionText == Path.Name && (PathMainMenu.Menu.Visible || EditPathMenu.Menu.Visible))
                             {
                                 markerHeight = 2f;
                             }

@@ -2,8 +2,10 @@
 using System.Collections.Generic;
 using System.Linq;
 using SceneManager.Utils;
+using SceneManager.Waypoints;
+using SceneManager.Paths;
 
-namespace SceneManager.Objects
+namespace SceneManager.CollectedPeds
 {
     internal class CollectedPed : Ped
     {
@@ -54,7 +56,7 @@ namespace SceneManager.Objects
                 DriveToNextWaypoint();
             }
 
-            if (!Dismissed && !VehicleAndDriverAreValid() || Directed)
+            if (Path.State == State.Deleting || (!Dismissed && !VehicleAndDriverAreValid()) || Directed)
             {
                 return;
             }
@@ -62,7 +64,7 @@ namespace SceneManager.Objects
             Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] all Path {Path.Number} tasks complete.");
             if (!Dismissed)
             {
-                base.Dismiss();
+                Dismiss();
             }
         }
 
@@ -85,7 +87,7 @@ namespace SceneManager.Objects
             }
         }
 
-        void DriveToDirectedWaypoint()
+        private void DriveToDirectedWaypoint()
         {
             Dismissed = false;
 
@@ -115,6 +117,12 @@ namespace SceneManager.Objects
                     }
                     GameFiber.Yield();
                 }
+
+                if(!VehicleAndDriverAreValid() || Path.State == State.Deleting)
+                {
+                    return;
+                }
+
                 if (CurrentVehicle)
                 {
                     Tasks.PerformDrivingManeuver(CurrentVehicle, VehicleManeuver.GoForwardWithCustomSteeringAngle, 3).WaitForCompletion();
@@ -231,19 +239,26 @@ namespace SceneManager.Objects
         {
             var stoppingDistance = GetAcceptedStoppingDistance(CurrentWaypoint.Path.Waypoints, CurrentWaypoint.Path.Waypoints.IndexOf(CurrentWaypoint));
             Game.LogTrivial($"{CurrentVehicle.Model.Name} stopping at path {CurrentWaypoint.Path.Number} waypoint.");
-            Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(CurrentVehicle, stoppingDistance, -1, true);
+            var vehicleToStop = CurrentVehicle;
+            Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(vehicleToStop, stoppingDistance, -1, true);
             StoppedAtWaypoint = true;
 
-            while (CurrentWaypoint != null && VehicleAndDriverAreValid() && StoppedAtWaypoint && !Directed)
+            while (CurrentWaypoint != null && VehicleAndDriverAreValid() && StoppedAtWaypoint && !Directed && IsInVehicle(CurrentVehicle, false))
             {
                 GameFiber.Yield();
             }
-            if (this && CurrentVehicle)
+            if(vehicleToStop)
             {
-                Game.LogTrivial($"{CurrentVehicle.Model.Name} releasing from stop waypoint.");
-                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(CurrentVehicle, 0f, 1, true);
-                Tasks.CruiseWithVehicle(5f);
+                Game.LogTrivial($"{vehicleToStop.Model.Name} releasing from stop waypoint.");
+                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(vehicleToStop, 0f, 1, true);
             }
+
+            //if (this && OriginalVehicle)
+            //{
+            //    Game.LogTrivial($"{OriginalVehicle.Model.Name} releasing from stop waypoint.");
+            //    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(OriginalVehicle, 0f, 1, true);
+            //    Tasks.CruiseWithVehicle(5f);
+            //}
         }
 
         private bool VehicleAndDriverAreValid()
@@ -274,7 +289,7 @@ namespace SceneManager.Objects
             {
                 if (StoppedAtWaypoint)
                 {
-                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(LastVehicle, 0f, 1, true);
+                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(CurrentVehicle, 0f, 1, true);
                 }
                 CurrentVehicle.Dismiss();
             }
@@ -379,20 +394,20 @@ namespace SceneManager.Objects
                 // Check if the vehicle is near any of the path's collector waypoints
                 GameFiber.StartNew(() =>
                 {
-                    var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector).OrderBy(wp => CurrentVehicle.DistanceTo2D(wp.Position)).FirstOrDefault();
-                    if(nearestCollectorWaypoint == null)
-                    {
-                        Game.LogTrivial($"Nearest collector is null");
-                    }
-                    else
-                    {
-                        while (nearestCollectorWaypoint != null && CurrentVehicle && CurrentVehicle.HasDriver && this && IsAlive && CurrentVehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius)
-                        {
-                            GameFiber.Yield();
-                        }
-                    }
+                    //var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector).OrderBy(wp => CurrentVehicle.DistanceTo2D(wp.Position)).FirstOrDefault();
+                    //if(nearestCollectorWaypoint == null)
+                    //{
+                    //    Game.LogTrivial($"Nearest collector is null");
+                    //}
+                    //else
+                    //{
+                    //    while (nearestCollectorWaypoint != null && CurrentVehicle && CurrentVehicle.HasDriver && this && IsAlive && CurrentVehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius)
+                    //    {
+                    //        GameFiber.Yield();
+                    //    }
+                    //}
 
-                    if (!CurrentVehicle || !this)
+                    if (!this || !CurrentVehicle)
                     {
                         Game.LogTrivial($"Vehicle or driver is null");
                         return;

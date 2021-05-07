@@ -7,8 +7,12 @@ using System.Xml.Serialization;
 using SceneManager.Utils;
 using SceneManager.Menus;
 using System.IO;
+using SceneManager.Managers;
+using SceneManager.Barriers;
+using SceneManager.Waypoints;
+using SceneManager.CollectedPeds;
 
-namespace SceneManager.Objects
+namespace SceneManager.Paths
 {
     [XmlRoot(ElementName = "Path", Namespace = "")]
     public class Path // Change this to Public for import/export
@@ -21,8 +25,11 @@ namespace SceneManager.Objects
         [XmlArray("Waypoints")]
         [XmlArrayItem("Waypoint")]
         public List<Waypoint> Waypoints { get; set; } = new List<Waypoint>();
+        [XmlArray("Barriers")]
+        [XmlArrayItem("Barrier")]
+        public List<Barrier> Barriers { get; set; } = new List<Barrier>();
         internal List<CollectedPed> CollectedPeds { get; } = new List<CollectedPed>();
-        private List<Vehicle> BlacklistedVehicles { get; } = new List<Vehicle>();
+        internal List<Vehicle> BlacklistedVehicles { get; } = new List<Vehicle>();
 
         private Path() { }
 
@@ -30,6 +37,7 @@ namespace SceneManager.Objects
         {
             Number = pathNum;
             State = pathState;
+            Name = Number.ToString();
             DrawLinesBetweenWaypoints();
         }
 
@@ -42,7 +50,7 @@ namespace SceneManager.Objects
                 Directory.CreateDirectory(SAVED_PATHS_DIRECTORY);
                 Game.LogTrivial($"New directory created at '/plugins/SceneManager/Saved Paths'");
             }
-            PathXMLManager.SaveItemToXML(this, SAVED_PATHS_DIRECTORY + filename);
+            Serializer.SaveItemToXML(this, SAVED_PATHS_DIRECTORY + filename);
         }
 
         internal void Load()
@@ -52,6 +60,12 @@ namespace SceneManager.Objects
             foreach(Waypoint waypoint in Waypoints)
             {
                 waypoint.LoadFromImport(this);
+            }
+
+            Game.LogTrivial($"This path has {Barriers.Count} barriers");
+            foreach(Barrier barrier in Barriers)
+            {
+                barrier.LoadFromImport();
             }
             DrawLinesBetweenWaypoints();
             PathManager.EndPath(this);
@@ -166,98 +180,48 @@ namespace SceneManager.Objects
             int yieldAfterChecks = 50; // How many calculations to do before yielding
             while (PathManager.Paths.Contains(this))
             {
-                if (IsEnabled)
+                GameFiber.SleepUntil(() => IsEnabled, 0);
+                
+                if(State == State.Deleting)
                 {
-                    int checksDone = 0;
-                    try
-                    {
-                        foreach (Waypoint waypoint in Waypoints.Where(x => x != null && x.IsCollector))
-                        {
-                            foreach (Vehicle vehicle in World.GetAllVehicles())
-                            {
-                                if (VehicleIsValidForCollection(vehicle) && VehicleIsNearWaypoint(vehicle, waypoint))
-                                {
-                                    CollectedPeds.Add(new CollectedPed(vehicle.Driver, this, waypoint));
-                                }
+                    Game.LogTrivial($"Path deleted, ending waypoint collection.");
+                    return;
+                }
 
-                                checksDone++; // Increment the counter inside the vehicle loop
-                                if (checksDone % yieldAfterChecks == 0)
-                                {
-                                    GameFiber.Yield(); // Yield the game fiber after the specified number of vehicles have been checked
-                                }
+                int checksDone = 0;
+                var collectorWaypoints = Waypoints.Where(x => x.IsCollector);
+                var vehiclesInWorld = World.GetAllVehicles().Where(x => x);
+
+                foreach (Waypoint waypoint in collectorWaypoints)
+                {
+                    foreach (Vehicle vehicle in vehiclesInWorld)
+                    {
+                        if (vehicle.IsNearCollectorWaypoint(waypoint) && vehicle.IsValidForPathCollection(this))
+                        {
+                            CollectedPeds.Add(new CollectedPed(vehicle.Driver, this, waypoint));
+                        }
+
+                        checksDone++; // Increment the counter inside the vehicle loop
+                        if (checksDone % yieldAfterChecks == 0)
+                        {
+                            GameFiber.Yield(); // Yield the game fiber after the specified number of vehicles have been checked
+                            if(State == State.Deleting)
+                            {
+                                Game.LogTrivial($"Path deleted, ending waypoint collection.");
+                                return;
                             }
                         }
                     }
-                    catch(Exception ex)
-                    {
-                        Game.LogTrivial($"Vehicle collection error: {ex}");
-                    }
                 }
+
                 GameFiber.Sleep((int)Math.Max(1, Game.GameTime - lastProcessTime)); // If the prior lines took more than a second to run, then you'll run again almost immediately, but if they ran fairly quickly, you can sleep the loop until the remainder of the time between checks has passed
                 lastProcessTime = Game.GameTime;
-            }
-
-            bool VehicleIsNearWaypoint(Vehicle v, Waypoint wp)
-            {
-                return v.FrontPosition.DistanceTo2D(wp.Position) <= wp.CollectorRadius && Math.Abs(wp.Position.Z - v.Position.Z) < 3;
-            }
-
-            bool VehicleIsValidForCollection(Vehicle v)
-            {
-                if(!v)
-                {
-                    return false;
-                }
-                if (v != Game.LocalPlayer.Character.LastVehicle && (v.IsCar || v.IsBike || v.IsBicycle || v.IsQuadBike) && !v.IsSirenOn && v.IsEngineOn && v.IsOnAllWheels && v.Speed > 1 && !CollectedPeds.Any(cp => cp && cp.CurrentVehicle == v) && !BlacklistedVehicles.Contains(v))
-                {
-                    var vehicleCollectedOnAnotherPath = PathManager.Paths.Any(p => p.Number != Number && p.CollectedPeds.Any(cp => cp && cp.CurrentVehicle == v));
-                    if (vehicleCollectedOnAnotherPath)
-                    {
-                        return false;
-                    }
-                    if (v.HasDriver && v.Driver)
-                    {
-                        if(!v.Driver.IsAlive)
-                        {
-                            Game.LogTrivial($"Vehicle's driver is dead.");
-                            BlacklistedVehicles.Add(v);
-                            return false;
-                        }
-                        if (v.IsPoliceVehicle && !v.Driver.IsAmbient())
-                        {
-                            Game.LogTrivial($"Vehicle's driver not ambient.");
-                            BlacklistedVehicles.Add(v);
-                            return false;
-                        }
-                    }
-                    if (!v.HasDriver)
-                    {
-                        v.CreateRandomDriver();
-                        while (!v.HasDriver)
-                        {
-                            GameFiber.Yield();
-                        }
-                        if (v && v.Driver)
-                        {
-                            v.Driver.IsPersistent = true;
-                            v.Driver.BlockPermanentEvents = true;
-                        }
-                        else
-                        {
-                            return false;
-                        }
-                    }
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
             }
         }
 
         internal void Delete()
         {
+            State = State.Deleting;
             DismissCollectedDrivers();
             RemoveWaypoints();
             Game.LogTrivial($"Path {Number} deleted.");

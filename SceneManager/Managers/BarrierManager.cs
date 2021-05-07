@@ -1,10 +1,12 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Rage;
+using SceneManager.Barriers;
 using SceneManager.Menus;
-using SceneManager.Objects;
+using SceneManager.Paths;
+using SceneManager.Utils;
 
-namespace SceneManager.Utils
+namespace SceneManager.Managers
 {
     internal static class BarrierManager
     {
@@ -21,11 +23,11 @@ namespace SceneManager.Utils
 
             var barrierKey = Settings.Barriers.Where(x => x.Key == BarrierMenu.BarrierList.SelectedItem).FirstOrDefault().Key;
             var barrierValue = Settings.Barriers[barrierKey].Name;
-            PlaceholderBarrier = new Object(barrierValue, UserInput.GetMousePositionForBarrier, BarrierMenu.RotateBarrier.Value);
+            PlaceholderBarrier = new Object(barrierValue, UserInput.PlayerMousePositionForBarrier, BarrierMenu.RotateBarrier.Value);
             if (!PlaceholderBarrier)
             {
                 BarrierMenu.Menu.Close();
-                Game.LogTrivial($"Something went wrong creating the placeholder barrier.  Mouse position: {UserInput.GetMousePositionForBarrier}");
+                Game.LogTrivial($"Something went wrong creating the placeholder barrier.  Mouse position: {UserInput.PlayerMousePositionForBarrier}");
                 Game.DisplayNotification($"~o~Scene Manager ~r~[Error]\n~w~Something went wrong creating the placeholder barrier.  This is a rare problem that only happens in certain areas of the world.  Please try again somewhere else.");
                 return;
             }
@@ -64,14 +66,14 @@ namespace SceneManager.Utils
             if (PlaceholderBarrier)
             {
                 PlaceholderBarrier.Heading = BarrierMenu.RotateBarrier.Value;
-                PlaceholderBarrier.Position = UserInput.GetMousePositionForBarrier;
+                PlaceholderBarrier.Position = UserInput.PlayerMousePositionForBarrier;
                 Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(PlaceholderBarrier);
                 //Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(shadowBarrier, setBarrierTrafficLight.Index);
             }
 
             void DisableBarrierMenuOptionsIfShadowConeTooFar()
             {
-                if (!PlaceholderBarrier && UserInput.GetMousePositionForBarrier.DistanceTo2D(Game.LocalPlayer.Character.Position) <= Settings.BarrierPlacementDistance)
+                if (!PlaceholderBarrier && UserInput.PlayerMousePositionForBarrier.DistanceTo2D(Game.LocalPlayer.Character.Position) <= Settings.BarrierPlacementDistance)
                 {
                     CreatePlaceholderBarrier();
 
@@ -106,7 +108,7 @@ namespace SceneManager.Utils
                         //UpdatePlaceholderBarrierPosition();
                         UpdatePlaceholderBarrierPosition();
                     }
-                    else if (UserInput.GetMousePositionForBarrier.DistanceTo2D(Game.LocalPlayer.Character.Position) <= Settings.BarrierPlacementDistance)
+                    else if (UserInput.PlayerMousePositionForBarrier.DistanceTo2D(Game.LocalPlayer.Character.Position) <= Settings.BarrierPlacementDistance)
                     {
                         //CreatePlaceholderBarrier();
                         CreatePlaceholderBarrier();
@@ -130,17 +132,29 @@ namespace SceneManager.Utils
 
         internal static void SpawnBarrier()
         {
+            Barrier barrier;
+
             if (BarrierMenu.BarrierList.SelectedItem == "Flare")
             {
                 SpawnFlare();
             }
             else
             {
-                var barrier = new Barrier(PlaceholderBarrier, PlaceholderBarrier.Position, BarrierMenu.RotateBarrier.Value, BarrierMenu.Invincible.Checked, BarrierMenu.Immobile.Checked, BarrierMenu.BarrierTexture.Value, BarrierMenu.SetBarrierLights.Checked);
+                //var obj = new Object(PlaceholderBarrier.Model, PlaceholderBarrier.Position, BarrierMenu.RotateBarrier.Value);
+                barrier = new Barrier(PlaceholderBarrier.Model.Name, PlaceholderBarrier.Position, PlaceholderBarrier.Heading, BarrierMenu.Invincible.Checked, BarrierMenu.Immobile.Checked, BarrierMenu.BarrierTexture.Value, BarrierMenu.SetBarrierLights.Checked);
                 Barriers.Add(barrier);
 
                 BarrierMenu.RemoveBarrierOptions.Enabled = true;
                 BarrierMenu.ResetBarriers.Enabled = true;
+            }
+
+            if (barrier != null && BarrierMenu.BelongsToPath.Checked)
+            {
+                var matchingPath = PathManager.Paths.FirstOrDefault(x => x.Name == BarrierMenu.AddToPath.OptionText);
+                if(matchingPath != null)
+                {
+                    matchingPath.Barriers.Add(barrier);
+                }
             }
 
             void SpawnFlare()
@@ -161,31 +175,53 @@ namespace SceneManager.Utils
                     }
                 }, "Spawn Flare Fiber");
 
-                Barriers.Add(new Barrier(flare, flare.Position, flare.Heading, BarrierMenu.Invincible.Checked, BarrierMenu.Immobile.Checked));
+                //var obj = new Object(flare.Model, flare.Position, flare.Heading);
+                barrier = new Barrier(flare.Model.Name, flare.Position, flare.Heading, BarrierMenu.Invincible.Checked, BarrierMenu.Immobile.Checked);
+                Barriers.Add(barrier);
                 BarrierMenu.RemoveBarrierOptions.Enabled = true;
             }
         }
 
         internal static void RemoveBarrier(int removeBarrierOptionsIndex)
         {
+            Path path;
             switch (removeBarrierOptionsIndex)
             {
                 case 0:
-                    Barriers[Barriers.Count - 1].Delete();
+                    var barrierToRemove = Barriers[Barriers.Count - 1];
+                    path = PathManager.Paths.FirstOrDefault(x => x.Barriers.Contains(barrierToRemove));
+                    if(path != null)
+                    {
+                        path.Barriers.Remove(barrierToRemove);
+                    }
+
+                    barrierToRemove.Delete();
                     Barriers.RemoveAt(Barriers.Count - 1);
                     break;
                 case 1:
                     var nearestBarrier = Barriers.OrderBy(b => b.DistanceTo2D(Game.LocalPlayer.Character)).FirstOrDefault();
                     if (nearestBarrier != null)
                     {
+                        path = PathManager.Paths.FirstOrDefault(x => x.Barriers.Contains(nearestBarrier));
+                        if (path != null)
+                        {
+                            path.Barriers.Remove(nearestBarrier);
+                        }
+
                         nearestBarrier.Delete();
                         Barriers.Remove(nearestBarrier);
                     }
                     break;
                 case 2:
-                    foreach (Barrier b in Barriers)
+                    foreach (Barrier barrier in Barriers)
                     {
-                        b.Delete();
+                        path = PathManager.Paths.FirstOrDefault(x => x.Barriers.Contains(barrier));
+                        if (path != null)
+                        {
+                            path.Barriers.Remove(barrier);
+                        }
+
+                        barrier.Delete();
                     }
                     if (Barriers.Count > 0)
                     {
@@ -194,20 +230,22 @@ namespace SceneManager.Utils
                     break;
             }
 
-            BarrierMenu.RemoveBarrierOptions.Enabled = Barriers.Count == 0 ? false : true;
-            BarrierMenu.ResetBarriers.Enabled = Barriers.Count == 0 ? false : true;
+            BarrierMenu.RemoveBarrierOptions.Enabled = Barriers.Count != 0;
+            BarrierMenu.ResetBarriers.Enabled = Barriers.Count != 0;
         }
 
         internal static void ResetBarriers()
         {
             GameFiber.StartNew(() =>
             {
-                var currentBarriers = Barriers.Where(b => b.Model.Name != "0xa2c44e80").ToList(); // 0xa2c44e80 is the flare weapon hash
+                var currentBarriers = Barriers.Where(b => b.ModelName != "0xa2c44e80").ToList(); // 0xa2c44e80 is the flare weapon hash
                 foreach (Barrier barrier in currentBarriers)
                 {
-                    Barriers.Add(new Barrier(barrier, barrier.SpawnPosition, barrier.SpawnHeading, barrier.Invincible, barrier.Immobile, barrier.TextureVariation, barrier.LightsEnabled));
+                    //var obj = new Object(barrier.ModelName, barrier.Position, barrier.Heading);
+                    var newBarrier = new Barrier(barrier.ModelName, barrier.Position, barrier.Heading, barrier.Invincible, barrier.Immobile, barrier.TextureVariation, barrier.LightsEnabled);
+                    Barriers.Add(newBarrier);
 
-                    if (barrier)
+                    if (barrier.IsValid())
                     {
                         barrier.Delete();
                     }
@@ -221,7 +259,7 @@ namespace SceneManager.Utils
         internal static void RotateBarrier()
         {
             PlaceholderBarrier.Heading = BarrierMenu.RotateBarrier.Value;
-            PlaceholderBarrier.Position = UserInput.GetMousePositionForBarrier;
+            PlaceholderBarrier.Position = UserInput.PlayerMousePositionForBarrier;
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(PlaceholderBarrier);
         }
     }

@@ -1,11 +1,12 @@
 ﻿using Rage;
-using RAGENativeUI.Elements;
 using SceneManager.Menus;
-using SceneManager.Objects;
+using SceneManager.Paths;
+using SceneManager.Utils;
+using SceneManager.Waypoints;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace SceneManager.Utils
+namespace SceneManager.Managers
 {
     internal class PathManager
     {
@@ -15,7 +16,7 @@ namespace SceneManager.Utils
         {
             importedPath.State = State.Creating;
 
-            var firstVacantIndex = Paths.IndexOf(Paths.FirstOrDefault(x => x.State != State.Creating)) + 1;
+            var firstVacantIndex = Paths.IndexOf(Paths.FirstOrDefault(x => x.State == State.Uninitialized)) + 1; // != State.Creating
             if (firstVacantIndex < 0)
             {
                 firstVacantIndex = 0;
@@ -35,7 +36,7 @@ namespace SceneManager.Utils
         {
             var currentPath = Paths[PathMainMenu.EditPath.Index];
             // Reference PNWParks's UserInput class from LiveLights
-            var filename = UserInput.GetFileName("Type the name you would like to save your file as", "Enter a filename", 100) + ".xml";
+            var filename = UserInput.PromptPlayerForFileName("Type the name you would like to save your file as", "Enter a filename", 100) + ".xml";
 
             // If filename != null or empty, check if export directory exists (GTA V/Plugins/SceneManager/Saved Paths)
             if (string.IsNullOrWhiteSpace(filename))
@@ -53,6 +54,9 @@ namespace SceneManager.Utils
             Settings.ImportPaths();
             PathMainMenu.ImportPath.Enabled = true;
             ImportPathMenu.BuildImportMenu();
+            PathMainMenu.Build();
+
+            PathMainMenu.Menu.Visible = true;
         }
 
         internal static Path InitializeNewPath()
@@ -85,11 +89,11 @@ namespace SceneManager.Utils
             Waypoint newWaypoint;
             if (PathCreationMenu.CollectorWaypoint.Checked)
             {
-                newWaypoint = new Waypoint(currentPath, waypointNumber, UserInput.GetMousePosition, SetDriveSpeedForWaypoint(), drivingFlag, PathCreationMenu.StopWaypoint.Checked, true, PathCreationMenu.CollectorRadius.Value, PathCreationMenu.SpeedZoneRadius.Value);
+                newWaypoint = new Waypoint(currentPath, waypointNumber, UserInput.PlayerMousePosition, ConvertDriveSpeedForWaypoint(PathCreationMenu.WaypointSpeed.Value), drivingFlag, PathCreationMenu.StopWaypoint.Checked, true, PathCreationMenu.CollectorRadius.Value, PathCreationMenu.SpeedZoneRadius.Value);
             }
             else
             {
-                newWaypoint = new Waypoint(currentPath, waypointNumber, UserInput.GetMousePosition, SetDriveSpeedForWaypoint(), drivingFlag, PathCreationMenu.StopWaypoint.Checked);
+                newWaypoint = new Waypoint(currentPath, waypointNumber, UserInput.PlayerMousePosition, ConvertDriveSpeedForWaypoint(PathCreationMenu.WaypointSpeed.Value), drivingFlag, PathCreationMenu.StopWaypoint.Checked);
             }
             currentPath.Waypoints.Add(newWaypoint);
             Game.LogTrivial($"Path {currentPath.Number} Waypoint {waypointNumber} added [Driving style: {drivingFlag} | Stop waypoint: {newWaypoint.IsStopWaypoint} | Speed: {newWaypoint.Speed} | Collector: {newWaypoint.IsCollector}]");
@@ -106,28 +110,29 @@ namespace SceneManager.Utils
 
             if (EditWaypointMenu.CollectorWaypoint.Checked)
             {
-                currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, UserInput.GetMousePosition, SetDriveSpeedForWaypoint(), drivingFlag, EditWaypointMenu.StopWaypointType.Checked, true, EditWaypointMenu.ChangeCollectorRadius.Value, EditWaypointMenu.ChangeSpeedZoneRadius.Value));
+                currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, UserInput.PlayerMousePosition, ConvertDriveSpeedForWaypoint(EditWaypointMenu.ChangeWaypointSpeed.Value), drivingFlag, EditWaypointMenu.StopWaypointType.Checked, true, EditWaypointMenu.ChangeCollectorRadius.Value, EditWaypointMenu.ChangeSpeedZoneRadius.Value));
             }
             else
             {
-                currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, UserInput.GetMousePosition, SetDriveSpeedForWaypoint(), drivingFlag, EditWaypointMenu.StopWaypointType.Checked));
+                currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, UserInput.PlayerMousePosition, ConvertDriveSpeedForWaypoint(EditWaypointMenu.ChangeWaypointSpeed.Value), drivingFlag, EditWaypointMenu.StopWaypointType.Checked));
             }
             Game.LogTrivial($"New waypoint (#{currentPath.Waypoints.Last().Number}) added.");
         }
 
         internal static void UpdateWaypoint()
         {
-            var currentPath = Paths[PathMainMenu.EditPath.Index];
+            //var currentPath = Paths[PathMainMenu.EditPath.Index];
+            var currentPath = Paths.FirstOrDefault(x => x.Name == PathMainMenu.EditPath.OptionText);
             var currentWaypoint = currentPath.Waypoints[EditWaypointMenu.EditWaypoint.Index];
             DrivingFlagType drivingFlag = EditWaypointMenu.DirectWaypointBehavior.Checked ? DrivingFlagType.Direct : DrivingFlagType.Normal;
 
             if (currentPath.Waypoints.Count == 1)
             {
-                currentWaypoint.UpdateWaypoint(currentWaypoint, UserInput.GetMousePosition, drivingFlag, EditWaypointMenu.StopWaypointType.Checked, SetDriveSpeedForWaypoint(), true, EditWaypointMenu.ChangeCollectorRadius.Value, EditWaypointMenu.ChangeSpeedZoneRadius.Value, EditWaypointMenu.UpdateWaypointPosition.Checked);
+                currentWaypoint.UpdateWaypoint(currentWaypoint, UserInput.PlayerMousePosition, drivingFlag, EditWaypointMenu.StopWaypointType.Checked, ConvertDriveSpeedForWaypoint(EditWaypointMenu.ChangeWaypointSpeed.Value), true, EditWaypointMenu.ChangeCollectorRadius.Value, EditWaypointMenu.ChangeSpeedZoneRadius.Value, EditWaypointMenu.UpdateWaypointPosition.Checked);
             }
             else
             {
-                currentWaypoint.UpdateWaypoint(currentWaypoint, UserInput.GetMousePosition, drivingFlag, EditWaypointMenu.StopWaypointType.Checked, SetDriveSpeedForWaypoint(), EditWaypointMenu.CollectorWaypoint.Checked, EditWaypointMenu.ChangeCollectorRadius.Value, EditWaypointMenu.ChangeSpeedZoneRadius.Value, EditWaypointMenu.UpdateWaypointPosition.Checked);
+                currentWaypoint.UpdateWaypoint(currentWaypoint, UserInput.PlayerMousePosition, drivingFlag, EditWaypointMenu.StopWaypointType.Checked, ConvertDriveSpeedForWaypoint(EditWaypointMenu.ChangeWaypointSpeed.Value), EditWaypointMenu.CollectorWaypoint.Checked, EditWaypointMenu.ChangeCollectorRadius.Value, EditWaypointMenu.ChangeSpeedZoneRadius.Value, EditWaypointMenu.UpdateWaypointPosition.Checked);
             }
             Game.LogTrivial($"Path {currentPath.Number} Waypoint {currentWaypoint.Number} updated [Driving style: {drivingFlag} | Stop waypoint: {EditWaypointMenu.StopWaypointType.Checked} | Speed: {EditWaypointMenu.ChangeWaypointSpeed.Value} | Collector: {currentWaypoint.IsCollector}]");
 
@@ -135,22 +140,11 @@ namespace SceneManager.Utils
             Game.DisplayNotification($"~o~Scene Manager ~g~[Success]~w~\nWaypoint {currentWaypoint.Number} updated.");
         }
 
-        private static float SetDriveSpeedForWaypoint()
+        private static float ConvertDriveSpeedForWaypoint(float speed)
         {
-            float convertedSpeed;
-            if (SettingsMenu.SpeedUnits.SelectedItem == SpeedUnits.MPH)
-            {
-                //Logger.Log($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
-                convertedSpeed = MathHelper.ConvertMilesPerHourToMetersPerSecond(PathCreationMenu.WaypointSpeed.Value);
-                //Logger.Log($"Converted speed: {convertedSpeed}m/s");
-            }
-            else
-            {
-                //Logger.Log($"Original speed: {waypointSpeeds[waypointSpeed.Index]}{SettingsMenu.speedUnits.SelectedItem}");
-                convertedSpeed = MathHelper.ConvertKilometersPerHourToMetersPerSecond(PathCreationMenu.WaypointSpeed.Value);
-                //Logger.Log($"Converted speed: {convertedSpeed}m/s");
-            }
-
+            float convertedSpeed = SettingsMenu.SpeedUnits.SelectedItem == SpeedUnits.MPH
+                ? MathHelper.ConvertMilesPerHourToMetersPerSecond(speed)
+                : MathHelper.ConvertKilometersPerHourToMetersPerSecond(speed);
             return convertedSpeed;
         }
 
@@ -169,7 +163,7 @@ namespace SceneManager.Utils
                 Game.LogTrivial($"Deleting the last waypoint from the path.");
                 currentPath.Delete();
                 Paths.Remove(currentPath);
-                PathMainMenu.BuildPathMenu();
+                PathMainMenu.Build();
 
                 EditWaypointMenu.Menu.Visible = false;
                 PathMainMenu.Menu.Visible = true;
@@ -191,7 +185,7 @@ namespace SceneManager.Utils
                 DrivingFlagType drivingFlag = EditWaypointMenu.DirectWaypointBehavior.Checked ? DrivingFlagType.Direct : DrivingFlagType.Normal;
                 Hints.Display($"~o~Scene Manager ~y~[Hint]~w~\nYour path's first waypoint ~b~must~w~ be a collector.  If it's not, it will automatically be made into one.");
                 Game.LogTrivial($"The path only has 1 waypoint left, this waypoint must be a collector.");
-                currentPath.Waypoints[0].UpdateWaypoint(currentPath.Waypoints.First(), UserInput.GetMousePosition, drivingFlag, EditWaypointMenu.StopWaypointType.Checked, SetDriveSpeedForWaypoint(), true, EditWaypointMenu.ChangeCollectorRadius.Value, EditWaypointMenu.ChangeSpeedZoneRadius.Value, EditWaypointMenu.UpdateWaypointPosition.Checked);
+                currentPath.Waypoints[0].UpdateWaypoint(currentPath.Waypoints.First(), UserInput.PlayerMousePosition, drivingFlag, EditWaypointMenu.StopWaypointType.Checked, ConvertDriveSpeedForWaypoint(EditWaypointMenu.ChangeWaypointSpeed.Value), true, EditWaypointMenu.ChangeCollectorRadius.Value, EditWaypointMenu.ChangeSpeedZoneRadius.Value, EditWaypointMenu.UpdateWaypointPosition.Checked);
                 EditWaypointMenu.CollectorWaypoint.Checked = true;
                 EditWaypointMenu.ChangeCollectorRadius.Enabled = true;
                 EditWaypointMenu.ChangeSpeedZoneRadius.Enabled = true;
@@ -209,8 +203,13 @@ namespace SceneManager.Utils
             GameFiber.StartNew(() => currentPath.LoopWaypointCollection(), "Waypoint Collection Loop Fiber");
 
             PathMainMenu.CreateNewPath.Text = "Create New Path";
-            PathMainMenu.BuildPathMenu();
+            PathMainMenu.Build();
             PathMainMenu.Menu.Visible = true;
+
+            MainMenu.BuildMainMenu();
+            DriverMenu.Build();
+            PathCreationMenu.BuildPathCreationMenu();
+            BarrierMenu.BuildMenu();
         }
 
         internal static void TogglePathCreationMenuItems(Path currentPath)
@@ -253,6 +252,29 @@ namespace SceneManager.Utils
             {
                 Paths.SelectMany(x => x.Waypoints).ToList().ForEach(x => x.DisableBlip());
             }
+        }
+
+        internal static void ToggleAllPaths(bool disable)
+        {
+            if (disable)
+            {
+                Paths.ForEach(x => x.DisablePath());
+                Game.LogTrivial($"All paths disabled.");
+            }
+            else
+            {
+                Paths.ForEach(x => x.EnablePath());
+                Game.LogTrivial($"All paths enabled.");
+            }
+        }
+
+        internal static void DeleteAllPaths()
+        {
+            Paths.ForEach(x => x.Delete());
+            Paths.Clear();
+            Game.LogTrivial($"All paths deleted");
+            Game.DisplayNotification($"~o~Scene Manager\n~w~All paths deleted.");
+            MainMenu.BuildMainMenu();
         }
     }
 }

@@ -63,41 +63,41 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Menus\DriverMenu.cs" />
     <Compile Include="Menus\ImportPathMenu.cs" />
     <Compile Include="SettingsValidator.cs" />
-    <Compile Include="Utils\BarrierManager.cs" />
+    <Compile Include="Managers\BarrierManager.cs" />
     <Compile Include="Utils\ConsoleCommands.cs" />
-    <Compile Include="Utils\DeleteAllPaths.cs" />
     <Compile Include="Utils\DependencyChecker.cs" />
-    <Compile Include="Utils\TogglePaths.cs" />
     <Compile Include="Utils\DismissDriver.cs" />
     <Compile Include="Utils\Enums.cs" />
     <Compile Include="Utils\Extensions.cs" />
-    <Compile Include="Objects\CollectedPed.cs" />
-    <Compile Include="Objects\Barrier.cs" />
+    <Compile Include="CollectedPeds\CollectedPed.cs" />
+    <Compile Include="Barriers\Barrier.cs" />
     <Compile Include="Utils\Hints.cs" />
     <Compile Include="Menus\BarrierMenu.cs" />
     <Compile Include="Menus\EditPathMenu.cs" />
     <Compile Include="Menus\EditWaypointMenu.cs" />
     <Compile Include="EntryPoint.cs" />
-    <Compile Include="Utils\PathManager.cs" />
+    <Compile Include="Managers\PathManager.cs" />
     <Compile Include="Utils\DirectDriver.cs" />
     <Compile Include="Utils\UserInput.cs" />
     <Compile Include="Menus\MainMenu.cs" />
-    <Compile Include="Menus\MenuManager.cs" />
-    <Compile Include="Objects\Path.cs" />
+    <Compile Include="Managers\MenuManager.cs" />
+    <Compile Include="Paths\Path.cs" />
     <Compile Include="Menus\PathCreationMenu.cs" />
-    <Compile Include="Utils\PathXMLManager.cs" />
+    <Compile Include="Utils\Serializer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Menus\PathMainMenu.cs" />
     <Compile Include="Menus\SettingsMenu.cs" />
     <Compile Include="Settings.cs" />
-    <Compile Include="Objects\Waypoint.cs" />
+    <Compile Include="Waypoints\Waypoint.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="app.config" />
     <None Include="packages.config" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Target Name="AfterCompile">
     <Exec Command="if &quot;$(ConfigurationName)&quot; == &quot;Release&quot; (&quot;$(ProjectDir)_ConfuserEx\Confuser.CLI.exe&quot; &quot;$(ProjectDir)_ConfuserEx\c.crproj&quot;)&#xD;&#xA;" />

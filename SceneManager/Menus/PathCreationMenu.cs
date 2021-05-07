@@ -4,7 +4,8 @@ using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
 using SceneManager.Utils;
-using SceneManager.Objects;
+using SceneManager.Managers;
+using SceneManager.Paths;
 
 namespace SceneManager.Menus
 {
@@ -36,7 +37,7 @@ namespace SceneManager.Menus
 
         internal static void BuildPathCreationMenu()
         {
-            Menu.MenuItems.Clear();
+            Menu.Clear();
 
             Menu.AddItem(CollectorWaypoint);
             CollectorWaypoint.Enabled = false;

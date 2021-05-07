@@ -5,7 +5,7 @@ using System.Linq;
 using RAGENativeUI.Elements;
 using System.Drawing;
 
-namespace SceneManager
+namespace SceneManager.Managers
 {
     // The only reason this class should change is to modify how menus are are being handled
     internal static class MenuManager
@@ -19,6 +19,7 @@ namespace SceneManager
             PathMainMenu.Initialize();
             PathCreationMenu.Initialize();
             ImportPathMenu.Initialize();
+            DriverMenu.Initialize();
             BarrierMenu.Initialize();
             EditPathMenu.Initialize();
             EditWaypointMenu.Initialize();
@@ -37,61 +38,42 @@ namespace SceneManager
             }
         }
 
-        private static void BuildMenus()
+        internal static void BuildMenus()
         {
             MainMenu.BuildMainMenu();
             SettingsMenu.BuildSettingsMenu();
-            PathMainMenu.BuildPathMenu();
+            DriverMenu.Build();
+            PathMainMenu.Build();
+            PathCreationMenu.BuildPathCreationMenu();
             ImportPathMenu.BuildImportMenu();
             EditPathMenu.BuildEditPathMenu();
-            BarrierMenu.BuildBarrierMenu();
+            BarrierMenu.BuildMenu();
         }
 
-        private static void ColorMenuItems()
+        internal static void ColorMenuItems()
         {
             foreach(UIMenuItem menuItem in MenuPool.SelectMany(x => x.MenuItems))
             {
-                if (menuItem.Enabled && menuItem.ForeColor == Color.Gold)
+                if (menuItem.Enabled)
                 {
                     menuItem.HighlightedBackColor = menuItem.ForeColor;
+                }
+                if(!menuItem.Enabled)
+                {
+                    menuItem.HighlightedBackColor = Color.DarkGray;
+                    menuItem.DisabledForeColor = Color.Gray;
                 }
             }
         }
 
-        internal static bool AreMenusClosed()
+        internal static void ProcessMenus()
         {
-            if (!BarrierMenu.Menu.Visible && !PathMainMenu.Menu.Visible && !PathCreationMenu.Menu.Visible && !EditPathMenu.Menu.Visible && !EditWaypointMenu.Menu.Visible && !SettingsMenu.Menu.Visible)
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        internal static void Update()
-        {
-            while (AnyMenuVisible())
+            while (MenuPool.Any(x => x.Visible))
             {
                 MenuPool.ProcessMenus();
+                ColorMenuItems();
                 GameFiber.Yield();
             }
-        }
-
-        private static bool AnyMenuVisible()
-        {
-            if(MenuPool.Any(x => x.Visible))
-            {
-                return true;
-            }
-
-            return false;
-        }
-
-        internal static void AddToMenuPool(UIMenu menu)
-        {
-            MenuPool.Add(menu);
         }
     }
 }
