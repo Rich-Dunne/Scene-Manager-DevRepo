@@ -35,7 +35,7 @@ namespace SceneManager
 
         // Barriers
         internal static Dictionary<string, Model> Barriers { get; private set; } = new Dictionary<string, Model>();
-        internal static List<Objects.Path> ImportedPaths { get; private set; } = new List<Objects.Path>();
+        internal static List<Paths.Path> ImportedPaths { get; private set; } = new List<Paths.Path>();
 
         internal static void LoadSettings()
         {
@@ -99,7 +99,7 @@ namespace SceneManager
             foreach (string file in savedPaths)
             {
                 Game.LogTrivial($"File: {Path.GetFileName(file)}");
-                var importedPath = PathXMLManager.LoadItemFromXML<Objects.Path>(SAVED_PATHS_DIRECTORY + Path.GetFileName(file));
+                var importedPath = Serializer.LoadItemFromXML<Paths.Path>(SAVED_PATHS_DIRECTORY + Path.GetFileName(file));
                 importedPath.Name = Path.GetFileNameWithoutExtension(file);
                 ImportedPaths.Add(importedPath);
             }
