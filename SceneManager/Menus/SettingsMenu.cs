@@ -4,6 +4,7 @@ using RAGENativeUI.Elements;
 using System;
 using System.Collections.Generic;
 using SceneManager.Utils;
+using SceneManager.Managers;
 
 namespace SceneManager.Menus
 {
@@ -15,12 +16,12 @@ namespace SceneManager.Menus
         internal static UIMenuCheckboxItem Hints { get; } = new UIMenuCheckboxItem("Enable Hints", Settings.EnableHints);
         private static SpeedUnits[] SpeedUnitsArray { get; } = { Utils.SpeedUnits.MPH, Utils.SpeedUnits.KPH };
         internal static UIMenuListScrollerItem<SpeedUnits> SpeedUnits { get; } = new UIMenuListScrollerItem<SpeedUnits>("Speed Unit of Measure", "", new[] { Utils.SpeedUnits.MPH, Utils.SpeedUnits.KPH });
-        internal static UIMenuItem SaveSettings { get; } = new UIMenuItem("Save settings to .ini", "Updates the plugin's .ini file with the current settings so the next time the plugin is loaded, it will use these settings.");
+        internal static UIMenuItem SaveSettings { get; } = new UIMenuItem("Save settings to .ini", "Updates the plugin's .ini file with the current settings.  The next time the plugin is loaded, it will use these settings.");
 
         internal static void Initialize()
         {
             Menu.ParentMenu = MainMenu.Menu;
-            MenuManager.AddToMenuPool(Menu);
+            MenuManager.MenuPool.Add(Menu);
 
             Menu.OnCheckboxChange += SettingsMenu_OnCheckboxChange;
             Menu.OnItemSelect += SettingsMenu_OnItemSelected;
