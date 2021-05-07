@@ -4,8 +4,9 @@ using System.Linq;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
-using SceneManager.Objects;
+using SceneManager.Managers;
 using SceneManager.Utils;
+using SceneManager.Waypoints;
 
 namespace SceneManager.Menus
 {
@@ -38,7 +39,7 @@ namespace SceneManager.Menus
         internal static void BuildEditWaypointMenu()
         {
             Menu.MenuItems.Clear();
-            var currentPath = PathManager.Paths[PathMainMenu.EditPath.Value-1];
+            var currentPath = PathManager.Paths.FirstOrDefault(x => x.Name == PathMainMenu.EditPath.OptionText);
 
             Menu.AddItem(EditWaypoint = new UIMenuNumericScrollerItem<int>("Edit Waypoint", "", currentPath.Waypoints.First().Number, currentPath.Waypoints.Last().Number, 1));
             EditWaypoint.Index = 0;
@@ -84,6 +85,7 @@ namespace SceneManager.Menus
             AddNewWaypoint.ForeColor = Color.Gold;
 
             EditPathMenu.Menu.Visible = false;
+
             Menu.RefreshIndex();
             Menu.Visible = true;
         }
@@ -152,7 +154,8 @@ namespace SceneManager.Menus
 
         private static void EditWaypoint_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            var currentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
+            //var currentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
+            var currentPath = PathManager.Paths.FirstOrDefault(x => x.Name == PathMainMenu.EditPath.OptionText);
 
             if (selectedItem == UpdateWaypoint)
             {
