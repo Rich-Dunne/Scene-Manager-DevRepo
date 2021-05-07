@@ -446,7 +446,8 @@
 	{
 		Uninitialized,
 		Creating,
-		Finished
+		Finished,
+		Deleting
 	}
 
 	internal enum SpeedUnits
