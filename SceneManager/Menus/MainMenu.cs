@@ -4,6 +4,8 @@ using System.Collections.Generic;
 using System.Drawing;
 using SceneManager.Utils;
 using Rage;
+using SceneManager.Managers;
+using System.Linq;
 
 namespace SceneManager.Menus
 {
@@ -14,24 +16,32 @@ namespace SceneManager.Menus
 
         internal static void Initialize()
         {
-            MenuManager.AddToMenuPool(Menu);
+            MenuManager.MenuPool.Add(Menu);
 
             Menu.OnMenuOpen += MainMenu_OnMenuOpen;
         }
 
         internal static void BuildMainMenu()
         {
-            var navigateToPathMenu = new UIMenuItem("Path Menu");
+            Menu.Clear();
+
+            var navigateToPathMenu = new UIMenuItem("Manage Paths");
             Menu.AddItem(navigateToPathMenu);
             navigateToPathMenu.ForeColor = Color.Gold;
             Menu.BindMenuToItem(PathMainMenu.Menu, navigateToPathMenu);
 
-            var navigateToBarrierMenu = new UIMenuItem("Barrier Menu");
+            var navigateToDriverMenu = new UIMenuItem("Manage Drivers", "After you create a path, you will be able to direct drivers using this menu.");
+            Menu.AddItem(navigateToDriverMenu);
+            navigateToDriverMenu.ForeColor = Color.Gold;
+            Menu.BindMenuToItem(DriverMenu.Menu, navigateToDriverMenu);
+            navigateToDriverMenu.Enabled = PathManager.Paths.Count() > 0;
+
+            var navigateToBarrierMenu = new UIMenuItem("Manage Barriers");
             Menu.AddItem(navigateToBarrierMenu);
             navigateToBarrierMenu.ForeColor = Color.Gold;
             Menu.BindMenuToItem(BarrierMenu.Menu, navigateToBarrierMenu);
 
-            var navigateToSettingsMenu = new UIMenuItem("Settings Menu");
+            var navigateToSettingsMenu = new UIMenuItem("Settings");
             Menu.AddItem(navigateToSettingsMenu);
             navigateToSettingsMenu.ForeColor = Color.Gold;
             Menu.BindMenuToItem(SettingsMenu.Menu, navigateToSettingsMenu);
