@@ -2,9 +2,10 @@
 using Rage.Attributes;
 using Rage.ConsoleCommands.AutoCompleters;
 using System.Linq;
-using SceneManager.Objects;
 using System;
 using System.Collections.Generic;
+using SceneManager.Managers;
+using SceneManager.Paths;
 
 namespace SceneManager.Utils
 {
