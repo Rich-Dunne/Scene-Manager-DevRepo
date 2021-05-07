@@ -49,5 +49,23 @@ namespace SceneManager.Utils
                 }
             }
         }
+
+        [ConsoleCommand("DeleteVehicle")]
+        internal static void Command_DeleteVehicle([ConsoleCommandParameter(AutoCompleterType = typeof(ConsoleCommandAutoCompleterVehicle), Name = "Vehicle")] Vehicle vehicle)
+        {
+            if (vehicle)
+            {
+                vehicle.Delete();
+            }
+        }
+
+        [ConsoleCommand("DeletePed")]
+        internal static void Command_DeletePed([ConsoleCommandParameter(AutoCompleterType = typeof(ConsoleCommandAutoCompleterPed), Name = "Ped")] Ped ped)
+        {
+            if (ped && ped != Game.LocalPlayer.Character)
+            {
+                ped.Delete();
+            }
+        }
     }
 }
