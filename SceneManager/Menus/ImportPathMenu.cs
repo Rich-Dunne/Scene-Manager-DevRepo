@@ -1,11 +1,12 @@
 ﻿using RAGENativeUI;
 using RAGENativeUI.Elements;
 using System.Drawing;
-using SceneManager.Objects;
 using SceneManager.Utils;
 using System.Collections.Generic;
 using System.Linq;
 using Rage;
+using SceneManager.Managers;
+using SceneManager.Paths;
 
 namespace SceneManager.Menus
 {
@@ -49,13 +50,11 @@ namespace SceneManager.Menus
             // When the user clicks on a path, that path needs to be added from Settings.importedPaths to PathMainMenu.paths
             Path importedPath = PathManager.ImportPath(Settings.ImportedPaths.FirstOrDefault(x => x.Name == selectedItem.Text));
             importedPath.Load();
-            Game.LogTrivial($"{selectedItem.Text} added to paths collection as path #{importedPath.Number}.  Paths count: {PathManager.Paths.Count}");
+            Game.LogTrivial($"{selectedItem.Text} added to paths collection.  Paths count: {PathManager.Paths.Count}");
             selectedItem.Enabled = false;
 
-            // Refresh path main menu
-            PathMainMenu.BuildPathMenu();
-            PathMainMenu.Menu.RefreshIndex();
-            Menu.Visible = true;
+            MenuManager.BuildMenus();
+            PathMainMenu.Menu.Visible = true;
         }
     }
 }
