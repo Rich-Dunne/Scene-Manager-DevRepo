@@ -1,6 +1,9 @@
 ﻿using Rage;
 using RAGENativeUI.Elements;
-using SceneManager.Objects;
+using SceneManager.CollectedPeds;
+using SceneManager.Managers;
+using SceneManager.Paths;
+using SceneManager.Waypoints;
 using System.Linq;
 
 namespace SceneManager.Utils

@@ -1,5 +1,6 @@
 ﻿using Rage;
-using SceneManager.Objects;
+using SceneManager.CollectedPeds;
+using SceneManager.Managers;
 using System.Linq;
 
 namespace SceneManager.Utils
