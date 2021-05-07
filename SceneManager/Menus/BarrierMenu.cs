@@ -4,7 +4,8 @@ using System.Linq;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
-using SceneManager.Objects;
+using SceneManager.Barriers;
+using SceneManager.Managers;
 using SceneManager.Utils;
 
 namespace SceneManager.Menus
@@ -16,10 +17,12 @@ namespace SceneManager.Menus
         internal static UIMenuListScrollerItem<string> BarrierList { get; } = new UIMenuListScrollerItem<string>("Spawn Barrier", "", Settings.Barriers.Keys); // Settings.barrierKeys
         internal static UIMenuNumericScrollerItem<int> RotateBarrier { get; } = new UIMenuNumericScrollerItem<int>("Rotate Barrier", "", 0, 350, 10);
         // ADD CHECKBOX FOR BARRIER TO STOP TRAFFIC?  ADD 3D MARKER TO SHOW WHERE TRAFFIC WILL STOP.  ONLY NEED ONE CONE TO DO IT PER LANE
-        internal static UIMenuCheckboxItem Invincible { get; } = new UIMenuCheckboxItem("Indestructible", false);
-        internal static UIMenuCheckboxItem Immobile { get; } = new UIMenuCheckboxItem("Immobile", false);
-        internal static UIMenuNumericScrollerItem<int> BarrierTexture { get; } = new UIMenuNumericScrollerItem<int>("Change Texture", "", 0, 15, 1);
-        internal static UIMenuCheckboxItem SetBarrierLights { get; } = new UIMenuCheckboxItem("Enable Barrier Lights", Settings.EnableBarrierLightsDefaultOn);
+        internal static UIMenuCheckboxItem Invincible { get; } = new UIMenuCheckboxItem("Indestructible", false, "If checked, the barrier will not break, or will be harder to break.  The barrier will still able to be moved around.");
+        internal static UIMenuCheckboxItem Immobile { get; } = new UIMenuCheckboxItem("Immobile", false, "If checked, the barrier will be frozen in place.");
+        internal static UIMenuNumericScrollerItem<int> BarrierTexture { get; } = new UIMenuNumericScrollerItem<int>("Change Texture", "If the barrier has multiple textures, changing this value will apply them to the barrier.", 0, 15, 1);
+        internal static UIMenuCheckboxItem SetBarrierLights { get; } = new UIMenuCheckboxItem("Enable Barrier Lights", Settings.EnableBarrierLightsDefaultOn, "If the barrier has functional lights, checking this option will turn them on.");
+        internal static UIMenuCheckboxItem BelongsToPath { get; } = new UIMenuCheckboxItem("Belongs to Path", false, "If checked, the barrier will be saved with the path when the path is exported.");
+        internal static UIMenuListScrollerItem<string> AddToPath { get; private set; }
         internal static UIMenuListScrollerItem<TrafficLight> SetBarrierTrafficLight { get; } = new UIMenuListScrollerItem<TrafficLight>("Set Barrier Traffic Light", "", TrafficLightList);
         internal static UIMenuListScrollerItem<string> RemoveBarrierOptions { get; } = new UIMenuListScrollerItem<string>("Remove Barrier", "", new[] { "Last Barrier", "Nearest Barrier", "All Barriers" });
         internal static UIMenuItem ResetBarriers { get; } = new UIMenuItem("Reset Barriers", "Reset all spawned barriers to their original position and rotation");
@@ -35,8 +38,10 @@ namespace SceneManager.Menus
             Menu.OnMenuOpen += BarrierMenu_OnMenuOpen;
         }
 
-        internal static void BuildBarrierMenu()
+        internal static void BuildMenu()
         {
+            Menu.Clear();
+
             Menu.AddItem(BarrierList);
             BarrierList.ForeColor = Color.Gold;
 
@@ -54,14 +59,21 @@ namespace SceneManager.Menus
                 //barrierMenu.AddItem(setBarrierTrafficLight);
                 //setBarrierTrafficLight.Index = 3;
             }
+            Menu.AddItem(BelongsToPath);
+            BelongsToPath.Enabled = PathManager.Paths.Count() > 0 ? true : false;
+            BelongsToPath.Checked = false;
+
+            AddToPath = new UIMenuListScrollerItem<string>("Path", "The path the barrier will be saved with when the path is exported.", PathManager.Paths.Select(x => x.Name));
+            Menu.AddItem(AddToPath);
+            AddToPath.Enabled = BelongsToPath.Checked;
 
             Menu.AddItem(RemoveBarrierOptions);
             RemoveBarrierOptions.ForeColor = Color.Gold;
-            RemoveBarrierOptions.Enabled = false;
+            RemoveBarrierOptions.Enabled = BarrierManager.Barriers.Count() != 0;
 
             Menu.AddItem(ResetBarriers);
             ResetBarriers.ForeColor = Color.Gold;
-            ResetBarriers.Enabled = false;    
+            ResetBarriers.Enabled = BarrierManager.Barriers.Count() != 0;
         }
 
         internal static void ScrollBarrierList()
@@ -90,6 +102,11 @@ namespace SceneManager.Menus
             {
                 //SetBarrierLights();
                 BarrierManager.SetBarrierLights();
+            }
+
+            if(checkbox == BelongsToPath)
+            {
+                AddToPath.Enabled = BelongsToPath.Checked;
             }
         }
 
