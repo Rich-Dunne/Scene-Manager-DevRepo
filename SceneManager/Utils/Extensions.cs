@@ -1,4 +1,9 @@
 ﻿using Rage;
+using SceneManager.Managers;
+using SceneManager.Paths;
+using SceneManager.Waypoints;
+using System;
+using System.Linq;
 
 namespace SceneManager.Utils
 {
@@ -103,6 +108,72 @@ namespace SceneManager.Utils
         {
             if (vehicle && vehicle.HasDriver && vehicle.Driver && vehicle.Driver.IsAlive)
             {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>Determines if this vehicle is within the waypoint's collection range.
+        /// </summary>
+        internal static bool IsNearCollectorWaypoint(this Vehicle vehicle, Waypoint waypoint)
+        {
+            if(!waypoint.IsCollector)
+            {
+                return false;
+            }
+
+            return vehicle.FrontPosition.DistanceTo2D(waypoint.Position) <= waypoint.CollectorRadius && Math.Abs(waypoint.Position.Z - vehicle.Position.Z) < 3;
+        }
+
+        internal static bool IsValidForPathCollection(this Vehicle vehicle, Path path)
+        {
+            if (!vehicle)
+            {
+                return false;
+            }
+
+            var vehicleCollectedOnAnotherPath = PathManager.Paths.Any(p => p.Number != path.Number && p.CollectedPeds.Any(cp => cp && cp.CurrentVehicle == vehicle));
+            if (vehicleCollectedOnAnotherPath)
+            {
+                return false;
+            }
+
+            if (vehicle.Driver)
+            {
+                if (!vehicle.Driver.IsAlive)
+                {
+                    Game.LogTrivial($"Vehicle's driver is dead.");
+                    path.BlacklistedVehicles.Add(vehicle);
+                    return false;
+                }
+                if (vehicle.IsPoliceVehicle && !vehicle.Driver.IsAmbient())
+                {
+                    Game.LogTrivial($"Vehicle is a non-ambient police vehicle.");
+                    path.BlacklistedVehicles.Add(vehicle);
+                    return false;
+                }
+            }
+
+            if (vehicle != Game.LocalPlayer.Character.LastVehicle && (vehicle.IsCar || vehicle.IsBike || vehicle.IsBicycle || vehicle.IsQuadBike) && !vehicle.IsSirenOn && vehicle.IsEngineOn && vehicle.IsOnAllWheels && vehicle.Speed > 1 && !path.CollectedPeds.Any(cp => cp && cp.CurrentVehicle == vehicle) && !path.BlacklistedVehicles.Contains(vehicle))
+            { 
+                if (!vehicle.HasDriver)
+                {
+                    vehicle.CreateRandomDriver();
+                    while (!vehicle.HasDriver)
+                    {
+                        GameFiber.Yield();
+                    }
+                    if(!vehicle || !vehicle.Driver)
+                    {
+                        return false;
+                    }
+
+                    vehicle.Driver.IsPersistent = true;
+                    vehicle.Driver.BlockPermanentEvents = true;
+                }
                 return true;
             }
             else
