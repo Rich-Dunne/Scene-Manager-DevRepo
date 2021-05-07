@@ -1,8 +1,10 @@
 ﻿using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
+using SceneManager.Managers;
 using SceneManager.Menus;
 using SceneManager.Utils;
 
@@ -14,7 +16,7 @@ namespace SceneManager
         internal static UIMenuCheckboxItem DisablePath { get; } = new UIMenuCheckboxItem("Disable Path", false);
         private static UIMenuItem EditWaypoints { get; } = new UIMenuItem("Edit Waypoints");
         private static UIMenuItem deletePath { get; } = new UIMenuItem("Delete Path");
-        private static UIMenuItem ExportPath { get; } = new UIMenuItem("Export Path");
+        private static UIMenuItem ExportPath { get; } = new UIMenuItem("Export Path", "Export path to ~b~plugins/SceneManager/Saved Paths");
 
         internal static void Initialize()
         {
@@ -28,13 +30,16 @@ namespace SceneManager
 
         internal static void BuildEditPathMenu()
         {
+            Menu.Clear();
+
             Menu.AddItem(DisablePath);
             Menu.AddItem(EditWaypoints);
             EditWaypoints.ForeColor = Color.Gold;
-            Menu.AddItem(deletePath);
-            deletePath.ForeColor = Color.Gold;
             Menu.AddItem(ExportPath);
             ExportPath.ForeColor = Color.Gold;
+            Menu.AddItem(deletePath);
+            deletePath.ForeColor = Color.Gold;
+
             Menu.RefreshIndex();
         }
 
@@ -54,8 +59,9 @@ namespace SceneManager
                 var currentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
                 currentPath.Delete();
                 PathManager.Paths.Remove(currentPath);
-                PathMainMenu.BuildPathMenu();
+                PathMainMenu.Build();
                 PathMainMenu.Menu.Visible = true;
+                BarrierMenu.BuildMenu();
             }
 
             if(selectedItem == ExportPath)
