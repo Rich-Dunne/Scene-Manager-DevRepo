@@ -3,6 +3,7 @@ using Rage;
 using Rage.Native;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
+using SceneManager.Managers;
 using SceneManager.Menus;
 using System.Collections.Generic;
 using System.Linq;
@@ -13,54 +14,60 @@ namespace SceneManager.Utils
     // The only reason this class should change is to modify how user input is handled
     class UserInput
     {
+        private static bool _menuKeysPressed
+        {
+            get => (Settings.ModifierKey == Keys.None && Game.IsKeyDown(Settings.ToggleKey)) ||
+                (Game.IsKeyDownRightNow(Settings.ModifierKey) && Game.IsKeyDown(Settings.ToggleKey));
+        }
+        private static bool _menuControllerButtonsPressed
+        {
+            get => (Settings.ModifierButton == ControllerButtons.None && Game.IsControllerButtonDown(Settings.ToggleButton)) ||
+                (Game.IsControllerButtonDownRightNow(Settings.ModifierButton) && Game.IsControllerButtonDown(Settings.ToggleButton));
+        }
+        internal static Vector3 PlayerMousePosition { get => GetMousePositionInWorld(); }
+        internal static Vector3 PlayerMousePositionForBarrier { get => GetMousePositionInWorld(Settings.BarrierPlacementDistance); }
+
         internal static void HandleKeyPress()
-        {     
+        {
             while (true)
             {
-                bool isTextEntryOpen = (Rage.Native.NativeFunction.Natives.UPDATE_ONSCREEN_KEYBOARD<int>() == 0);
+                GameFiber.Yield();
+
+                bool isTextEntryOpen = (NativeFunction.Natives.UPDATE_ONSCREEN_KEYBOARD<int>() == 0);
                 if (!isTextEntryOpen && MenuKeysPressed())
                 {
+                    if (MenuManager.MenuPool.Any(x => x.Visible))
+                    {
+                        foreach (UIMenu menu in MenuManager.MenuPool.Where(x => x.Visible))
+                        {
+                            menu.Visible = !menu.Visible;
+                        }
+                        MenuManager.MenuPool.CloseAllMenus();
+                        continue;
+                    }
+
                     Menus.MainMenu.DisplayMenu();
-                    GameFiber.StartNew(() => MenuManager.Update(), "Menu Processing Fiber");
+                    GameFiber.StartNew(() => MenuManager.ProcessMenus(), "Menu Processing Fiber");
                 }
 
 #if DEBUG
                 if (MenuManager.MenuPool.IsAnyMenuOpen())
                 {
-                    Game.DisplaySubtitle($"You are using a test build of Scene Manager.  Please report any bugs/crashes in the Discord server.");
+                    Game.DisplaySubtitle($"You are using a test build of ~y~Scene Manager~w~.  Please report any ~r~bugs/crashes ~w~in the ~p~Discord ~w~server.");
                 }
 #endif
-                GameFiber.Yield();
             }
         }
 
         private static bool MenuKeysPressed()
         {
-            if (MenuKeysPressed())
+            if (_menuKeysPressed || _menuControllerButtonsPressed)
             {
                 return true;
             }
 
             return false;
-
-            bool MenuKeysPressed()
-            {
-                if (MenuManager.AreMenusClosed() &&
-                    ((Settings.ModifierKey == Keys.None && Game.IsKeyDown(Settings.ToggleKey)) ||
-                    (Game.IsKeyDownRightNow(Settings.ModifierKey) && Game.IsKeyDown(Settings.ToggleKey)) ||
-                    (Settings.ModifierButton == ControllerButtons.None && Game.IsControllerButtonDown(Settings.ToggleButton)) ||
-                    (Game.IsControllerButtonDownRightNow(Settings.ModifierButton) && Game.IsControllerButtonDown(Settings.ToggleButton))))
-                {
-                    return true;
-                }
-
-                return false;
-            }
         }
-
-        internal static Vector3 GetMousePosition { get { return GetMousePositionInWorld(); } }
-
-        internal static Vector3 GetMousePositionForBarrier { get { return GetMousePositionInWorld(Settings.BarrierPlacementDistance); } }
 
         private static Vector3 GetMousePositionInWorld(float maxDistance = 100f)
         {
@@ -97,13 +104,13 @@ namespace SceneManager.Utils
         {
             while (menu.Visible)
             {
-                var selectedScroller = menu.MenuItems.Where(x => scrollerItems.Contains(x) && x.Selected && x.Enabled).FirstOrDefault();
+                var selectedScroller = menu.MenuItems.FirstOrDefault(x => scrollerItems.Contains(x) && x.Selected && x.Enabled);
                 if (selectedScroller != null)
                 {
                     OnWheelScroll(menu, selectedScroller, scrollerItems);
                 }
 
-                if (Game.IsKeyDown(Keys.LButton) && Rage.Native.NativeFunction.Natives.UPDATE_ONSCREEN_KEYBOARD<int>() != 0)
+                if (Game.IsKeyDown(Keys.LButton) && NativeFunction.Natives.UPDATE_ONSCREEN_KEYBOARD<int>() != 0)
                 {
                     Keyboard.KeyDown(Keys.Enter);
                     GameFiber.Wait(1);
@@ -112,7 +119,7 @@ namespace SceneManager.Utils
 
                 if (menu.SubtitleText.Contains("Path Creation Menu"))
                 {
-                    DrawWaypointMarker();
+                    DrawWaypointMarkerAtMousePosition();
                 }
                 GameFiber.Yield();
             }
@@ -135,7 +142,7 @@ namespace SceneManager.Utils
                 }
                 if (menu.SubtitleText.Contains("Path Creation Menu"))
                 {
-                    DrawWaypointMarker();
+                    DrawWaypointMarkerAtMousePosition();
                 }
                 GameFiber.Yield();
             }
@@ -187,25 +194,25 @@ namespace SceneManager.Utils
             }
         }
 
-        private static void DrawWaypointMarker()
+        private static void DrawWaypointMarkerAtMousePosition()
         {
-            var waypointPosition = GetMousePosition;
+            var waypointPosition = PlayerMousePosition;
             if (SettingsMenu.ThreeDWaypoints.Checked && PathCreationMenu.CollectorWaypoint.Checked)
             {
-                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.CollectorRadius.Value * 2, (float)PathCreationMenu.CollectorRadius.Value * 2, 1f, 80, 130, 255, 80, false, false, 2, false, 0, 0, false);
-                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.SpeedZoneRadius.Value * 2, (float)PathCreationMenu.SpeedZoneRadius.Value * 2, 1f, 255, 185, 80, 80, false, false, 2, false, 0, 0, false);
+                NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.CollectorRadius.Value * 2, (float)PathCreationMenu.CollectorRadius.Value * 2, 1f, 80, 130, 255, 80, false, false, 2, false, 0, 0, false);
+                NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, (float)PathCreationMenu.SpeedZoneRadius.Value * 2, (float)PathCreationMenu.SpeedZoneRadius.Value * 2, 1f, 255, 185, 80, 80, false, false, 2, false, 0, 0, false);
             }
             else if (PathCreationMenu.StopWaypoint.Checked)
             {
-                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 80, false, false, 2, false, 0, 0, false);
+                NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 255, 65, 65, 80, false, false, 2, false, 0, 0, false);
             }
             else
             {
-                Rage.Native.NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 80, false, false, 2, false, 0, 0, false);
+                NativeFunction.Natives.DRAW_MARKER(1, waypointPosition, 0, 0, 0, 0, 0, 0, 1f, 1f, 1f, 65, 255, 65, 80, false, false, 2, false, 0, 0, false);
             }
         }
 
-        internal static string GetFileName(string windowTitle, string defaultText, int maxLength)
+        internal static string PromptPlayerForFileName(string windowTitle, string defaultText, int maxLength)
         {
             NativeFunction.Natives.DISABLE_ALL_CONTROL_ACTIONS(2);
 
