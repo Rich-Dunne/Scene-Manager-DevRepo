@@ -162,7 +162,7 @@ namespace SceneManager.Utils
                 if (!vehicle.HasDriver)
                 {
                     vehicle.CreateRandomDriver();
-                    while (!vehicle.HasDriver)
+                    while (vehicle && !vehicle.HasDriver)
                     {
                         GameFiber.Yield();
                     }
