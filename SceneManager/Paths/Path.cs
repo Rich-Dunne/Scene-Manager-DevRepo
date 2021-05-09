@@ -224,6 +224,7 @@ namespace SceneManager.Paths
             State = State.Deleting;
             DismissCollectedDrivers();
             RemoveWaypoints();
+            RemoveBarriers();
             Game.LogTrivial($"Path {Number} deleted.");
         }
 
@@ -253,6 +254,14 @@ namespace SceneManager.Paths
         {
             Waypoints.ForEach(x => x.Delete());
             Waypoints.Clear();
+        }
+
+        private void RemoveBarriers()
+        {
+            foreach(Barrier barrier in Barriers.Where(x => x.IsValid()))
+            {
+                barrier.Delete();
+            }
         }
     }
 }
