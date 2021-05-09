@@ -14,16 +14,11 @@ namespace SceneManager.Menus
     internal static class PathMainMenu
     {
         private static int MAX_PATH_LIMIT { get; } = 10;
-        internal static List<string> ImportedPaths { get; } = new List<string>();
-        private static string[] DismissOptions { get; } = new string[] { "From path", "From waypoint", "From world" };
         internal static UIMenu Menu { get; } = new UIMenu("Scene Manager", "~o~Path Manager");
         internal static UIMenuItem CreateNewPath { get; } = new UIMenuItem("Create New Path");
-        internal static UIMenuListScrollerItem<string> ImportPath { get; } = new UIMenuListScrollerItem<string>("Import Path", "Import a saved path from ~b~plugins/SceneManager/Saved Paths", ImportedPaths);
+        internal static UIMenuItem ImportPath { get; } = new UIMenuItem("Import Path", "Import a saved path from ~b~plugins/SceneManager/Saved Paths");
         internal static UIMenuItem DeleteAllPaths { get; } = new UIMenuItem("Delete All Paths");
         internal static UIMenuListScrollerItem<string> EditPath { get; private set; }
-        //internal static UIMenuListScrollerItem<string> DirectOptions { get; } = new UIMenuListScrollerItem<string>("Direct driver to path's", "", new[] { "First waypoint", "Nearest waypoint" });
-        //internal static UIMenuListScrollerItem<string> DirectDriver { get; private set; } 
-        //internal static UIMenuListScrollerItem<string> DismissDriver { get; } = new UIMenuListScrollerItem<string>("Dismiss nearest driver", $"~b~From path: ~w~Driver will be released from the path\n~b~From waypoint: ~w~Driver will skip their current waypoint task\n~b~From world: ~w~Driver will be removed from the world.", DismissOptions);
         internal static UIMenuCheckboxItem DisableAllPaths { get; } = new UIMenuCheckboxItem("Disable All Paths", false);
 
         internal static void Initialize()
@@ -53,13 +48,6 @@ namespace SceneManager.Menus
             Menu.AddItem(DeleteAllPaths);
             DeleteAllPaths.Enabled = true;
             DeleteAllPaths.ForeColor = Color.Gold;
-            //Menu.AddItem(DirectOptions);
-            //DirectOptions.Enabled = true;
-            //Menu.AddItem(DirectDriver = new UIMenuListScrollerItem<string>("Direct nearest driver to path", "", PathManager.Paths.Select(x => x.Name))); // This must instantiate here because the Paths change
-            //DirectDriver.ForeColor = Color.Gold;
-            //DirectDriver.Enabled = true;
-            //Menu.AddItem(DismissDriver);
-            //DismissDriver.ForeColor = Color.Gold;
 
             if (PathManager.Paths.Count == MAX_PATH_LIMIT)
             {
@@ -71,8 +59,6 @@ namespace SceneManager.Menus
                 EditPath.Enabled = false;
                 DeleteAllPaths.Enabled = false;
                 DisableAllPaths.Enabled = false;
-                //DirectOptions.Enabled = false;
-                //DirectDriver.Enabled = false;
             }
             if(Settings.ImportedPaths.Count == 0)
             {
@@ -107,19 +93,6 @@ namespace SceneManager.Menus
                 Menu.Visible = true;
                 BarrierMenu.BuildMenu();
             }
-
-            //if (selectedItem == DirectDriver)
-            //{
-            //    if(Utils.DirectDriver.ValidateOptions(DirectOptions, PathManager.Paths[DirectDriver.Index], out Vehicle nearbyVehicle, out Waypoint targetWaypoint))
-            //    {
-            //        Utils.DirectDriver.Direct(nearbyVehicle, PathManager.Paths[DirectDriver.Index], targetWaypoint);
-            //    }
-            //}
-
-            //if (selectedItem == DismissDriver)
-            //{
-            //    Utils.DismissDriver.Dismiss(DismissDriver.Index);
-            //}
         }
 
         private static void PathMenu_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
@@ -132,7 +105,6 @@ namespace SceneManager.Menus
 
         private static void PathMenu_OnMenuOpen(UIMenu menu)
         {
-            //var scrollerItems = new List<UIMenuScrollerItem> { DirectOptions, DirectDriver, DismissDriver, EditPath };
             var scrollerItems = new List<UIMenuScrollerItem> { EditPath };
             GameFiber.StartNew(() => UserInput.InitializeMenuMouseControl(menu, scrollerItems), "RNUI Mouse Input Fiber");
         }
