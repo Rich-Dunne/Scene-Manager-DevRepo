@@ -62,7 +62,7 @@ namespace SceneManager.Managers
 
         internal static void UpdatePlaceholderBarrierPosition()
         {
-            DisableBarrierMenuOptionsIfShadowConeTooFar();
+            DisableBarrierMenuOptionsIfPlaceholderTooFar();
             if (PlaceholderBarrier)
             {
                 PlaceholderBarrier.Heading = BarrierMenu.RotateBarrier.Value;
@@ -71,7 +71,7 @@ namespace SceneManager.Managers
                 //Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(shadowBarrier, setBarrierTrafficLight.Index);
             }
 
-            void DisableBarrierMenuOptionsIfShadowConeTooFar()
+            void DisableBarrierMenuOptionsIfPlaceholderTooFar()
             {
                 if (!PlaceholderBarrier && UserInput.PlayerMousePositionForBarrier.DistanceTo2D(Game.LocalPlayer.Character.Position) <= Settings.BarrierPlacementDistance)
                 {
