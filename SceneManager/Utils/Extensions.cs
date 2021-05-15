@@ -135,7 +135,7 @@ namespace SceneManager.Utils
                 return false;
             }
 
-            var vehicleCollectedOnAnotherPath = PathManager.Paths.Any(p => p.Number != path.Number && p.CollectedPeds.Any(cp => cp && cp.CurrentVehicle == vehicle));
+            var vehicleCollectedOnAnotherPath = PathManager.Paths.Any(p => p != null && p.Number != path.Number && p.CollectedPeds.Any(cp => cp && cp.CurrentVehicle == vehicle));
             if (vehicleCollectedOnAnotherPath)
             {
                 return false;
