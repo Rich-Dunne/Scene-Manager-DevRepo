@@ -1,11 +1,5 @@
 ﻿namespace SceneManager.Utils
 {
-	internal enum Delete
-	{
-		Single,
-		All
-	}
-
 	internal enum PedTask
 	{
 		CTaskHandsUp = 0,
