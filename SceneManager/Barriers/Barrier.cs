@@ -1,5 +1,6 @@
 ﻿using Rage;
 using SceneManager.Managers;
+using SceneManager.Paths;
 using SceneManager.Utils;
 
 namespace SceneManager.Barriers
@@ -14,26 +15,66 @@ namespace SceneManager.Barriers
         public bool Immobile { get; set; }
         public bool LightsEnabled { get; set; }
         public int TextureVariation { get; set; }
+        internal Path Path { get; set; }
 
         public PoolHandle Handle => ((IHandleable)_object).Handle;
 
         private Barrier() { }
 
-        internal Barrier(string modelName, Vector3 position, float heading, bool invincible, bool immobile, int textureVariation = 0, bool lightsEnabled = false)
+        internal Barrier(Barrier obj, bool invincible, bool immobile, int textureVariation = 0, bool lightsEnabled = false)
         {
-            ModelName = modelName;
-            Position = position;
-            Heading = heading;
+            ModelName = obj.ModelName;
+            Position = obj.Position;
+            Heading = obj.Heading;
             Invincible = invincible;
             Immobile = immobile;
             TextureVariation = textureVariation;
             LightsEnabled = lightsEnabled;
+            if (obj.IsValid())
+            {
+                obj.Delete();
+            }
+
             _object = new Object(ModelName, Position, Heading);
 
-            if (BarrierManager.PlaceholderBarrier)
+            _object.SetPositionWithSnap(Position);
+            Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY<bool>(_object);
+
+            Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(_object, true);
+            if (Invincible)
             {
-                _object.SetPositionWithSnap(BarrierManager.PlaceholderBarrier.Position);
+                Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(_object, true);
+                if (ModelName != "prop_barrier_wat_03a")
+                {
+                    Rage.Native.NativeFunction.Natives.SET_DISABLE_BREAKING(_object, true);
+                }
             }
+            _object.IsPositionFrozen = Immobile;
+
+            if (Settings.EnableAdvancedBarricadeOptions)
+            {
+                SetAdvancedOptions();
+            }
+        }
+
+        internal Barrier(Object obj, bool invincible, bool immobile, int textureVariation = 0, bool lightsEnabled = false)
+        {
+            ModelName = obj.Model.Name;
+            Position = obj.Position;
+            Heading = obj.Heading;
+            Invincible = invincible;
+            Immobile = immobile;
+            TextureVariation = textureVariation;
+            LightsEnabled = lightsEnabled;
+            if(BarrierManager.PlaceholderBarrier)
+            {
+                BarrierManager.PlaceholderBarrier.Delete();
+            }
+
+            _object = new Object(ModelName, Position, Heading);
+
+            _object.SetPositionWithSnap(Position);
+            Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY<bool>(_object);
 
             Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(_object, true);
             if (Invincible)
@@ -73,8 +114,9 @@ namespace SceneManager.Barriers
             }
         }
 
-        internal void LoadFromImport()
+        internal void LoadFromImport(Path path)
         {
+            Path = path;
             Game.LogTrivial($"===== BARRIER DATA =====");
             Game.LogTrivial($"Model: {ModelName}");
             Game.LogTrivial($"Position: {Position}");
@@ -83,18 +125,22 @@ namespace SceneManager.Barriers
             Game.LogTrivial($"Immobile: {Immobile}");
             Game.LogTrivial($"LightsEnabled: {LightsEnabled}");
             Game.LogTrivial($"Texture Variation: {TextureVariation}");
-            var barrier = new Barrier(ModelName, Position, Heading, Invincible, Immobile, TextureVariation, LightsEnabled);
+            var barrier = new Barrier(this, Invincible, Immobile, TextureVariation, LightsEnabled);
+            Path.Barriers.Add(barrier);
             BarrierManager.Barriers.Add(barrier);
         }
 
         public void Delete()
         {
-            ((IDeletable)_object).Delete();
+            if (_object)
+            {
+                ((IDeletable)_object).Delete();
+            }
         }
 
         public bool IsValid()
         {
-            return ((IHandleable)_object).IsValid();
+            return _object != null;
         }
 
         public bool Equals(IHandleable other)
