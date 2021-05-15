@@ -23,7 +23,7 @@ namespace SceneManager.CollectedPeds
             Path = path;
             CurrentWaypoint = waypoint;
             SetPersistence();
-            Game.LogTrivial($"Added {CurrentVehicle.Model.Name} to collection from path {Path.Number} waypoint {waypoint.Number}.");
+            Game.LogTrivial($"Added {CurrentVehicle.Model.Name} to collection from path {Path.Number} waypoint {CurrentWaypoint.Number}.");
             
             GameFiber.StartNew(() => AssignWaypointTasks(), "Task Assignment Fiber");
         }
@@ -103,7 +103,7 @@ namespace SceneManager.CollectedPeds
         {
             float acceptedDistance = GetAcceptedStoppingDistance(Path.Waypoints, Path.Waypoints.IndexOf(CurrentWaypoint));
             Vector3 oldPosition = CurrentWaypoint.Position;
-            Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] is driving to path {CurrentWaypoint.Path.Number} waypoint {CurrentWaypoint.Number} (directed)");
+            Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] is driving to path {Path.Number} waypoint {CurrentWaypoint.Number} (directed)");
             Tasks.DriveToPosition(CurrentWaypoint.Position, CurrentWaypoint.Speed, (VehicleDrivingFlags)CurrentWaypoint.DrivingFlagType, acceptedDistance);
             LoopWhileDrivingToDirectedWaypoint();
 
