@@ -14,11 +14,10 @@ using SceneManager.CollectedPeds;
 
 namespace SceneManager.Paths
 {
-    [XmlRoot(ElementName = "Path", Namespace = "")]
     public class Path // Change this to Public for import/export
     {
-        internal string Name { get; set; }
-        internal int Number { get; set; }
+        public string Name { get; set; }
+        internal int Number { get => Array.IndexOf(PathManager.Paths, this) + 1; set { } }
         internal bool IsEnabled { get; set; }
         internal State State { get; set; }
 
@@ -31,17 +30,13 @@ namespace SceneManager.Paths
         internal List<CollectedPed> CollectedPeds { get; } = new List<CollectedPed>();
         internal List<Vehicle> BlacklistedVehicles { get; } = new List<Vehicle>();
 
-        private Path() { }
-
-        internal Path(int pathNum, State pathState)
+        internal Path()
         {
-            Number = pathNum;
-            State = pathState;
-            Name = Number.ToString();
+            State = State.Creating;
             DrawLinesBetweenWaypoints();
         }
 
-        internal void Save(string filename)
+        internal void Save()
         {
             var GAME_DIRECTORY = Directory.GetCurrentDirectory();
             var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "/plugins/SceneManager/Saved Paths/";
@@ -50,28 +45,78 @@ namespace SceneManager.Paths
                 Directory.CreateDirectory(SAVED_PATHS_DIRECTORY);
                 Game.LogTrivial($"New directory created at '/plugins/SceneManager/Saved Paths'");
             }
-            Serializer.SaveItemToXML(this, SAVED_PATHS_DIRECTORY + filename);
+
+            var overrides = DefineOverridesForCombinedPath();
+            Serializer.SaveItemToXML(this, SAVED_PATHS_DIRECTORY + Name + ".xml", overrides);
+            Game.LogTrivial($"Saved {Name}.xml");
+
+            Game.DisplayNotification($"~o~Scene Manager ~g~[Success]\n~w~Path ~b~{Name} ~w~exported.");
         }
 
         internal void Load()
         {
-            State = State.Finished;
-            EnablePath();
             foreach(Waypoint waypoint in Waypoints)
             {
                 waypoint.LoadFromImport(this);
             }
 
             Game.LogTrivial($"This path has {Barriers.Count} barriers");
-            foreach(Barrier barrier in Barriers)
+            for(int i = 0; i < Barriers.Count(); i++)
             {
-                barrier.LoadFromImport();
+                var barrier = new Barrier(Barriers[i], Barriers[i].Invincible, Barriers[i].Immobile, Barriers[i].TextureVariation, Barriers[i].LightsEnabled);
+                barrier.Path = this;
+                Barriers[i] = barrier;
+                BarrierManager.Barriers.Add(barrier);
             }
+
             DrawLinesBetweenWaypoints();
-            PathManager.EndPath(this);
+            Finish();
         }
 
-        private void LowerWaypointBlipsOpacity()
+        internal void AddWaypoint()
+        {
+            DrivingFlagType drivingFlag = PathCreationMenu.DirectWaypoint.Checked ? DrivingFlagType.Direct : DrivingFlagType.Normal;
+            float speed = HelperMethods.ConvertDriveSpeedForWaypoint(PathCreationMenu.WaypointSpeed.Value);
+
+            if (PathCreationMenu.CollectorWaypoint.Checked)
+            {
+                new Waypoint(this, UserInput.PlayerMousePosition, speed, drivingFlag, PathCreationMenu.StopWaypoint.Checked, true, PathCreationMenu.CollectorRadius.Value, PathCreationMenu.SpeedZoneRadius.Value);
+            }
+            else
+            {
+                new Waypoint(this, UserInput.PlayerMousePosition, speed, drivingFlag, PathCreationMenu.StopWaypoint.Checked);
+            }
+        }
+
+        internal void RemoveWaypoint()
+        {
+            Waypoint lastWaypoint = Waypoints.Last();
+            lastWaypoint.Delete();
+            Waypoints.Remove(lastWaypoint);
+        }
+
+        internal void Finish()
+        {
+            Game.LogTrivial($"[Path Creation] Path {Name} finished with {Waypoints.Count} waypoints.");
+            Game.DisplayNotification($"~o~Scene Manager ~g~[Success]\n~w~Path ~b~{Name} ~w~complete.");
+            State = State.Finished;
+            IsEnabled = true;
+            Waypoints.ForEach(x => x.EnableBlip());
+            GameFiber.StartNew(() => LoopForVehiclesToBeDismissed(), "Vehicle Cleanup Loop Fiber");
+            GameFiber.StartNew(() => LoopWaypointCollection(), "Waypoint Collection Loop Fiber");
+
+            PathMainMenu.CreateNewPath.Text = "Create New Path";
+            PathMainMenu.Build();
+            PathMainMenu.Menu.Visible = true;
+
+            MainMenu.Build();
+            DriverMenu.Build();
+            PathCreationMenu.Build();
+            ExportPathMenu.Build();
+            BarrierMenu.Build();
+        }
+
+        internal void LowerWaypointBlipsOpacity()
         {
             foreach (Waypoint wp in Waypoints)
             {
@@ -98,7 +143,7 @@ namespace SceneManager.Paths
             }
         }
 
-        internal void DisablePath()
+        internal void Disable()
         {
             IsEnabled = false;
             foreach(Waypoint wp in Waypoints)
@@ -109,9 +154,10 @@ namespace SceneManager.Paths
             {
                 LowerWaypointBlipsOpacity();
             }
+            Game.LogTrivial($"Path {Name} disabled.");
         }
 
-        internal void EnablePath()
+        internal void Enable()
         {
             IsEnabled = true;
             foreach (Waypoint wp in Waypoints)
@@ -125,6 +171,7 @@ namespace SceneManager.Paths
             {
                 RestoreWaypointBlipsOpacity();
             }
+            Game.LogTrivial($"Path {Name} enabled.");
         }
 
         internal void DrawLinesBetweenWaypoints()
@@ -221,11 +268,13 @@ namespace SceneManager.Paths
 
         internal void Delete()
         {
+            var pathIndex = Array.IndexOf(PathManager.Paths, this);
             State = State.Deleting;
+            RemoveAllBarriers();
             DismissCollectedDrivers();
-            RemoveWaypoints();
-            RemoveBarriers();
-            Game.LogTrivial($"Path {Number} deleted.");
+            RemoveAllWaypoints();
+            PathManager.Paths[pathIndex] = null;
+            Game.LogTrivial($"Path {Name} deleted.");
         }
 
         private void DismissCollectedDrivers()
@@ -250,18 +299,48 @@ namespace SceneManager.Paths
             }
         }
 
-        private void RemoveWaypoints()
+        private void RemoveAllWaypoints()
         {
             Waypoints.ForEach(x => x.Delete());
             Waypoints.Clear();
         }
 
-        private void RemoveBarriers()
+        private void RemoveAllBarriers()
         {
-            foreach(Barrier barrier in Barriers.Where(x => x.IsValid()))
+            Game.LogTrivial($"Deleting barriers.");
+            foreach(Barrier barrier in Barriers)
             {
                 barrier.Delete();
             }
+        }
+
+        internal void ChangeName()
+        {
+            var pathName = UserInput.PromptPlayerForFileName("Type the name you would like for your path", "Enter a path name", 100);
+            if (string.IsNullOrWhiteSpace(pathName))
+            {
+                Game.DisplayHelp($"Invalid path name given.  Name cannot be null, empty, or consist of just white spaces.  Defaulting to ~b~\"{Name}\"");
+                Game.LogTrivial($"Invalid path name given.  Name cannot be null, empty, or consist of just white spaces.  Defaulting to \"{Name}\"");
+                return;
+            }
+            if (PathManager.Paths.Any(x => x != null && x.Name == pathName))
+            {
+                Game.DisplayHelp($"Invalid path name given.  A path with that name already exists.  Defaulting to ~b~\"{Name}\"");
+                Game.LogTrivial($"Invalid path name given.  A path with that name already exists.  Defaulting to \"{Name}\"");
+                return;
+            }
+
+            Name = pathName;
+        }
+
+        private static XmlAttributeOverrides DefineOverridesForCombinedPath()
+        {
+            XmlAttributeOverrides overrides = new XmlAttributeOverrides();
+            XmlAttributes attr = new XmlAttributes();
+            attr.XmlRoot = new XmlRootAttribute("Paths");
+            overrides.Add(typeof(List<Path>), attr);
+
+            return overrides;
         }
     }
 }
