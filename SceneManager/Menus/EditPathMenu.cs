@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Rage;
@@ -6,6 +7,7 @@ using RAGENativeUI;
 using RAGENativeUI.Elements;
 using SceneManager.Managers;
 using SceneManager.Menus;
+using SceneManager.Paths;
 using SceneManager.Utils;
 
 namespace SceneManager
@@ -13,10 +15,11 @@ namespace SceneManager
     internal class EditPathMenu
     {
         internal static UIMenu Menu { get; } = new UIMenu("Scene Manager", "~o~Edit Path");
-        internal static UIMenuCheckboxItem DisablePath { get; } = new UIMenuCheckboxItem("Disable Path", false);
+        private static UIMenuCheckboxItem DisablePath { get; } = new UIMenuCheckboxItem("Disable Path", false);
         private static UIMenuItem EditWaypoints { get; } = new UIMenuItem("Edit Waypoints");
-        private static UIMenuItem deletePath { get; } = new UIMenuItem("Delete Path");
-        private static UIMenuItem ExportPath { get; } = new UIMenuItem("Export Path", "Export path to ~b~plugins/SceneManager/Saved Paths");
+        private static UIMenuItem DeletePath { get; } = new UIMenuItem("Delete Path");
+        private static UIMenuItem ChangePathName { get; } = new UIMenuItem("Change Path Name");
+        internal static Path CurrentPath { get; set; }
 
         internal static void Initialize()
         {
@@ -28,17 +31,17 @@ namespace SceneManager
             Menu.OnMenuOpen += EditPath_OnMenuOpen;
         }
 
-        internal static void BuildEditPathMenu()
+        internal static void Build()
         {
             Menu.Clear();
 
             Menu.AddItem(DisablePath);
             Menu.AddItem(EditWaypoints);
             EditWaypoints.ForeColor = Color.Gold;
-            Menu.AddItem(ExportPath);
-            ExportPath.ForeColor = Color.Gold;
-            Menu.AddItem(deletePath);
-            deletePath.ForeColor = Color.Gold;
+            Menu.AddItem(ChangePathName);
+            ChangePathName.ForeColor = Color.Gold;
+            Menu.AddItem(DeletePath);
+            DeletePath.ForeColor = Color.Gold;
 
             Menu.RefreshIndex();
         }
@@ -54,19 +57,21 @@ namespace SceneManager
                 EditWaypointMenu.BuildEditWaypointMenu();
             }
 
-            if (selectedItem == deletePath)
+            if (selectedItem == DeletePath)
             {
                 var currentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
                 currentPath.Delete();
-                PathManager.Paths.Remove(currentPath);
                 PathMainMenu.Build();
                 PathMainMenu.Menu.Visible = true;
-                BarrierMenu.BuildMenu();
+                BarrierMenu.Build();
             }
 
-            if(selectedItem == ExportPath)
+            if(selectedItem == ChangePathName)
             {
-                PathManager.ExportPath();
+                var currentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
+                currentPath.ChangeName();
+                MenuManager.BuildMenus();
+                Menu.Visible = true;
             }
         }
 
@@ -74,16 +79,20 @@ namespace SceneManager
         {
             if (checkboxItem == DisablePath)
             {
-                var currentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
+                //var currentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
+                var currentPath = PathManager.Paths.FirstOrDefault(x => x.Name == PathMainMenu.EditPath.OptionText);
+                if(currentPath == null)
+                {
+                    return;
+                }
+
                 if (DisablePath.Checked)
                 {
-                    currentPath.DisablePath();
-                    Game.LogTrivial($"Path {currentPath.Number} disabled.");
+                    currentPath.Disable();
                 }
                 else
                 {
-                    currentPath.EnablePath();
-                    Game.LogTrivial($"Path {currentPath.Number} enabled.");
+                    currentPath.Enable();
                 }
             }
         }
@@ -92,6 +101,8 @@ namespace SceneManager
         {
             var scrollerItems = new List<UIMenuScrollerItem> {  };
             GameFiber.StartNew(() => UserInput.InitializeMenuMouseControl(menu, scrollerItems), "RNUI Mouse Input Fiber");
+            //CurrentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
+            ChangePathName.Description = $"Change the path name from ~b~{CurrentPath.Name} ~w~to something else.";
         }
     }
 }
