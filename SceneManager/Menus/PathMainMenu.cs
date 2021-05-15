@@ -7,16 +7,15 @@ using RAGENativeUI.Elements;
 using SceneManager.Managers;
 using SceneManager.Paths;
 using SceneManager.Utils;
-using SceneManager.Waypoints;
 
 namespace SceneManager.Menus
 {
     internal static class PathMainMenu
     {
-        private static int MAX_PATH_LIMIT { get; } = 10;
         internal static UIMenu Menu { get; } = new UIMenu("Scene Manager", "~o~Path Manager");
         internal static UIMenuItem CreateNewPath { get; } = new UIMenuItem("Create New Path");
-        internal static UIMenuItem ImportPath { get; } = new UIMenuItem("Import Path", "Import a saved path from ~b~plugins/SceneManager/Saved Paths");
+        internal static UIMenuItem ImportPath { get; } = new UIMenuItem("Import Paths", "Import saved paths from ~b~plugins/SceneManager/Saved Paths");
+        internal static UIMenuItem ExportPath { get; } = new UIMenuItem("Export Paths", "Export selected paths to ~b~plugins/SceneManager/Saved Paths");
         internal static UIMenuItem DeleteAllPaths { get; } = new UIMenuItem("Delete All Paths");
         internal static UIMenuListScrollerItem<string> EditPath { get; private set; }
         internal static UIMenuCheckboxItem DisableAllPaths { get; } = new UIMenuCheckboxItem("Disable All Paths", false);
@@ -40,8 +39,11 @@ namespace SceneManager.Menus
             CreateNewPath.ForeColor = Color.Gold;
             Menu.AddItem(ImportPath);
             ImportPath.ForeColor = Color.Gold;
-            ImportPath.Enabled = Settings.ImportedPaths.Count() > 0;
-            Menu.AddItem(EditPath = new UIMenuListScrollerItem<string>("Edit Path", "Options to ~b~edit path waypoints~w~, ~b~disable the path~w~, ~b~export the path~w~, or ~b~delete the path~w~.", PathManager.Paths.Select(x => x.Name)));
+            ImportPath.Enabled = PathManager.ImportedPaths.Count > 0;
+            Menu.AddItem(ExportPath);
+            ExportPath.ForeColor = Color.Gold;
+            ExportPath.Enabled = PathManager.Paths.Any(x => x != null);
+            Menu.AddItem(EditPath = new UIMenuListScrollerItem<string>("Edit Path", "Options to ~b~edit path waypoints~w~, ~b~disable the path~w~, ~b~change path name~w~, or ~b~delete the path~w~.", PathManager.Paths.Where(x => x != null).Select(x => x.Name)));
             EditPath.ForeColor = Color.Gold;
             Menu.AddItem(DisableAllPaths);
             DisableAllPaths.Enabled = true;
@@ -49,18 +51,18 @@ namespace SceneManager.Menus
             DeleteAllPaths.Enabled = true;
             DeleteAllPaths.ForeColor = Color.Gold;
 
-            if (PathManager.Paths.Count == MAX_PATH_LIMIT)
+            if (PathManager.Paths.All(x => x != null))
             {
                 CreateNewPath.Enabled = false;
                 ImportPath.Enabled = false;
             }
-            if (PathManager.Paths.Count == 0)
+            if (PathManager.Paths.All(x => x == null))
             {
                 EditPath.Enabled = false;
                 DeleteAllPaths.Enabled = false;
                 DisableAllPaths.Enabled = false;
             }
-            if(Settings.ImportedPaths.Count == 0)
+            if(PathManager.ImportedPaths.Count == 0)
             {
                 ImportPath.Enabled = false;
             }
@@ -80,6 +82,11 @@ namespace SceneManager.Menus
                 GoToImportMenu();
             }
 
+            if(selectedItem == ExportPath)
+            {
+                GoToExportMenu();
+            }
+
             if (selectedItem == EditPath)
             {
                 GoToEditPathMenu();
@@ -91,7 +98,7 @@ namespace SceneManager.Menus
                 DisableAllPaths.Checked = false;
                 Build();
                 Menu.Visible = true;
-                BarrierMenu.BuildMenu();
+                BarrierMenu.Build();
             }
         }
 
@@ -115,12 +122,11 @@ namespace SceneManager.Menus
             {
                 Menu.Visible = false;
                 PathCreationMenu.Menu.Visible = true;
-                Path currentPath = PathManager.Paths.FirstOrDefault(x => x.State == State.Creating);
-                Game.DisplayNotification($"~o~Scene Manager~y~[Creating]\n~w~Resuming path {currentPath.Number}");
+                Path currentPath = PathManager.Paths.FirstOrDefault(x => x != null && x.State == State.Creating);
+                Game.DisplayNotification($"~o~Scene Manager~y~[Creating]\n~w~Resuming path ~b~{currentPath.Name}~w~.");
             }
             else
             {
-                //PathCreationMenu.BuildPathCreationMenu();
                 Menu.Visible = false;
                 PathCreationMenu.Menu.Visible = true;
             }
@@ -132,9 +138,16 @@ namespace SceneManager.Menus
             ImportPathMenu.Menu.Visible = true;
         }
 
+        private static void GoToExportMenu()
+        {
+            Menu.Visible = false;
+            ExportPathMenu.Menu.Visible = true;
+        }
+
         private static void GoToEditPathMenu()
         {
             Menu.Visible = false;
+            EditPathMenu.CurrentPath = PathManager.Paths[EditPath.Index];
             EditPathMenu.Menu.Visible = true;
         }
     }
