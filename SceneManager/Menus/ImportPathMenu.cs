@@ -7,13 +7,15 @@ using System.Linq;
 using Rage;
 using SceneManager.Managers;
 using SceneManager.Paths;
+using System;
+using System.Windows.Forms;
 
 namespace SceneManager.Menus
 {
     internal class ImportPathMenu
     {
         internal static UIMenu Menu = new UIMenu("Scene Manager", "~o~Import Path Menu");
-        private static UIMenuItem menuItem;
+        internal static UIMenuItem Import { get; } = new UIMenuItem("Import", "Import the selected paths.");
 
         internal static void Initialize()
         {
@@ -22,39 +24,93 @@ namespace SceneManager.Menus
 
             Menu.OnItemSelect += ImportPathMenu_OnItemSelect;
             Menu.OnMenuOpen += ImportPathMenu_OnMenuOpen;
+            Menu.OnCheckboxChange += ImportPathMenu_OnCheckboxChange;
         }
 
-        internal static void BuildImportMenu()
+        internal static void Build()
         {
             Menu.Clear();
-            foreach(Path path in Settings.ImportedPaths)
+            PathManager.ImportPaths();
+            foreach(KeyValuePair<string, List<Path>> kvp in PathManager.ImportedPaths)
             {
-                Menu.AddItem(menuItem = new UIMenuItem(path.Name));
-                menuItem.ForeColor = Color.Gold;
+                Menu.AddItem(new UIMenuCheckboxItem(kvp.Key, false));
             }
+
+            Menu.AddItem(Import);
+            Import.ForeColor = Color.Gold;
+            Import.Enabled = false;
         }
 
         private static void ImportPathMenu_OnMenuOpen(UIMenu menu)
         {
             GameFiber.StartNew(() => UserInput.InitializeMenuMouseControl(menu, new List<UIMenuScrollerItem>()), "RNUI Mouse Input Fiber");
-            
-            // Disable menu item if PathManager.Paths contains a path with a matching name
-            foreach (UIMenuItem menuItem in menu.MenuItems)
-            {
-                menuItem.Enabled = !PathManager.Paths.Any(x => x.Name == menuItem.Text);
-            }
         }
 
         private static void ImportPathMenu_OnItemSelect(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            // When the user clicks on a path, that path needs to be added from Settings.importedPaths to PathMainMenu.paths
-            Path importedPath = PathManager.ImportPath(Settings.ImportedPaths.FirstOrDefault(x => x.Name == selectedItem.Text));
-            importedPath.Load();
-            Game.LogTrivial($"{selectedItem.Text} added to paths collection.  Paths count: {PathManager.Paths.Count}");
-            selectedItem.Enabled = false;
+            if(selectedItem == Import)
+            {
+                var checkboxItems = Menu.MenuItems.Where(x => x.GetType() == typeof(UIMenuCheckboxItem));
+                foreach(UIMenuCheckboxItem menuItem in checkboxItems)
+                {
+                    if(menuItem.Checked)
+                    {
+                        var pathsFromFile = PathManager.ImportedPaths.FirstOrDefault(x => x.Key == menuItem.Text).Value;
+                        foreach(Path path in pathsFromFile)
+                        {
+                            if(PathManager.Paths.Any(x => x != null && x.Name == path.Name))
+                            {
+                                Game.DisplayHelp($"A path with the name ~b~{path.Name} ~w~already exists.  Do you want to replace it?  ~{Keys.Y.GetInstructionalId()}~ or ~{Keys.N.GetInstructionalId()}~");
+                                GameFiber.Sleep(100);
+                                GameFiber.SleepUntil(() => Game.IsKeyDown(Keys.Y) || Game.IsKeyDown(Keys.N), 8300);
 
-            MenuManager.BuildMenus();
-            PathMainMenu.Menu.Visible = true;
+                                if(Game.IsKeyDown(Keys.Y))
+                                {
+                                    var pathToReplace = PathManager.Paths.First(x => x.Name == path.Name);
+                                    var pathToReplaceIndex = Array.IndexOf(PathManager.Paths, pathToReplace);
+                                    pathToReplace.Delete();
+                                    PathManager.Paths[pathToReplaceIndex] = path;
+                                    path.Load();
+                                    Rage.Native.NativeFunction.Natives.CLEAR_ALL_HELP_MESSAGES();
+                                    continue;
+                                }
+                                else
+                                {
+                                    Game.DisplayNotification($"~o~Scene Manager ~y~[Import]\n~w~Path ~b~{path.Name} ~w~was not imported.");
+                                    Rage.Native.NativeFunction.Natives.CLEAR_ALL_HELP_MESSAGES();
+                                    continue;
+                                }
+                            }
+
+                            var firstNullPathIndex = Array.IndexOf(PathManager.Paths, PathManager.Paths.First(x => x == null));
+                            PathManager.Paths[firstNullPathIndex] = path;
+                            path.Load();
+                        }
+
+                        var numberOfNonNullPaths = PathManager.Paths.Where(x => x != null).Count();
+                        Game.LogTrivial($"{menuItem.Text} added to paths collection.  Paths count: {numberOfNonNullPaths}");
+                        Menu.RefreshIndex();
+                    }
+                }
+
+                MenuManager.BuildMenus();
+                Menu.Visible = true;
+            }
+        }
+
+        private static void ImportPathMenu_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool Checked)
+        {
+            var checkboxItems = Menu.MenuItems.Where(x => x.GetType() == typeof(UIMenuCheckboxItem));
+            int checkedItems = 0;
+            foreach (UIMenuCheckboxItem menuItem in checkboxItems)
+            {
+                if (menuItem.Checked)
+                {
+                    checkedItems++;
+                }
+            }
+
+            Import.Enabled = checkedItems > 0;
         }
     }
 }
