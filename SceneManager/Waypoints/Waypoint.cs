@@ -12,7 +12,7 @@ namespace SceneManager.Waypoints
     public class Waypoint // Change this and select properties to Public for import/export
     {
         internal Path Path { get; set; }
-        public int Number { get; set; }
+        internal int Number { get => Path.Waypoints.IndexOf(this) + 1; set { } }
         public Vector3 Position { get; set; }
         public float Speed { get; set; }
         public DrivingFlagType DrivingFlagType { get; set; }
@@ -27,10 +27,9 @@ namespace SceneManager.Waypoints
 
         private Waypoint() { }
 
-        internal Waypoint(Path path, int waypointNumber, Vector3 waypointPosition, float speed, DrivingFlagType drivingFlag, bool stopWaypoint, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 5)
+        internal Waypoint(Path path, Vector3 waypointPosition, float speed, DrivingFlagType drivingFlag, bool stopWaypoint, bool collector = false, float collectorRadius = 1, float speedZoneRadius = 5)
         {
             Path = path;
-            Number = waypointNumber;
             Position = waypointPosition;
             Speed = speed;
             DrivingFlagType = drivingFlag;
@@ -56,6 +55,8 @@ namespace SceneManager.Waypoints
                 }
             }
 
+            Path.Waypoints.Add(this);
+            Game.LogTrivial($"Path {Path.Name} Waypoint {Number} added [Driving style: {DrivingFlagType} | Stop waypoint: {IsStopWaypoint} | Speed: {Speed} | Collector: {IsCollector}]");
             DrawWaypointMarker();
         }
 
