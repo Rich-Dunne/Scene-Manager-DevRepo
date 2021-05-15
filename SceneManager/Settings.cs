@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using System.Windows.Forms;
 using SceneManager.Utils;
 using System.IO;
+using System.Xml.Linq;
+using System.Linq;
+using System.Xml.Serialization;
+using SceneManager.Managers;
 
 namespace SceneManager
 {
@@ -34,8 +38,7 @@ namespace SceneManager
         internal static int WaypointSpeed { get; set; } = 5;
 
         // Barriers
-        internal static Dictionary<string, Model> Barriers { get; private set; } = new Dictionary<string, Model>();
-        internal static List<Paths.Path> ImportedPaths { get; private set; } = new List<Paths.Path>();
+        internal static Dictionary<string, Model> BarrierModels { get; private set; } = new Dictionary<string, Model>();
 
         internal static void LoadSettings()
         {
@@ -66,44 +69,6 @@ namespace SceneManager
             
             SettingsValidator.ValidateWaypointSettings();
             SettingsValidator.ValidateBarrierSettings(ini);
-            ImportPaths();
-        }
-
-        // This will need to be moved to a different class
-        internal static void ImportPaths()
-        {
-            ImportedPaths.Clear();
-
-            // Check if Saved Paths directory exists
-            var GAME_DIRECTORY = Directory.GetCurrentDirectory();
-            var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "\\plugins\\SceneManager\\Saved Paths\\";
-            if (!Directory.Exists(SAVED_PATHS_DIRECTORY))
-            {
-                Game.LogTrivial($"Directory '\\plugins\\SceneManager\\Saved Paths' does not exist.  No paths available to import.");
-                return;
-            }
-
-            // Check if any XML files are available to import from Saved Paths
-            var savedPaths = Directory.GetFiles(SAVED_PATHS_DIRECTORY, "*.xml");
-            if (savedPaths.Length == 0)
-            {
-                Game.LogTrivial($"No saved paths found.");
-                return;
-            }
-            else
-            {
-                Game.LogTrivial($"{savedPaths.Length} path(s) available to import.");
-            }
-
-            // Import paths
-            foreach (string file in savedPaths)
-            {
-                Game.LogTrivial($"File: {Path.GetFileName(file)}");
-                var importedPath = Serializer.LoadItemFromXML<Paths.Path>(SAVED_PATHS_DIRECTORY + Path.GetFileName(file));
-                importedPath.Name = Path.GetFileNameWithoutExtension(file);
-                ImportedPaths.Add(importedPath);
-            }
-            Game.LogTrivial($"Successfully imported {ImportedPaths.Count} path(s).");
         }
 
         internal static void UpdateSettings(bool threeDWaypointsEnabled, bool mapBlipsEnabled, bool hintsEnabled, SpeedUnits unit)
