@@ -42,7 +42,7 @@ namespace SceneManager
                 var model = new Model(ini.ReadString("Barriers", displayName.Trim()));
                 if (model.IsValid)
                 {
-                    Settings.Barriers.Add(displayName, model);
+                    Settings.BarrierModels.Add(displayName, model);
                 }
                 else
                 {
