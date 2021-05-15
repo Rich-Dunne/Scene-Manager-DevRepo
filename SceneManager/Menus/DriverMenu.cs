@@ -34,13 +34,13 @@ namespace SceneManager.Menus
 
             Menu.AddItem(DirectOptions);
             DirectOptions.Enabled = true;
-            Menu.AddItem(DirectDriver = new UIMenuListScrollerItem<string>("Direct nearest driver to path", "", PathManager.Paths.Select(x => x.Name))); // This must instantiate here because the Paths change
+            Menu.AddItem(DirectDriver = new UIMenuListScrollerItem<string>("Direct nearest driver to path", "", PathManager.Paths.Where(x => x != null).Select(x => x.Name))); // This must instantiate here because the Paths change
             DirectDriver.ForeColor = Color.Gold;
             DirectDriver.Enabled = true;
             Menu.AddItem(DismissDriver);
             DismissDriver.ForeColor = Color.Gold;
 
-            if (PathManager.Paths.Count == 0)
+            if (PathManager.Paths.Length == 0)
             {
                 DirectOptions.Enabled = false;
                 DirectDriver.Enabled = false;
