@@ -28,8 +28,10 @@ namespace SceneManager.Menus
             Menu.OnMenuOpen += SettingsMenu_OnMenuOpen;
         }
 
-        internal static void BuildSettingsMenu()
+        internal static void Build()
         {
+            Menu.Clear();
+
             Menu.AddItem(ThreeDWaypoints);
             Menu.AddItem(MapBlips);
             Menu.AddItem(Hints);
