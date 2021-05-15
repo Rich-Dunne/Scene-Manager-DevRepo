@@ -1,22 +1,24 @@
 ﻿using Rage;
 using SceneManager.Menus;
-using SceneManager.Paths;
 using SceneManager.Utils;
 using SceneManager.Waypoints;
+using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
+using System.Xml.Serialization;
 
 namespace SceneManager.Managers
 {
     internal class PathManager
     {
-        internal static List<Path> Paths { get; } = new List<Path>(10);
+        internal static Paths.Path[] Paths { get; } = new Paths.Path[10];
+        internal static Dictionary<string, List<Paths.Path>> ImportedPaths { get; } = new Dictionary<string, List<Paths.Path>>();
 
-        internal static Path ImportPath(Path importedPath)
+        internal static Paths.Path ImportPath(Paths.Path importedPath)
         {
             importedPath.State = State.Creating;
-
-            var firstVacantIndex = Paths.IndexOf(Paths.FirstOrDefault(x => x.State == State.Uninitialized)) + 1; // != State.Creating
+            var firstVacantIndex = Array.IndexOf(Paths, Paths.First(x => x == null));
             if (firstVacantIndex < 0)
             {
                 firstVacantIndex = 0;
@@ -24,10 +26,10 @@ namespace SceneManager.Managers
             var pathNumber = firstVacantIndex + 1;
 
             importedPath.Number = pathNumber;
-            Paths.Insert(firstVacantIndex, importedPath);
+            Paths[firstVacantIndex] = importedPath;
 
-            Game.LogTrivial($"Importing path {importedPath.Number} at Paths index {firstVacantIndex}");
-            Game.DisplayNotification($"~o~Scene Manager ~y~[Importing]\n~w~Path {importedPath.Number} import started.");
+            Game.LogTrivial($"Importing {importedPath.Name} at Paths index {firstVacantIndex}");
+            Game.DisplayNotification($"~o~Scene Manager ~y~[Importing]\n~w~Importing path: ~b~{importedPath.Name} ~w~.");
 
             return importedPath;
         }
@@ -35,46 +37,52 @@ namespace SceneManager.Managers
         internal static void ExportPath()
         {
             var currentPath = Paths[PathMainMenu.EditPath.Index];
-            // Reference PNWParks's UserInput class from LiveLights
-            var filename = UserInput.PromptPlayerForFileName("Type the name you would like to save your file as", "Enter a filename", 100) + ".xml";
 
-            // If filename != null or empty, check if export directory exists (GTA V/Plugins/SceneManager/Saved Paths)
-            if (string.IsNullOrWhiteSpace(filename))
+            // If the path is in the import menu, autosave with the same name.
+            if(ImportPathMenu.Menu.MenuItems.Any(x=> x.Text == currentPath.Name))
             {
-                Game.DisplayHelp($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
-                Game.LogTrivial($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
-                return;
+                Game.LogTrivial($"Autosaving {currentPath.Name}");
+                currentPath.Save();
             }
-            Game.LogTrivial($"Filename: {filename}");
-            currentPath.Save(filename);
-            currentPath.Name = filename.Remove(filename.Length - 4);
-            Game.LogTrivial($"Path name: {currentPath.Name}");
-            Game.LogTrivial($"Exporting path {currentPath.Number}");
-            Game.DisplayNotification($"~o~Scene Manager ~y~[Exporting]\n~w~Path {currentPath.Number} exported.");
-            Settings.ImportPaths();
+            else
+            {
+                // Reference PNWParks's UserInput class from LiveLights
+                var filename = UserInput.PromptPlayerForFileName("Type the name you would like to save your file as", "Enter a filename", 100);
+
+                // If filename != null or empty, check if export directory exists (GTA V/Plugins/SceneManager/Saved Paths)
+                if (string.IsNullOrWhiteSpace(filename))
+                {
+                    Game.DisplayHelp($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
+                    Game.LogTrivial($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
+                    return;
+                }
+
+                Game.LogTrivial($"Filename: {filename}");
+                currentPath.Name = filename;
+                currentPath.Save();
+            }
+
             PathMainMenu.ImportPath.Enabled = true;
-            ImportPathMenu.BuildImportMenu();
+            ImportPathMenu.Build();
             PathMainMenu.Build();
+            BarrierMenu.Build();
 
             PathMainMenu.Menu.Visible = true;
         }
 
-        internal static Path InitializeNewPath()
+        internal static Paths.Path InitializeNewPath()
         {
             PathCreationMenu.PathCreationState = State.Creating;
 
-            var firstVacantIndex = Paths.IndexOf(Paths.FirstOrDefault(x => x.State != State.Creating)) + 1;
-            if(firstVacantIndex < 0)
-            {
-                firstVacantIndex = 0;
-            }
-            var pathNumber = firstVacantIndex + 1;
+            Paths.Path newPath = new Paths.Path();
+            var firstEmptyIndex = Array.IndexOf(Paths, Paths.First(x => x == null));
+            Game.LogTrivial($"First empty index: {firstEmptyIndex}");
+            Paths[firstEmptyIndex] = newPath;
+            newPath.Name = newPath.Number.ToString();
 
-            Path newPath = new Path(pathNumber, State.Creating);
-            Paths.Insert(firstVacantIndex, newPath);
-
-            Game.LogTrivial($"Creating path {newPath.Number} at Paths index {firstVacantIndex}");
-            Game.DisplayNotification($"~o~Scene Manager ~y~[Creating]\n~w~Path {newPath.Number} started.");
+            PathMainMenu.CreateNewPath.Text = $"Continue Creating Path {newPath.Name}";
+            Game.LogTrivial($"Creating path {newPath.Name} at Paths[{firstEmptyIndex}]");
+            Game.DisplayNotification($"~o~Scene Manager ~y~[Creating]\n~w~Path ~b~{newPath.Name} ~w~started.");
 
             PathCreationMenu.RemoveLastWaypoint.Enabled = false;
             PathCreationMenu.EndPathCreation.Enabled = false;
@@ -82,46 +90,23 @@ namespace SceneManager.Managers
             return newPath;
         }
 
-        internal static void AddWaypoint(Path currentPath)
-        {
-            var waypointNumber = currentPath.Waypoints.Count + 1;
-            DrivingFlagType drivingFlag = PathCreationMenu.DirectWaypoint.Checked ? DrivingFlagType.Direct : DrivingFlagType.Normal;
-            Waypoint newWaypoint;
-            if (PathCreationMenu.CollectorWaypoint.Checked)
-            {
-                newWaypoint = new Waypoint(currentPath, waypointNumber, UserInput.PlayerMousePosition, ConvertDriveSpeedForWaypoint(PathCreationMenu.WaypointSpeed.Value), drivingFlag, PathCreationMenu.StopWaypoint.Checked, true, PathCreationMenu.CollectorRadius.Value, PathCreationMenu.SpeedZoneRadius.Value);
-            }
-            else
-            {
-                newWaypoint = new Waypoint(currentPath, waypointNumber, UserInput.PlayerMousePosition, ConvertDriveSpeedForWaypoint(PathCreationMenu.WaypointSpeed.Value), drivingFlag, PathCreationMenu.StopWaypoint.Checked);
-            }
-            currentPath.Waypoints.Add(newWaypoint);
-            Game.LogTrivial($"Path {currentPath.Number} Waypoint {waypointNumber} added [Driving style: {drivingFlag} | Stop waypoint: {newWaypoint.IsStopWaypoint} | Speed: {newWaypoint.Speed} | Collector: {newWaypoint.IsCollector}]");
-
-            if(currentPath.Waypoints.Count == 1)
-            {
-                PathMainMenu.CreateNewPath.Text = $"Continue Creating Path {currentPath.Number}";
-            }
-        }
-
-        internal static void AddNewEditWaypoint(Path currentPath)
+        internal static void AddNewEditWaypoint(Paths.Path currentPath)
         {
             DrivingFlagType drivingFlag = EditWaypointMenu.DirectWaypointBehavior.Checked ? DrivingFlagType.Direct : DrivingFlagType.Normal;
 
             if (EditWaypointMenu.CollectorWaypoint.Checked)
             {
-                currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, UserInput.PlayerMousePosition, ConvertDriveSpeedForWaypoint(EditWaypointMenu.ChangeWaypointSpeed.Value), drivingFlag, EditWaypointMenu.StopWaypointType.Checked, true, EditWaypointMenu.ChangeCollectorRadius.Value, EditWaypointMenu.ChangeSpeedZoneRadius.Value));
+                currentPath.Waypoints.Add(new Waypoint(currentPath, UserInput.PlayerMousePosition, ConvertDriveSpeedForWaypoint(EditWaypointMenu.ChangeWaypointSpeed.Value), drivingFlag, EditWaypointMenu.StopWaypointType.Checked, true, EditWaypointMenu.ChangeCollectorRadius.Value, EditWaypointMenu.ChangeSpeedZoneRadius.Value));
             }
             else
             {
-                currentPath.Waypoints.Add(new Waypoint(currentPath, currentPath.Waypoints.Last().Number + 1, UserInput.PlayerMousePosition, ConvertDriveSpeedForWaypoint(EditWaypointMenu.ChangeWaypointSpeed.Value), drivingFlag, EditWaypointMenu.StopWaypointType.Checked));
+                currentPath.Waypoints.Add(new Waypoint(currentPath, UserInput.PlayerMousePosition, ConvertDriveSpeedForWaypoint(EditWaypointMenu.ChangeWaypointSpeed.Value), drivingFlag, EditWaypointMenu.StopWaypointType.Checked));
             }
             Game.LogTrivial($"New waypoint (#{currentPath.Waypoints.Last().Number}) added.");
         }
 
         internal static void UpdateWaypoint()
         {
-            //var currentPath = Paths[PathMainMenu.EditPath.Index];
             var currentPath = Paths.FirstOrDefault(x => x.Name == PathMainMenu.EditPath.OptionText);
             var currentWaypoint = currentPath.Waypoints[EditWaypointMenu.EditWaypoint.Index];
             DrivingFlagType drivingFlag = EditWaypointMenu.DirectWaypointBehavior.Checked ? DrivingFlagType.Direct : DrivingFlagType.Normal;
@@ -148,21 +133,14 @@ namespace SceneManager.Managers
             return convertedSpeed;
         }
 
-        internal static void RemoveWaypoint(Path currentPath)
-        {
-            Waypoint lastWaypoint = currentPath.Waypoints.Last();
-            lastWaypoint.Delete();
-            currentPath.Waypoints.Remove(lastWaypoint);
-        }
-
-        internal static void RemoveEditWaypoint(Path currentPath)
+        internal static void RemoveEditWaypoint(Paths.Path currentPath)
         {
             var currentWaypoint = currentPath.Waypoints[EditWaypointMenu.EditWaypoint.Index];
             if (currentPath.Waypoints.Count == 1)
             {
                 Game.LogTrivial($"Deleting the last waypoint from the path.");
                 currentPath.Delete();
-                Paths.Remove(currentPath);
+                Paths[Array.IndexOf(Paths, currentPath)] = null;
                 PathMainMenu.Build();
 
                 EditWaypointMenu.Menu.Visible = false;
@@ -178,7 +156,7 @@ namespace SceneManager.Managers
             DefaultWaypointToCollector(currentPath);
         }
 
-        private static void DefaultWaypointToCollector(Path currentPath)
+        private static void DefaultWaypointToCollector(Paths.Path currentPath)
         {
             if (currentPath.Waypoints.Count == 1)
             {
@@ -192,27 +170,7 @@ namespace SceneManager.Managers
             }
         }
 
-        internal static void EndPath(Path currentPath)
-        {
-            Game.LogTrivial($"[Path Creation] Path {currentPath.Number} finished with {currentPath.Waypoints.Count} waypoints.");
-            Game.DisplayNotification($"~o~Scene Manager ~g~[Success]\n~w~Path {currentPath.Number} complete.");
-            currentPath.State = State.Finished;
-            currentPath.IsEnabled = true;
-            currentPath.Waypoints.ForEach(x => x.EnableBlip());
-            GameFiber.StartNew(() => currentPath.LoopForVehiclesToBeDismissed(), "Vehicle Cleanup Loop Fiber");
-            GameFiber.StartNew(() => currentPath.LoopWaypointCollection(), "Waypoint Collection Loop Fiber");
-
-            PathMainMenu.CreateNewPath.Text = "Create New Path";
-            PathMainMenu.Build();
-            PathMainMenu.Menu.Visible = true;
-
-            MainMenu.BuildMainMenu();
-            DriverMenu.Build();
-            PathCreationMenu.BuildPathCreationMenu();
-            BarrierMenu.BuildMenu();
-        }
-
-        internal static void TogglePathCreationMenuItems(Path currentPath)
+        internal static void TogglePathCreationMenuItems(Paths.Path currentPath)
         {
             if(currentPath.Waypoints.Count == 1)
             {
@@ -228,6 +186,15 @@ namespace SceneManager.Managers
                 PathCreationMenu.CollectorWaypoint.Checked = true;
                 PathCreationMenu.RemoveLastWaypoint.Enabled = false;
                 PathCreationMenu.EndPathCreation.Enabled = false;
+                PathCreationMenu.PathName.Enabled = false;
+                PathCreationMenu.PathName.Description = "Add your first waypoint to enable this option.";
+                currentPath.Delete();
+
+                PathCreationMenu.PathCreationState = State.Uninitialized;
+                PathMainMenu.CreateNewPath.Text = "Create New Path";
+                PathMainMenu.Build();
+                GameFiber.Yield();
+                PathCreationMenu.Menu.Visible = true;
             }
 
             if (PathCreationMenu.CollectorWaypoint.Checked)
@@ -256,25 +223,81 @@ namespace SceneManager.Managers
 
         internal static void ToggleAllPaths(bool disable)
         {
+            var nonNullPaths = Paths.Where(x => x != null).ToList();
             if (disable)
             {
-                Paths.ForEach(x => x.DisablePath());
+                nonNullPaths.ForEach(x => x.Disable());
                 Game.LogTrivial($"All paths disabled.");
             }
             else
             {
-                Paths.ForEach(x => x.EnablePath());
+                nonNullPaths.ForEach(x => x.Enable());
                 Game.LogTrivial($"All paths enabled.");
             }
         }
 
         internal static void DeleteAllPaths()
         {
-            Paths.ForEach(x => x.Delete());
-            Paths.Clear();
+            for(int i = 0; i < Paths.Length; i++)
+            {
+                if(Paths[i] != null)
+                {
+                    Paths[i].Delete();
+                }
+            }
+            Array.Clear(Paths, 0, Paths.Length);
+            //Paths.Clear();
             Game.LogTrivial($"All paths deleted");
             Game.DisplayNotification($"~o~Scene Manager\n~w~All paths deleted.");
-            MainMenu.BuildMainMenu();
+            MainMenu.Build();
+        }
+
+        internal static void ImportPaths()
+        {
+            ImportedPaths.Clear();
+
+            // Check if Saved Paths directory exists
+            var GAME_DIRECTORY = Directory.GetCurrentDirectory();
+            var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "\\plugins\\SceneManager\\Saved Paths\\";
+            if (!Directory.Exists(SAVED_PATHS_DIRECTORY))
+            {
+                Game.LogTrivial($"Directory '\\plugins\\SceneManager\\Saved Paths' does not exist.  No paths available to import.");
+                return;
+            }
+
+            // Check if any XML files are available to import from Saved Paths
+            var savedPathNames = Directory.GetFiles(SAVED_PATHS_DIRECTORY, "*.xml");
+            if (savedPathNames.Length == 0)
+            {
+                Game.LogTrivial($"No saved paths found.");
+                return;
+            }
+            else
+            {
+                Game.LogTrivial($"{savedPathNames.Length} path(s) available to import.");
+            }
+
+            // Import paths
+            foreach (string pathName in savedPathNames)
+            {
+                var fileName = Path.GetFileNameWithoutExtension(pathName);
+                Game.LogTrivial($"File: {fileName}");
+
+                var overrides = DefineOverridesForCombinedPath();
+                var paths = Serializer.LoadItemFromXML<List<Paths.Path>>(SAVED_PATHS_DIRECTORY + Path.GetFileName(pathName), overrides);
+                ImportedPaths.Add(fileName, paths);
+            }
+            Game.LogTrivial($"Successfully imported {ImportedPaths.Count} file(s).");
+        }
+
+        private static XmlAttributeOverrides DefineOverridesForCombinedPath()
+        {
+            XmlAttributeOverrides overrides = new XmlAttributeOverrides();
+            XmlAttributes attr = new XmlAttributes();
+            attr.XmlRoot = new XmlRootAttribute("Paths");
+            overrides.Add(typeof(List<Paths.Path>), attr);
+
+            return overrides;
         }
     }
 }
