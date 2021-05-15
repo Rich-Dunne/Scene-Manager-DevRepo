@@ -22,6 +22,7 @@ namespace SceneManager.Menus
         internal static UIMenuCheckboxItem CollectorWaypoint { get; } = new UIMenuCheckboxItem("Collector", true, "If checked, this waypoint will collect vehicles to follow the path.  Your path's first waypoint ~b~must~w~ be a collector.");
         internal static UIMenuNumericScrollerItem<int> CollectorRadius { get; } = new UIMenuNumericScrollerItem<int>("Collection Radius", "The distance from this waypoint (in meters) vehicles will be collected", 1, 50, 1);
         internal static UIMenuNumericScrollerItem<int> SpeedZoneRadius { get; } = new UIMenuNumericScrollerItem<int>("Speed Zone Radius", "The distance from this collector waypoint (in meters) non-collected vehicles will drive at this waypoint's speed", 5, 200, 5);
+        internal static UIMenuItem PathName { get; private set; } = new UIMenuItem("Change Path Name", $"Add your first waypoint to enable this option.");
         internal static State PathCreationState { get; set; } = State.Uninitialized;
 
         internal static void Initialize()
@@ -35,7 +36,7 @@ namespace SceneManager.Menus
             Menu.OnMenuOpen += PathCreation_OnMenuOpen;
         }
 
-        internal static void BuildPathCreationMenu()
+        internal static void Build()
         {
             Menu.Clear();
 
@@ -58,6 +59,10 @@ namespace SceneManager.Menus
 
             Menu.AddItem(WaypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to this waypoint in ~b~{SettingsMenu.SpeedUnits.SelectedItem}", 5, 100, 5));
             WaypointSpeed.Index = (Settings.WaypointSpeed / 5) - 1;
+
+            Menu.AddItem(PathName);
+            PathName.ForeColor = Color.Gold;
+            PathName.Enabled = false;
 
             Menu.AddItem(AddWaypoint);
             AddWaypoint.ForeColor = Color.Gold;
@@ -108,22 +113,31 @@ namespace SceneManager.Menus
                 if (PathCreationState != State.Creating)
                 {
                     CurrentPath = PathManager.InitializeNewPath();
+                    PathName.Description = $"Current path name is ~b~{CurrentPath.Name}";
+                    PathName.Enabled = true;
                 }
 
-                PathManager.AddWaypoint(CurrentPath);
+                CurrentPath.AddWaypoint();
                 PathManager.TogglePathCreationMenuItems(CurrentPath);
             }
 
             if (selectedItem == RemoveLastWaypoint)
             {
-                PathManager.RemoveWaypoint(CurrentPath);
+                CurrentPath.RemoveWaypoint();
                 PathManager.TogglePathCreationMenuItems(CurrentPath);
             }
 
             if (selectedItem == EndPathCreation)
             {
-                PathCreationState = State.Finished;
-                PathManager.EndPath(CurrentPath);
+                CurrentPath.Finish();
+                PathCreationState = State.Uninitialized;
+                PathName.Description = $"Add your first waypoint to enable this option.";
+            }
+
+            if(selectedItem == PathName)
+            {
+                CurrentPath.ChangeName();
+                PathName.Description = $"Current path name is ~b~{CurrentPath.Name}";
             }
         }
 
