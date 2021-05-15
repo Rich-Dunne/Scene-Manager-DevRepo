@@ -172,7 +172,7 @@ namespace SceneManager.Menus
             if (selectedItem == RemoveWaypoint)
             {
                 PathManager.RemoveEditWaypoint(currentPath);
-                if(PathManager.Paths.Count < 1)
+                if(PathManager.Paths.Length < 1)
                 {
                     return;
                 }
