@@ -16,9 +16,10 @@ namespace SceneManager.Managers
         {
             MainMenu.Initialize();
             SettingsMenu.Initialize();
+            ImportPathMenu.Initialize();
             PathMainMenu.Initialize();
             PathCreationMenu.Initialize();
-            ImportPathMenu.Initialize();
+            ExportPathMenu.Initialize();
             DriverMenu.Initialize();
             BarrierMenu.Initialize();
             EditPathMenu.Initialize();
@@ -40,14 +41,15 @@ namespace SceneManager.Managers
 
         internal static void BuildMenus()
         {
-            MainMenu.BuildMainMenu();
-            SettingsMenu.BuildSettingsMenu();
+            MainMenu.Build();
+            SettingsMenu.Build();
+            ImportPathMenu.Build();
+            ExportPathMenu.Build();
             DriverMenu.Build();
             PathMainMenu.Build();
-            PathCreationMenu.BuildPathCreationMenu();
-            ImportPathMenu.BuildImportMenu();
-            EditPathMenu.BuildEditPathMenu();
-            BarrierMenu.BuildMenu();
+            PathCreationMenu.Build();
+            EditPathMenu.Build();
+            BarrierMenu.Build();
         }
 
         internal static void ColorMenuItems()
