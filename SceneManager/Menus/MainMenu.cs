@@ -21,7 +21,7 @@ namespace SceneManager.Menus
             Menu.OnMenuOpen += MainMenu_OnMenuOpen;
         }
 
-        internal static void BuildMainMenu()
+        internal static void Build()
         {
             Menu.Clear();
 
