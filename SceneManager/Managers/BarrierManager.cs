@@ -21,8 +21,8 @@ namespace SceneManager.Managers
                 PlaceholderBarrier.Delete();
             }
 
-            var barrierKey = Settings.Barriers.Where(x => x.Key == BarrierMenu.BarrierList.SelectedItem).FirstOrDefault().Key;
-            var barrierValue = Settings.Barriers[barrierKey].Name;
+            var barrierKey = Settings.BarrierModels.Where(x => x.Key == BarrierMenu.BarrierList.SelectedItem).FirstOrDefault().Key;
+            var barrierValue = Settings.BarrierModels[barrierKey].Name;
             PlaceholderBarrier = new Object(barrierValue, UserInput.PlayerMousePositionForBarrier, BarrierMenu.RotateBarrier.Value);
             if (!PlaceholderBarrier)
             {
@@ -67,7 +67,7 @@ namespace SceneManager.Managers
             {
                 PlaceholderBarrier.Heading = BarrierMenu.RotateBarrier.Value;
                 PlaceholderBarrier.Position = UserInput.PlayerMousePositionForBarrier;
-                Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(PlaceholderBarrier);
+                Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY<bool>(PlaceholderBarrier);
                 //Rage.Native.NativeFunction.Natives.SET_ENTITY_TRAFFICLIGHT_OVERRIDE(shadowBarrier, setBarrierTrafficLight.Index);
             }
 
@@ -105,12 +105,10 @@ namespace SceneManager.Managers
                 {
                     if (PlaceholderBarrier)
                     {
-                        //UpdatePlaceholderBarrierPosition();
                         UpdatePlaceholderBarrierPosition();
                     }
                     else if (UserInput.PlayerMousePositionForBarrier.DistanceTo2D(Game.LocalPlayer.Character.Position) <= Settings.BarrierPlacementDistance)
                     {
-                        //CreatePlaceholderBarrier();
                         CreatePlaceholderBarrier();
                     }
                 }
@@ -140,10 +138,10 @@ namespace SceneManager.Managers
             }
             else
             {
-                //var obj = new Object(PlaceholderBarrier.Model, PlaceholderBarrier.Position, BarrierMenu.RotateBarrier.Value);
-                barrier = new Barrier(PlaceholderBarrier.Model.Name, PlaceholderBarrier.Position, PlaceholderBarrier.Heading, BarrierMenu.Invincible.Checked, BarrierMenu.Immobile.Checked, BarrierMenu.BarrierTexture.Value, BarrierMenu.SetBarrierLights.Checked);
+                barrier = new Barrier(PlaceholderBarrier, BarrierMenu.Invincible.Checked, BarrierMenu.Immobile.Checked, BarrierMenu.BarrierTexture.Value, BarrierMenu.SetBarrierLights.Checked);
                 Barriers.Add(barrier);
 
+                BarrierMenu.AddUnassignedToPath.Enabled = true;
                 BarrierMenu.RemoveBarrierOptions.Enabled = true;
                 BarrierMenu.ResetBarriers.Enabled = true;
             }
@@ -175,10 +173,12 @@ namespace SceneManager.Managers
                     }
                 }, "Spawn Flare Fiber");
 
-                //var obj = new Object(flare.Model, flare.Position, flare.Heading);
-                barrier = new Barrier(flare.Model.Name, flare.Position, flare.Heading, BarrierMenu.Invincible.Checked, BarrierMenu.Immobile.Checked);
+                barrier = new Barrier(flare, BarrierMenu.Invincible.Checked, BarrierMenu.Immobile.Checked);
                 Barriers.Add(barrier);
+
+                BarrierMenu.AddUnassignedToPath.Enabled = true;
                 BarrierMenu.RemoveBarrierOptions.Enabled = true;
+                BarrierMenu.ResetBarriers.Enabled = true;
             }
         }
 
@@ -189,7 +189,7 @@ namespace SceneManager.Managers
             {
                 case 0:
                     var barrierToRemove = Barriers[Barriers.Count - 1];
-                    path = PathManager.Paths.FirstOrDefault(x => x.Barriers.Contains(barrierToRemove));
+                    path = PathManager.Paths.FirstOrDefault(x => x != null && x.Barriers.Contains(barrierToRemove));
                     if(path != null)
                     {
                         path.Barriers.Remove(barrierToRemove);
@@ -202,7 +202,7 @@ namespace SceneManager.Managers
                     var nearestBarrier = Barriers.OrderBy(b => b.DistanceTo2D(Game.LocalPlayer.Character)).FirstOrDefault();
                     if (nearestBarrier != null)
                     {
-                        path = PathManager.Paths.FirstOrDefault(x => x.Barriers.Contains(nearestBarrier));
+                        path = PathManager.Paths.FirstOrDefault(x => x != null && x.Barriers.Contains(nearestBarrier));
                         if (path != null)
                         {
                             path.Barriers.Remove(nearestBarrier);
@@ -215,7 +215,7 @@ namespace SceneManager.Managers
                 case 2:
                     foreach (Barrier barrier in Barriers)
                     {
-                        path = PathManager.Paths.FirstOrDefault(x => x.Barriers.Contains(barrier));
+                        path = PathManager.Paths.FirstOrDefault(x => x != null && x.Barriers.Contains(barrier));
                         if (path != null)
                         {
                             path.Barriers.Remove(barrier);
@@ -230,6 +230,7 @@ namespace SceneManager.Managers
                     break;
             }
 
+            BarrierMenu.AddUnassignedToPath.Enabled = Barriers.Any(x => x.Path == null);
             BarrierMenu.RemoveBarrierOptions.Enabled = Barriers.Count != 0;
             BarrierMenu.ResetBarriers.Enabled = Barriers.Count != 0;
         }
@@ -241,8 +242,7 @@ namespace SceneManager.Managers
                 var currentBarriers = Barriers.Where(b => b.ModelName != "0xa2c44e80").ToList(); // 0xa2c44e80 is the flare weapon hash
                 foreach (Barrier barrier in currentBarriers)
                 {
-                    //var obj = new Object(barrier.ModelName, barrier.Position, barrier.Heading);
-                    var newBarrier = new Barrier(barrier.ModelName, barrier.Position, barrier.Heading, barrier.Invincible, barrier.Immobile, barrier.TextureVariation, barrier.LightsEnabled);
+                    var newBarrier = new Barrier(barrier, barrier.Invincible, barrier.Immobile, barrier.TextureVariation, barrier.LightsEnabled);
                     Barriers.Add(newBarrier);
 
                     if (barrier.IsValid())
@@ -261,6 +261,27 @@ namespace SceneManager.Managers
             PlaceholderBarrier.Heading = BarrierMenu.RotateBarrier.Value;
             PlaceholderBarrier.Position = UserInput.PlayerMousePositionForBarrier;
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY(PlaceholderBarrier);
+        }
+
+        internal static void AddBarrierToPath()
+        {
+            var unassignedBarriers = Barriers.Where(x => x.Path == null);
+            if(unassignedBarriers.Count() == 0)
+            {
+                Game.LogTrivial($"There are no unassigned barriers.");
+                return;
+            }
+
+            var pathToAssignTo = PathManager.Paths.First(x => x.Name == BarrierMenu.AddUnassignedToPath.OptionText);
+            foreach (Barrier barrier in unassignedBarriers)
+            {
+                pathToAssignTo.Barriers.Add(barrier);
+            }
+
+            Game.LogTrivial($"Added {unassignedBarriers.Count()} unassigned barrier to {pathToAssignTo.Name}");
+            Game.DisplayNotification($"~o~Scene Manager ~y~[Barriers]\n~w~Assigned ~b~{unassignedBarriers.Count()} ~w~barrier(s) to ~b~{pathToAssignTo.Name}~w~.");
+
+            BarrierMenu.AddUnassignedToPath.Enabled = false;
         }
     }
 }
