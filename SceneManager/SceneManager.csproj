@@ -64,6 +64,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Menus\DriverMenu.cs" />
+    <Compile Include="Menus\ExportPathMenu.cs" />
     <Compile Include="Menus\ImportPathMenu.cs" />
     <Compile Include="SettingsValidator.cs" />
     <Compile Include="Managers\BarrierManager.cs" />
@@ -74,6 +75,7 @@
     <Compile Include="Utils\Extensions.cs" />
     <Compile Include="CollectedPeds\CollectedPed.cs" />
     <Compile Include="Barriers\Barrier.cs" />
+    <Compile Include="Utils\HelperMethods.cs" />
     <Compile Include="Utils\Hints.cs" />
     <Compile Include="Menus\BarrierMenu.cs" />
     <Compile Include="Menus\EditPathMenu.cs" />
