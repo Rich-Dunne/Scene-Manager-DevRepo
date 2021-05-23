@@ -15,60 +15,60 @@ namespace SceneManager.Managers
         internal static Paths.Path[] Paths { get; } = new Paths.Path[10];
         internal static Dictionary<string, List<Paths.Path>> ImportedPaths { get; } = new Dictionary<string, List<Paths.Path>>();
 
-        internal static Paths.Path ImportPath(Paths.Path importedPath)
-        {
-            importedPath.State = State.Creating;
-            var firstVacantIndex = Array.IndexOf(Paths, Paths.First(x => x == null));
-            if (firstVacantIndex < 0)
-            {
-                firstVacantIndex = 0;
-            }
-            var pathNumber = firstVacantIndex + 1;
+        //internal static Paths.Path ImportPath(Paths.Path importedPath)
+        //{
+        //    importedPath.State = State.Creating;
+        //    var firstVacantIndex = Array.IndexOf(Paths, Paths.First(x => x == null));
+        //    if (firstVacantIndex < 0)
+        //    {
+        //        firstVacantIndex = 0;
+        //    }
+        //    var pathNumber = firstVacantIndex + 1;
 
-            importedPath.Number = pathNumber;
-            Paths[firstVacantIndex] = importedPath;
+        //    importedPath.Number = pathNumber;
+        //    Paths[firstVacantIndex] = importedPath;
 
-            Game.LogTrivial($"Importing {importedPath.Name} at Paths index {firstVacantIndex}");
-            Game.DisplayNotification($"~o~Scene Manager ~y~[Importing]\n~w~Importing path: ~b~{importedPath.Name} ~w~.");
+        //    Game.LogTrivial($"Importing {importedPath.Name} at Paths index {firstVacantIndex}");
+        //    Game.DisplayNotification($"~o~Scene Manager ~y~[Importing]\n~w~Importing path: ~b~{importedPath.Name} ~w~.");
 
-            return importedPath;
-        }
+        //    return importedPath;
+        //}
 
-        internal static void ExportPath()
-        {
-            var currentPath = Paths[PathMainMenu.EditPath.Index];
+        //internal static void ExportPath()
+        //{
+        //    var currentPath = Paths[PathMainMenu.EditPath.Index];
 
-            // If the path is in the import menu, autosave with the same name.
-            if(ImportPathMenu.Menu.MenuItems.Any(x=> x.Text == currentPath.Name))
-            {
-                Game.LogTrivial($"Autosaving {currentPath.Name}");
-                currentPath.Save();
-            }
-            else
-            {
-                // Reference PNWParks's UserInput class from LiveLights
-                var filename = UserInput.PromptPlayerForFileName("Type the name you would like to save your file as", "Enter a filename", 100);
+        //    // If the path is in the import menu, autosave with the same name.
+        //    if(ImportPathMenu.Menu.MenuItems.Any(x=> x.Text == currentPath.Name))
+        //    {
+        //        Game.LogTrivial($"Autosaving {currentPath.Name}");
+        //        currentPath.Save();
+        //    }
+        //    else
+        //    {
+        //        // Reference PNWParks's UserInput class from LiveLights
+        //        var filename = UserInput.PromptPlayerForFileName("Type the name you would like to save your file as", "Enter a filename", 100);
 
-                // If filename != null or empty, check if export directory exists (GTA V/Plugins/SceneManager/Saved Paths)
-                if (string.IsNullOrWhiteSpace(filename))
-                {
-                    Game.DisplayHelp($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
-                    Game.LogTrivial($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
-                    return;
-                }
+        //        // If filename != null or empty, check if export directory exists (GTA V/Plugins/SceneManager/Saved Paths)
+        //        if (string.IsNullOrWhiteSpace(filename))
+        //        {
+        //            Game.DisplayHelp($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
+        //            Game.LogTrivial($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
+        //            return;
+        //        }
 
-                Game.LogTrivial($"Filename: {filename}");
-                currentPath.Name = filename;
-                currentPath.Save();
-            }
+        //        Game.LogTrivial($"Filename: {filename}");
+        //        currentPath.Name = filename;
+        //        currentPath.Save();
+        //    }
 
-            PathMainMenu.ImportPath.Enabled = true;
-            ImportPathMenu.Build();
-            PathMainMenu.Build();
-            BarrierMenu.Build();
+        //    PathMainMenu.ImportPath.Enabled = true;
+        //    ImportPathMenu.Build();
+        //    PathMainMenu.Build();
+        //    BarrierMenu.Build();
 
-            PathMainMenu.Menu.Visible = true;
-        }
+        //    PathMainMenu.Menu.Visible = true;
+        //}
 
         internal static Paths.Path InitializeNewPath()
         {
