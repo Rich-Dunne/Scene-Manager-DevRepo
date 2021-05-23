@@ -241,7 +241,7 @@ namespace SceneManager.Paths
 
                 foreach (Waypoint waypoint in collectorWaypoints.ToList())
                 {
-                    foreach (Vehicle vehicle in vehiclesInWorld.ToList())
+                    foreach (Vehicle vehicle in vehiclesInWorld)
                     {
                         if (vehicle.IsNearCollectorWaypoint(waypoint) && vehicle.IsValidForPathCollection(this))
                         {
