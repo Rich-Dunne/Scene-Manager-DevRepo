@@ -161,7 +161,7 @@ namespace SceneManager.CollectedPeds
                 var oldPosition = Path.Waypoints[currentWaypointTask].Position;
                 SkipWaypoint = false;
 
-                if (this == null || !CurrentVehicle || Dismissed || Directed)
+                if (this == null || !this || !CurrentVehicle || Dismissed || Directed)
                 {
                     Game.LogTrivial($"Vehicle dismissed, directed, or null, return");
                     return;
