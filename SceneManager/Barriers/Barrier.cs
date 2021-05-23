@@ -36,6 +36,11 @@ namespace SceneManager.Barriers
             }
 
             _object = new Object(ModelName, Position, Heading);
+            if(!_object)
+            {
+                Game.LogTrivial($"New barrier object is invalid.");
+                return;
+            }
 
             _object.SetPositionWithSnap(Position);
             Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY<bool>(_object);
