@@ -237,14 +237,25 @@ namespace SceneManager.Paths
 
                 int checksDone = 0;
                 var collectorWaypoints = Waypoints.Where(x => x.IsCollector);
-                var vehiclesInWorld = World.GetAllVehicles().Where(x => x);
 
                 foreach (Waypoint waypoint in collectorWaypoints.ToList())
                 {
-                    foreach (Vehicle vehicle in vehiclesInWorld)
+                    foreach (Vehicle vehicle in World.GetAllVehicles().Where(x => x))
                     {
                         if (vehicle.IsNearCollectorWaypoint(waypoint) && vehicle.IsValidForPathCollection(this))
                         {
+                            while(!vehicle.Driver)
+                            {
+                                GameFiber.Yield();
+                                if (!vehicle)
+                                {
+                                    break;
+                                }
+                            }
+                            if (!vehicle)
+                            {
+                                continue;
+                            }
                             CollectedPeds.Add(new CollectedPed(vehicle.Driver, this, waypoint));
                         }
 
