@@ -316,7 +316,7 @@ namespace SceneManager.Paths
 
         internal void ChangeName()
         {
-            var pathName = UserInput.PromptPlayerForFileName("Type the name you would like for your path", "Enter a path name", 100);
+            var pathName = UserInput.PromptPlayerForFileName("Type the name you would like for your path", $"{Name}", 100);
             if (string.IsNullOrWhiteSpace(pathName))
             {
                 Game.DisplayHelp($"Invalid path name given.  Name cannot be null, empty, or consist of just white spaces.  Defaulting to ~b~\"{Name}\"");
