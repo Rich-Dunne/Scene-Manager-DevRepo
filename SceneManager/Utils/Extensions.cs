@@ -116,11 +116,6 @@ namespace SceneManager.Utils
         /// </summary>
         internal static bool IsNearCollectorWaypoint(this Vehicle vehicle, Waypoint waypoint)
         {
-            if(!waypoint.IsCollector)
-            {
-                return false;
-            }
-
             return vehicle.FrontPosition.DistanceTo2D(waypoint.Position) <= waypoint.CollectorRadius && Math.Abs(waypoint.Position.Z - vehicle.Position.Z) < 3;
         }
 
@@ -133,6 +128,16 @@ namespace SceneManager.Utils
 
             var vehicleCollectedOnAnotherPath = PathManager.Paths.Any(p => p != null && p.Number != path.Number && p.CollectedPeds.Any(cp => cp && cp.CurrentVehicle == vehicle));
             if (vehicleCollectedOnAnotherPath)
+            {
+                return false;
+            }
+
+            if(path.BlacklistedVehicles.Contains(vehicle))
+            {
+                return false;
+            }
+
+            if(vehicle == Game.LocalPlayer.Character.LastVehicle)
             {
                 return false;
             }
@@ -153,7 +158,7 @@ namespace SceneManager.Utils
                 }
             }
 
-            if (vehicle != Game.LocalPlayer.Character.LastVehicle && (vehicle.IsCar || vehicle.IsBike || vehicle.IsBicycle || vehicle.IsQuadBike) && !vehicle.IsSirenOn && vehicle.IsEngineOn && vehicle.IsOnAllWheels && vehicle.Speed > 1 && !path.CollectedPeds.Any(cp => cp && cp.CurrentVehicle == vehicle) && !path.BlacklistedVehicles.Contains(vehicle))
+            if ((vehicle.IsCar || vehicle.IsBike || vehicle.IsBicycle || vehicle.IsQuadBike) && !vehicle.IsSirenOn && vehicle.IsEngineOn && vehicle.IsOnAllWheels && vehicle.Speed > 1 && !path.CollectedPeds.Any(cp => cp && cp.CurrentVehicle == vehicle))
             { 
                 if (!vehicle.HasDriver)
                 {
@@ -166,7 +171,7 @@ namespace SceneManager.Utils
                     {
                         return false;
                     }
-
+                    Game.LogTrivial($"Vehicle has a new driver");
                     vehicle.Driver.IsPersistent = true;
                     vehicle.Driver.BlockPermanentEvents = true;
                 }
