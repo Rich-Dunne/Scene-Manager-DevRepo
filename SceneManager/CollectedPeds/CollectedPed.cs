@@ -19,6 +19,10 @@ namespace SceneManager.CollectedPeds
 
         internal CollectedPed(Ped ped, Path path, Waypoint waypoint)
         {
+            if(!ped)
+            {
+                Game.LogTrivial($"Ped is invalid.");
+            }
             Handle = ped.Handle;
             Path = path;
             CurrentWaypoint = waypoint;
@@ -223,6 +227,7 @@ namespace SceneManager.CollectedPeds
                         if (CurrentVehicle)
                         {
                             Tasks.DriveToPosition(Path.Waypoints[currentWaypointTask].Position, Path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)Path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
+                            Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] driver [{Handle}] should have a task now.");
                         }
                         else
                         {
@@ -230,7 +235,8 @@ namespace SceneManager.CollectedPeds
                             return;
                         }
                     }
-                    GameFiber.Sleep(100);
+                    //GameFiber.Sleep(100);
+                    GameFiber.Yield();
                 }
             }
         }
