@@ -17,6 +17,8 @@ namespace SceneManager.Menus
         internal static UIMenu Menu = new UIMenu("Scene Manager", "~o~Import Path Menu");
         internal static UIMenuItem Import { get; } = new UIMenuItem("Import", "Import the selected paths.");
 
+        private static List<string> _HasBeenImported = new List<string>();
+
         internal static void Initialize()
         {
             Menu.ParentMenu = PathMainMenu.Menu;
@@ -33,7 +35,12 @@ namespace SceneManager.Menus
             PathManager.ImportPaths();
             foreach(KeyValuePair<string, List<Path>> kvp in PathManager.ImportedPaths)
             {
-                Menu.AddItem(new UIMenuCheckboxItem(kvp.Key, false));
+                var menuItem = new UIMenuCheckboxItem(kvp.Key, false);
+                if(!_HasBeenImported.Contains(kvp.Key))
+                {
+                    menuItem.LeftBadge = UIMenuItem.BadgeStyle.Star;
+                }
+                Menu.AddItem(menuItem);
             }
 
             Menu.AddItem(Import);
@@ -72,6 +79,7 @@ namespace SceneManager.Menus
                                     PathManager.Paths[pathToReplaceIndex] = path;
                                     path.Load();
                                     Rage.Native.NativeFunction.Natives.CLEAR_ALL_HELP_MESSAGES();
+                                    _HasBeenImported.Add(PathManager.ImportedPaths.FirstOrDefault(x => x.Key == menuItem.Text).Key);
                                     continue;
                                 }
                                 else
@@ -85,6 +93,7 @@ namespace SceneManager.Menus
                             var firstNullPathIndex = Array.IndexOf(PathManager.Paths, PathManager.Paths.First(x => x == null));
                             PathManager.Paths[firstNullPathIndex] = path;
                             path.Load();
+                            _HasBeenImported.Add(PathManager.ImportedPaths.FirstOrDefault(x => x.Key == menuItem.Text).Key);
                         }
 
                         var numberOfNonNullPaths = PathManager.Paths.Where(x => x != null).Count();
