@@ -215,10 +215,9 @@ namespace SceneManager.Managers
                 case 2:
                     foreach (Barrier barrier in Barriers)
                     {
-                        path = PathManager.Paths.FirstOrDefault(x => x != null && x.Barriers.Contains(barrier));
-                        if (path != null)
+                        if(barrier.Path != null)
                         {
-                            path.Barriers.Remove(barrier);
+                            barrier.Path.Barriers.Remove(barrier);
                         }
 
                         barrier.Delete();
@@ -237,22 +236,19 @@ namespace SceneManager.Managers
 
         internal static void ResetBarriers()
         {
-            GameFiber.StartNew(() =>
-            {
+            //GameFiber.StartNew(() =>
+            //{
                 var currentBarriers = Barriers.Where(b => b.ModelName != "0xa2c44e80").ToList(); // 0xa2c44e80 is the flare weapon hash
                 foreach (Barrier barrier in currentBarriers)
                 {
                     var newBarrier = new Barrier(barrier, barrier.Invincible, barrier.Immobile, barrier.TextureVariation, barrier.LightsEnabled);
                     Barriers.Add(newBarrier);
 
-                    if (barrier.IsValid())
-                    {
-                        barrier.Delete();
-                    }
+                    //barrier.Delete();
                     Barriers.Remove(barrier);
                 }
                 currentBarriers.Clear();
-            }, "Barrier Reset Fiber");
+            //}, "Barrier Reset Fiber");
 
         }
 
