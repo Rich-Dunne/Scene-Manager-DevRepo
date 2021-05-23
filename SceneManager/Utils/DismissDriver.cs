@@ -33,7 +33,7 @@ namespace SceneManager.Utils
             }
             else
             {
-                CollectedPed collectedPed = PathManager.Paths.Where(x => x != null).SelectMany(x => x.CollectedPeds).FirstOrDefault(x => x.CurrentVehicle == nearbyVehicle);
+                CollectedPed collectedPed = PathManager.Paths.Where(x => x != null).SelectMany(x => x.CollectedPeds).FirstOrDefault(x => x.CurrentVehicle && x.CurrentVehicle == nearbyVehicle);
                 if(collectedPed != null)
                 {
                     collectedPed.Dismiss((Dismiss)dismissIndex);
