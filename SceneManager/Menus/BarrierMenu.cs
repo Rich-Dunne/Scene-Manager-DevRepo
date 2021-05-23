@@ -41,6 +41,7 @@ namespace SceneManager.Menus
         internal static void Build()
         {
             Menu.Clear();
+            Menu.MaxItemsOnScreen = 11;
 
             Menu.AddItem(BarrierList);
             BarrierList.ForeColor = Color.Gold;
