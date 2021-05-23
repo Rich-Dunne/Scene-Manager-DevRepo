@@ -54,15 +54,15 @@ namespace SceneManager.Utils
             }
 
             // Ped is in a vehicle
-            if (taskInVehicleBasic)
+            if (ped.CurrentVehicle)
             {
                 //Game.LogTrivial($"Ped is in a vehicle.");
                 // Ped has a controlled driving task
-                if (taskControlVehicle)
-                {
-                    //Game.LogTrivial($"Ped has a controlled driving task. (non-ambient)");
-                    return false;
-                }
+                //if (taskControlVehicle)
+                //{
+                //    //Game.LogTrivial($"Ped has a controlled driving task. (non-ambient)");
+                //    return false;
+                //}
 
                 // Ped has a wander driving task
                 if (taskCarDriveWander)
@@ -72,23 +72,19 @@ namespace SceneManager.Utils
                 }
 
                 // If the ped is in a vehicle but doesn't have a driving task, then it's a passenger.  Check if the vehicle's driver has a driving wander task
-                var driverHasWanderTask = Rage.Native.NativeFunction.Natives.GET_IS_TASK_ACTIVE<bool>(ped.CurrentVehicle.Driver, 151);
-                if (driverHasWanderTask)
+                if (ped.CurrentVehicle.Driver && ped.CurrentVehicle.Driver != ped)
                 {
-                    //Game.LogTrivial($"Ped is a passenger.  Vehicle's driver has a wander driving task. (ambient)");
-                    return true;
+                    var driverHasWanderTask = Rage.Native.NativeFunction.Natives.GET_IS_TASK_ACTIVE<bool>(ped.CurrentVehicle.Driver, 151);
+                    if (driverHasWanderTask)
+                    {
+                        //Game.LogTrivial($"Ped is a passenger.  Vehicle's driver has a wander driving task. (ambient)");
+                        return true;
+                    }
                 }
             }
 
             if (ped.IsOnFoot)
             {
-                // UB unit on-foot, waiting for interaction
-                if (ped.RelationshipGroup.Name == "UBCOP")
-                {
-                    //Game.LogTrivial($"Cop is UB unit. (non-ambient)");
-                    return false;
-                }
-
                 // Cop ped walking around or standing still
                 if ((taskComplexControlMovement && taskWanderingScenario) || (taskAmbientClips && taskUseScenario))
                 {
