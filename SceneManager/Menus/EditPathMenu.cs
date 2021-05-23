@@ -101,7 +101,7 @@ namespace SceneManager
         {
             var scrollerItems = new List<UIMenuScrollerItem> {  };
             GameFiber.StartNew(() => UserInput.InitializeMenuMouseControl(menu, scrollerItems), "RNUI Mouse Input Fiber");
-            //CurrentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
+            Menu.SubtitleText = $"Currently editing path {CurrentPath.Name}";
             ChangePathName.Description = $"Change the path name from ~b~{CurrentPath.Name} ~w~to something else.";
         }
     }
