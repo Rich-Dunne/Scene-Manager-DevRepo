@@ -1,4 +1,5 @@
 ﻿using Rage;
+using RAGENativeUI;
 using SceneManager.Menus;
 using SceneManager.Utils;
 using SceneManager.Waypoints;
@@ -6,7 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Xml.Serialization;
+using System.Windows.Forms;
 
 namespace SceneManager.Managers
 {
@@ -14,61 +15,7 @@ namespace SceneManager.Managers
     {
         internal static Paths.Path[] Paths { get; } = new Paths.Path[10];
         internal static Dictionary<string, List<Paths.Path>> ImportedPaths { get; } = new Dictionary<string, List<Paths.Path>>();
-
-        //internal static Paths.Path ImportPath(Paths.Path importedPath)
-        //{
-        //    importedPath.State = State.Creating;
-        //    var firstVacantIndex = Array.IndexOf(Paths, Paths.First(x => x == null));
-        //    if (firstVacantIndex < 0)
-        //    {
-        //        firstVacantIndex = 0;
-        //    }
-        //    var pathNumber = firstVacantIndex + 1;
-
-        //    importedPath.Number = pathNumber;
-        //    Paths[firstVacantIndex] = importedPath;
-
-        //    Game.LogTrivial($"Importing {importedPath.Name} at Paths index {firstVacantIndex}");
-        //    Game.DisplayNotification($"~o~Scene Manager ~y~[Importing]\n~w~Importing path: ~b~{importedPath.Name} ~w~.");
-
-        //    return importedPath;
-        //}
-
-        //internal static void ExportPath()
-        //{
-        //    var currentPath = Paths[PathMainMenu.EditPath.Index];
-
-        //    // If the path is in the import menu, autosave with the same name.
-        //    if(ImportPathMenu.Menu.MenuItems.Any(x=> x.Text == currentPath.Name))
-        //    {
-        //        Game.LogTrivial($"Autosaving {currentPath.Name}");
-        //        currentPath.Save();
-        //    }
-        //    else
-        //    {
-        //        // Reference PNWParks's UserInput class from LiveLights
-        //        var filename = UserInput.PromptPlayerForFileName("Type the name you would like to save your file as", "Enter a filename", 100);
-
-        //        // If filename != null or empty, check if export directory exists (GTA V/Plugins/SceneManager/Saved Paths)
-        //        if (string.IsNullOrWhiteSpace(filename))
-        //        {
-        //            Game.DisplayHelp($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
-        //            Game.LogTrivial($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
-        //            return;
-        //        }
-
-        //        Game.LogTrivial($"Filename: {filename}");
-        //        currentPath.Name = filename;
-        //        currentPath.Save();
-        //    }
-
-        //    PathMainMenu.ImportPath.Enabled = true;
-        //    ImportPathMenu.Build();
-        //    PathMainMenu.Build();
-        //    BarrierMenu.Build();
-
-        //    PathMainMenu.Menu.Visible = true;
-        //}
+        internal static List<string> LoadedFiles { get; } = new List<string>();
 
         internal static Paths.Path InitializeNewPath()
         {
@@ -246,58 +193,76 @@ namespace SceneManager.Managers
                 }
             }
             Array.Clear(Paths, 0, Paths.Length);
-            //Paths.Clear();
             Game.LogTrivial($"All paths deleted");
             Game.DisplayNotification($"~o~Scene Manager\n~w~All paths deleted.");
-            MainMenu.Build();
+            Menus.MainMenu.Build();
         }
 
-        internal static void ImportPaths()
+        internal static List<Paths.Path> ImportPathsFromFile(string file)
         {
-            ImportedPaths.Clear();
-
-            // Check if Saved Paths directory exists
+            List<Paths.Path> importedPaths;
             var GAME_DIRECTORY = Directory.GetCurrentDirectory();
             var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "\\plugins\\SceneManager\\Saved Paths\\";
             if (!Directory.Exists(SAVED_PATHS_DIRECTORY))
             {
                 Game.LogTrivial($"Directory '\\plugins\\SceneManager\\Saved Paths' does not exist.  No paths available to import.");
-                return;
+                return null;
             }
 
-            // Check if any XML files are available to import from Saved Paths
-            var savedPathNames = Directory.GetFiles(SAVED_PATHS_DIRECTORY, "*.xml");
-            if (savedPathNames.Length == 0)
+            var overrides = Serializer.DefineOverrides();
+            try
             {
-                Game.LogTrivial($"No saved paths found.");
-                return;
+                importedPaths = Serializer.LoadItemFromXML<List<Paths.Path>>(SAVED_PATHS_DIRECTORY + Path.GetFileName(file) + ".xml", overrides);
+                ImportedPaths.Add(file, importedPaths);
+                
             }
-            else
+            catch (Exception ex)
             {
-                Game.LogTrivial($"{savedPathNames.Length} path(s) available to import.");
+                Game.DisplayNotification($"~y~Scene Manager ~w~[~r~ERROR~w~]: There was a problem importing file ~b~{file}~w~.  This is likely due to an XML error.  Double check any changes you've made to this file.");
+                Game.LogTrivial($"Error: {ex.Message}");
+                return null;
             }
 
-            // Import paths
-            foreach (string pathName in savedPathNames)
-            {
-                var fileName = Path.GetFileNameWithoutExtension(pathName);
-                Game.LogTrivial($"File: {fileName}");
-
-                var overrides = DefineOverridesForCombinedPath();
-                var paths = Serializer.LoadItemFromXML<List<Paths.Path>>(SAVED_PATHS_DIRECTORY + Path.GetFileName(pathName), overrides);
-                ImportedPaths.Add(fileName, paths);
-            }
-            Game.LogTrivial($"Successfully imported {ImportedPaths.Count} file(s).");
+            return importedPaths;
         }
 
-        private static XmlAttributeOverrides DefineOverridesForCombinedPath()
+        internal static void LoadImportedPaths(List<Paths.Path> paths, string file)
         {
-            XmlAttributeOverrides overrides = new XmlAttributeOverrides();
-            XmlAttributes attr = new XmlAttributes();
-            attr.XmlRoot = new XmlRootAttribute("Paths");
-            overrides.Add(typeof(List<Paths.Path>), attr);
+            foreach (Paths.Path path in paths)
+            {
+                if (Paths.Any(x => x != null && x.Name == path.Name))
+                {
+                    Game.DisplayHelp($"~y~Scene Manager ~w~[~o~WARNING~w~]:\nA path with the name ~b~{path.Name} ~w~already exists.  Do you want to replace it?  ~{Keys.Y.GetInstructionalId()}~ or ~{Keys.N.GetInstructionalId()}~");
+                    GameFiber.Sleep(100);
+                    GameFiber.SleepUntil(() => Game.IsKeyDown(Keys.Y) || Game.IsKeyDown(Keys.N), 8300);
 
-            return overrides;
+                    if (Game.IsKeyDown(Keys.Y))
+                    {
+                        var pathToReplace = Paths.First(x => x.Name == path.Name);
+                        var pathToReplaceIndex = Array.IndexOf(Paths, pathToReplace);
+                        pathToReplace.Delete();
+                        Paths[pathToReplaceIndex] = path;
+                        path.Load();
+                        Rage.Native.NativeFunction.Natives.CLEAR_ALL_HELP_MESSAGES();
+                        LoadedFiles.Add(file);
+                        continue;
+                    }
+                    else
+                    {
+                        Game.DisplayNotification($"~o~Scene Manager ~y~[Import]\n~w~Path ~b~{path.Name} ~w~was not imported.");
+                        Rage.Native.NativeFunction.Natives.CLEAR_ALL_HELP_MESSAGES();
+                        continue;
+                    }
+                }
+
+                var firstNullPathIndex = Array.IndexOf(Paths, Paths.First(x => x == null));
+                Paths[firstNullPathIndex] = path;
+                path.Load();
+                LoadedFiles.Add(file);
+
+                var numberOfNonNullPaths = Paths.Where(x => x != null).Count();
+                Game.LogTrivial($"{path.Name} added to paths collection.  Paths count: {numberOfNonNullPaths}");
+            }
         }
     }
 }
