@@ -11,6 +11,7 @@ using SceneManager.Managers;
 using SceneManager.Barriers;
 using SceneManager.Waypoints;
 using SceneManager.CollectedPeds;
+using RAGENativeUI;
 
 namespace SceneManager.Paths
 {
@@ -46,16 +47,17 @@ namespace SceneManager.Paths
                 Game.LogTrivial($"New directory created at '/plugins/SceneManager/Saved Paths'");
             }
 
-            var overrides = DefineOverridesForCombinedPath();
-            Serializer.SaveItemToXML(this, SAVED_PATHS_DIRECTORY + Name + ".xml", overrides);
+            var overrides = Serializer.DefineOverrides();
+            Serializer.SaveItemToXML(new List<Path> { this }, SAVED_PATHS_DIRECTORY + Name + ".xml", overrides);
             Game.LogTrivial($"Saved {Name}.xml");
 
-            Game.DisplayNotification($"~o~Scene Manager ~g~[Success]\n~w~Path ~b~{Name} ~w~exported.");
+            Game.DisplayNotification($"~o~Scene Manager ~w~[~g~Success~w~]\n~w~Path ~b~{Name} ~w~exported.");
         }
 
         internal void Load()
         {
-            foreach(Waypoint waypoint in Waypoints)
+            Game.DisplayHelp($"~{InstructionalKey.SymbolBusySpinner.GetId()}~ Loading ~b~{Name}~w~...");
+            foreach (Waypoint waypoint in Waypoints)
             {
                 waypoint.LoadFromImport(this);
             }
@@ -68,7 +70,7 @@ namespace SceneManager.Paths
                 Barriers[i] = barrier;
                 BarrierManager.Barriers.Add(barrier);
             }
-
+            Rage.Native.NativeFunction.Natives.CLEAR_ALL_HELP_MESSAGES();
             DrawLinesBetweenWaypoints();
             Finish();
         }
@@ -97,12 +99,12 @@ namespace SceneManager.Paths
 
         internal void Finish()
         {
-            Game.LogTrivial($"[Path Creation] Path {Name} finished with {Waypoints.Count} waypoints.");
-            Game.DisplayNotification($"~o~Scene Manager ~g~[Success]\n~w~Path ~b~{Name} ~w~complete.");
+            Game.LogTrivial($"[Path Creation] Path \"{Name}\" finished with {Waypoints.Count} waypoints.");
+            Game.DisplayNotification($"~o~Scene Manager ~w~[~g~Success~w~]\n~w~Path ~b~{Name} ~w~complete.");
             State = State.Finished;
             IsEnabled = true;
             Waypoints.ForEach(x => x.EnableBlip());
-            GameFiber.StartNew(() => LoopForVehiclesToBeDismissed(), "Vehicle Cleanup Loop Fiber");
+            //GameFiber.StartNew(() => LoopForVehiclesToBeDismissed(), "Vehicle Cleanup Loop Fiber");
             GameFiber.StartNew(() => LoopWaypointCollection(), "Waypoint Collection Loop Fiber");
 
             PathMainMenu.CreateNewPath.Text = "Create New Path";
@@ -154,7 +156,7 @@ namespace SceneManager.Paths
             {
                 LowerWaypointBlipsOpacity();
             }
-            Game.LogTrivial($"Path {Name} disabled.");
+            Game.LogTrivial($"Path \"{Name}\" disabled.");
         }
 
         internal void Enable()
@@ -171,7 +173,7 @@ namespace SceneManager.Paths
             {
                 RestoreWaypointBlipsOpacity();
             }
-            Game.LogTrivial($"Path {Name} enabled.");
+            Game.LogTrivial($"Path \"{Name}\" enabled.");
         }
 
         internal void DrawLinesBetweenWaypoints()
@@ -202,23 +204,40 @@ namespace SceneManager.Paths
             }, "3D Waypoint Line Drawing Fiber");
         }
 
-        internal void LoopForVehiclesToBeDismissed()
-        {
-            while (PathManager.Paths.Contains(this))
-            {
-                foreach (CollectedPed cp in CollectedPeds.Where(x => x && x.CurrentVehicle && (!x.CurrentVehicle.IsDriveable || x.CurrentVehicle.IsUpsideDown || !x.CurrentVehicle.HasDriver)))
-                {
-                    if (cp.CurrentVehicle.HasDriver)
-                    {
-                        cp.CurrentVehicle.Driver.Dismiss();
-                    }
-                    cp.CurrentVehicle.Dismiss();
-                }
+        //internal void LoopForVehiclesToBeDismissed()
+        //{
+        //    while (PathManager.Paths.Contains(this))
+        //    {
+        //        foreach (CollectedPed cp in CollectedPeds.Where(x => x && x.CurrentVehicle && (!x.CurrentVehicle.IsDriveable || x.CurrentVehicle.IsUpsideDown || !x.CurrentVehicle.HasDriver)))
+        //        {
+        //            if (cp.CurrentVehicle.HasDriver)
+        //            {
+        //                cp.CurrentVehicle.Driver.Dismiss();
+        //            }
+        //            cp.CurrentVehicle.Dismiss();
+        //        }
 
-                CollectedPeds.RemoveAll(cp => !cp || !cp.CurrentVehicle);
-                BlacklistedVehicles.RemoveAll(v => !v);
-                GameFiber.Sleep(60000);
+        //        CollectedPeds.RemoveAll(cp => !cp || !cp.CurrentVehicle);
+        //        BlacklistedVehicles.RemoveAll(v => !v);
+        //        GameFiber.Sleep(60000);
+        //    }
+        //}
+
+        internal void CleanupInvalidPedsAndVehicles()
+        {
+            var pedsToDismiss = CollectedPeds.Where(x => x && x.CurrentVehicle && (!x.CurrentVehicle.IsDriveable || x.CurrentVehicle.IsUpsideDown || !x.CurrentVehicle.HasDriver)).ToList();
+            foreach (CollectedPed cp in pedsToDismiss)
+            {
+                //if (cp.CurrentVehicle.HasDriver)
+                //{
+                //    cp.CurrentVehicle.Driver.Dismiss();
+                //}
+                //cp.CurrentVehicle.Dismiss();
+                cp.Dismiss();
             }
+
+            CollectedPeds.RemoveAll(cp => !cp || !cp.CurrentVehicle);
+            BlacklistedVehicles.RemoveAll(v => !v);
         }
 
         internal void LoopWaypointCollection()
@@ -227,11 +246,19 @@ namespace SceneManager.Paths
             int yieldAfterChecks = 50; // How many calculations to do before yielding
             while (PathManager.Paths.Contains(this))
             {
-                GameFiber.SleepUntil(() => IsEnabled, 0);
-                
-                if(State == State.Deleting)
+                //Game.DisplaySubtitle($"CollectedPeds: ~b~{CollectedPeds.Count} ~w~| Persistent Peds: ~b~{World.GetAllPeds().Count(p => p.IsPersistent)}");
+
+                //Game.LogTrivial($"Looping for waypoint collection");
+                //GameFiber.SleepUntil(() => IsEnabled, 0);
+                if(!IsEnabled)
                 {
-                    Game.LogTrivial($"Path deleted, ending waypoint collection.");
+                    lastProcessTime = Game.GameTime;
+                    GameFiber.Yield();
+                    continue;
+                }
+
+                if (State == State.Deleting)
+                {
                     return;
                 }
 
@@ -240,11 +267,17 @@ namespace SceneManager.Paths
 
                 foreach (Waypoint waypoint in collectorWaypoints.ToList())
                 {
-                    foreach (Vehicle vehicle in World.GetAllVehicles().Where(x => x))
+                    foreach (Vehicle vehicle in World.GetAllVehicles())
                     {
+                        if(!vehicle)
+                        {
+                            lastProcessTime = Game.GameTime;
+                            continue;
+                        }
+
                         if (vehicle.IsNearCollectorWaypoint(waypoint) && vehicle.IsValidForPathCollection(this))
                         {
-                            while(!vehicle.Driver)
+                            while (!vehicle.Driver)
                             {
                                 GameFiber.Yield();
                                 if (!vehicle)
@@ -254,6 +287,7 @@ namespace SceneManager.Paths
                             }
                             if (!vehicle)
                             {
+                                lastProcessTime = Game.GameTime;
                                 continue;
                             }
                             CollectedPeds.Add(new CollectedPed(vehicle.Driver, this, waypoint));
@@ -268,6 +302,7 @@ namespace SceneManager.Paths
                                 Game.LogTrivial($"Path deleted, ending waypoint collection.");
                                 return;
                             }
+                            CleanupInvalidPedsAndVehicles();
                         }
                     }
                 }
@@ -285,7 +320,7 @@ namespace SceneManager.Paths
             DismissCollectedDrivers();
             RemoveAllWaypoints();
             PathManager.Paths[pathIndex] = null;
-            Game.LogTrivial($"Path {Name} deleted.");
+            Game.LogTrivial($"Path \"{Name}\" deleted.");
         }
 
         private void DismissCollectedDrivers()
@@ -293,19 +328,7 @@ namespace SceneManager.Paths
             List<CollectedPed> collectedPedsCopy = CollectedPeds.ToList(); // Have to enumerate over a copied list because you can't delete from the same list you're enumerating through
             foreach (CollectedPed collectedPed in collectedPedsCopy.Where(x => x != null && x && x.CurrentVehicle))
             {
-                if (collectedPed.StoppedAtWaypoint)
-                {
-                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(collectedPed.CurrentVehicle, 1f, 1, true);
-                }
-                if (collectedPed.GetAttachedBlip())
-                {
-                    collectedPed.GetAttachedBlip().Delete();
-                }
                 collectedPed.Dismiss();
-                collectedPed.CurrentVehicle.IsSirenOn = false;
-                collectedPed.CurrentVehicle.IsSirenSilent = true;
-                collectedPed.CurrentVehicle.Dismiss();
-
                 CollectedPeds.Remove(collectedPed);
             }
         }
@@ -342,16 +365,6 @@ namespace SceneManager.Paths
             }
 
             Name = pathName;
-        }
-
-        private static XmlAttributeOverrides DefineOverridesForCombinedPath()
-        {
-            XmlAttributeOverrides overrides = new XmlAttributeOverrides();
-            XmlAttributes attr = new XmlAttributes();
-            attr.XmlRoot = new XmlRootAttribute("Paths");
-            overrides.Add(typeof(List<Path>), attr);
-
-            return overrides;
         }
     }
 }
