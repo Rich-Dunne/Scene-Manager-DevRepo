@@ -8,9 +8,10 @@ using System.Xml.Serialization;
 
 namespace SceneManager.Utils
 {
-    internal static class PathXMLManager
+    internal static class Serializer
     {
         private static Dictionary<Type, XmlSerializer> _serializerCache = new Dictionary<Type, XmlSerializer>();
+        
         private static XmlSerializer _getOrCreateSerializer<T>(XmlAttributeOverrides overrides = null)
         {
             if (_serializerCache.ContainsKey(typeof(T)))
@@ -74,7 +75,7 @@ namespace SceneManager.Utils
             SaveItemToXML(list, filePath);
         }
 
-        public static void SaveItemToXML<T>(T item, string path, XmlAttributeOverrides overrides)
+        public static void SaveItemToXML<T>(T item, string path, XmlAttributeOverrides overrides = null)
         {
             Encoding utf8NoBom = new UTF8Encoding(false);
             using (TextWriter writer = new StreamWriter(path, false, utf8NoBom))
@@ -82,17 +83,16 @@ namespace SceneManager.Utils
                 XmlSerializerNamespaces ns = new XmlSerializerNamespaces();
                 ns.Add("", "");
 
-                // new XmlSerializer(typeof(T)).Serialize(writer, item);
                 _getOrCreateSerializer<T>(overrides).Serialize(writer, item, ns);
             }
         }
 
-        public static void SaveItemToXML<T>(T item, string path)
-        {
-            SaveItemToXML<T>(item, path, null);
-        }
+        //public static void SaveItemToXML<T>(T item, string path)
+        //{
+        //    SaveItemToXML(item, path, null);
+        //}
 
-        public static T LoadItemFromXML<T>(string filePath, XmlAttributeOverrides overrides)
+        public static T LoadItemFromXML<T>(string filePath, XmlAttributeOverrides overrides = null)
         {
             if (!File.Exists(filePath)) throw new FileNotFoundException($"{nameof(LoadItemFromXML)}(): specified file does not exist: {filePath}");
 
@@ -102,10 +102,10 @@ namespace SceneManager.Utils
             }
         }
 
-        public static T LoadItemFromXML<T>(string filePath)
-        {
-            return (T)LoadItemFromXML<T>(filePath, null);
-        }
+        //public static T LoadItemFromXML<T>(string filePath)
+        //{
+        //    return LoadItemFromXML<T>(filePath, null);
+        //}
 
         public static void ModifyItemInXML<T>(string filePath, Action<T> modification)
         {
@@ -130,24 +130,14 @@ namespace SceneManager.Utils
             ModifyItemInXML<List<T>>(path, t => t.Add(objectToAdd));
         }
 
-        ///// <summary>
-        ///// Creates folder in case it doesn't exist and checks file existance.
-        ///// </summary>
-        ///// <param name="path"></param>
-        ///// <returns>false when a file does not exist.</returns>
-        //private static bool ValidatePath(string path)
-        //{
-        //    //TODO: implement
-        //    // - check extension
-        //    // - bool param: createDir
-        //    string dir = Path.GetDirectoryName(path);
-        //    if (!Directory.Exists(dir))
-        //    {
-        //        Directory.CreateDirectory(dir);
-        //        return false;
-        //    }
+        internal static XmlAttributeOverrides DefineOverrides()
+        {
+            XmlAttributeOverrides overrides = new XmlAttributeOverrides();
+            XmlAttributes attr = new XmlAttributes();
+            attr.XmlRoot = new XmlRootAttribute("Paths");
+            overrides.Add(typeof(List<Paths.Path>), attr);
 
-        //    return File.Exists(path);
-        //}
+            return overrides;
+        }
     }
 }

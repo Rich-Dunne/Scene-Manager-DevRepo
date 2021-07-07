@@ -10,17 +10,11 @@
 <protection id="anti debug" />
 <protection id="ref proxy" />
 <protection id="resources" />
-<protection id = "rename" >
-<argument name = "mode" value = "decodable" />
-<argument name = "renPublic" value = "false" />
-<argument name = "renEnum" value = "false" />
-<argument name = "renameArgs" value = "false" />
-</protection >
 </rule>
 </module>
 <probePath>..\..\..\packages\InputManager.1.0.0\lib</probePath>
-<probePath>D:\Program Files\Rockstar Games\Grand Theft Auto V</probePath>
-<probePath>C:\Users\Rich\Desktop\Mod Stuff\Mod Development\Modding Resources\References</probePath>
+<probePath>..\..\..\packages\RagePluginHook.1.86.1\lib\net472</probePath>
 <probePath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8</probePath>
 <probePath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\Facades</probePath>
+<probePath>..\..\..\packages\RAGENativeUI.1.8.0\lib\net472</probePath>
 </project>

@@ -1,11 +1,5 @@
 ﻿namespace SceneManager.Utils
 {
-	internal enum Delete
-	{
-		Single,
-		All
-	}
-
 	internal enum PedTask
 	{
 		CTaskHandsUp = 0,
@@ -446,7 +440,8 @@
 	{
 		Uninitialized,
 		Creating,
-		Finished
+		Finished,
+		Deleting
 	}
 
 	internal enum SpeedUnits
@@ -455,18 +450,18 @@
 		KPH
 	}
 
-	internal enum DrivingFlagType
+	public enum DrivingFlagType
 	{
 		Normal = 263075,
 		Direct = 17040259
-	} // Change this to Public for import/export?
+	} // Change this to Public for import/export
 
-	internal enum DismissOption
+	internal enum Dismiss
 	{
 		FromPath = 0,
 		FromWaypoint = 1,
 		FromWorld = 2,
-		FromPlayer = 3,
+		ByPlayer = 3,
 		FromDirected = 4
 	}
 

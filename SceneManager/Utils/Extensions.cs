@@ -1,4 +1,10 @@
 ﻿using Rage;
+using RAGENativeUI.Elements;
+using SceneManager.Managers;
+using SceneManager.Paths;
+using SceneManager.Waypoints;
+using System;
+using System.Linq;
 
 namespace SceneManager.Utils
 {
@@ -49,15 +55,15 @@ namespace SceneManager.Utils
             }
 
             // Ped is in a vehicle
-            if (taskInVehicleBasic)
+            if (ped.CurrentVehicle)
             {
                 //Game.LogTrivial($"Ped is in a vehicle.");
                 // Ped has a controlled driving task
-                if (taskControlVehicle)
-                {
-                    //Game.LogTrivial($"Ped has a controlled driving task. (non-ambient)");
-                    return false;
-                }
+                //if (taskControlVehicle)
+                //{
+                //    //Game.LogTrivial($"Ped has a controlled driving task. (non-ambient)");
+                //    return false;
+                //}
 
                 // Ped has a wander driving task
                 if (taskCarDriveWander)
@@ -67,12 +73,12 @@ namespace SceneManager.Utils
                 }
 
                 // If the ped is in a vehicle but doesn't have a driving task, then it's a passenger.  Check if the vehicle's driver has a driving wander task
-                if (ped.CurrentVehicle && ped.CurrentVehicle.Driver)
+                if (ped.CurrentVehicle.Driver && ped.CurrentVehicle.Driver != ped)
                 {
                     var driverHasWanderTask = Rage.Native.NativeFunction.Natives.GET_IS_TASK_ACTIVE<bool>(ped.CurrentVehicle.Driver, 151);
                     if (driverHasWanderTask)
                     {
-                        //Game.LogTrivial($"[Ambient Ped Check]: Ped is a passenger.  Vehicle's driver has a wander driving task. (ambient)");
+                        //Game.LogTrivial($"Ped is a passenger.  Vehicle's driver has a wander driving task. (ambient)");
                         return true;
                     }
                 }
@@ -80,13 +86,6 @@ namespace SceneManager.Utils
 
             if (ped.IsOnFoot)
             {
-                // UB unit on-foot, waiting for interaction
-                if (ped.RelationshipGroup.Name == "UBCOP")
-                {
-                    //Game.LogTrivial($"Cop is UB unit. (non-ambient)");
-                    return false;
-                }
-
                 // Cop ped walking around or standing still
                 if ((taskComplexControlMovement && taskWanderingScenario) || (taskAmbientClips && taskUseScenario))
                 {
@@ -98,6 +97,122 @@ namespace SceneManager.Utils
             // If nothing else returns true before now, then the ped is probably being controlled and doing something else
             //Game.LogTrivial($"Nothing else has returned true by this point. (non-ambient)");
             return false;
+        }
+
+        /// <summary>Determines if a vehicle and driver are valid.
+        /// </summary>
+        internal static bool VehicleAndDriverValid(this Vehicle vehicle)
+        {
+            if (vehicle && vehicle.HasDriver && vehicle.Driver && vehicle.Driver.IsAlive)
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        /// <summary>Determines if this vehicle is within the waypoint's collection range.
+        /// </summary>
+        internal static bool IsNearCollectorWaypoint(this Vehicle vehicle, Waypoint waypoint)
+        {
+            return vehicle.FrontPosition.DistanceTo2D(waypoint.Position) <= waypoint.CollectorRadius && Math.Abs(waypoint.Position.Z - vehicle.Position.Z) < 3;
+        }
+
+        internal static bool IsValidForPathCollection(this Vehicle vehicle, Path path)
+        {
+            if (!vehicle)
+            {
+                return false;
+            }
+
+            var vehicleCollectedOnAnotherPath = PathManager.Paths.Any(p => p != null && p.Number != path.Number && p.CollectedPeds.Any(cp => cp && cp.CurrentVehicle == vehicle));
+            if (vehicleCollectedOnAnotherPath)
+            {
+                return false;
+            }
+
+            if(path.BlacklistedVehicles.Contains(vehicle))
+            {
+                return false;
+            }
+
+            if(vehicle == Game.LocalPlayer.Character.LastVehicle)
+            {
+                return false;
+            }
+
+            if (vehicle.Driver)
+            {
+                if (!vehicle.Driver.IsAlive)
+                {
+                    Game.LogTrivial($"Vehicle's driver is dead.");
+                    path.BlacklistedVehicles.Add(vehicle);
+                    return false;
+                }
+                if (vehicle.IsPoliceVehicle && !vehicle.Driver.IsAmbient())
+                {
+                    Game.LogTrivial($"Vehicle is a non-ambient police vehicle.");
+                    path.BlacklistedVehicles.Add(vehicle);
+                    return false;
+                }
+            }
+
+            if ((vehicle.IsCar || vehicle.IsBike || vehicle.IsBicycle || vehicle.IsQuadBike) && !vehicle.IsSirenOn && vehicle.IsEngineOn && vehicle.IsOnAllWheels && vehicle.Speed > 1 && !path.CollectedPeds.Any(cp => cp && cp.CurrentVehicle == vehicle))
+            { 
+                if (!vehicle.HasDriver)
+                {
+                    vehicle.CreateRandomDriver();
+                    GameFiber.Yield();
+                    //while (vehicle && !vehicle.HasDriver)
+                    //{
+                    //    Game.LogTrivial($"Trying to create new driver");
+                    //    GameFiber.Yield();
+                    //}
+                    if(!vehicle)
+                    {
+                        return false;
+                    }
+                    if(!vehicle.Driver)
+                    {
+                        Game.LogTrivial($"Unable to create a new driver");
+                        vehicle.Delete();
+                        return false;
+                    }
+                    Game.LogTrivial($"Vehicle has a new driver");
+                    //vehicle.Driver.IsPersistent = true;
+                    vehicle.Driver.BlockPermanentEvents = true;
+                }
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+
+        internal static float GetTextWidth(this UIMenuItem menuItem)
+        {
+            menuItem.TextStyle.Apply();
+            Rage.Native.NativeFunction.Natives.x54CE8AC98E120CAB("STRING"); // _BEGIN_TEXT_COMMAND_GET_WIDTH
+            Rage.Native.NativeFunction.Natives.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(menuItem.Text);
+            return Rage.Native.NativeFunction.Natives.x85F061DA64ED2F67<float>(true); // _END_TEXT_COMMAND_GET_WIDTH
+        }
+
+        internal static float GetSelectedItemTextWidth(this UIMenuListScrollerItem<string> scrollerItem)
+        {
+            if (scrollerItem.OptionCount == 0)
+            {
+                return 0;
+            }
+            scrollerItem.GetTextWidth();
+            scrollerItem.TextStyle.Apply();
+
+            Rage.Native.NativeFunction.Natives.x54CE8AC98E120CAB("STRING"); // _BEGIN_TEXT_COMMAND_GET_WIDTH
+            Rage.Native.NativeFunction.Natives.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(scrollerItem.SelectedItem);
+
+            return Rage.Native.NativeFunction.Natives.x85F061DA64ED2F67<float>(true); // _END_TEXT_COMMAND_GET_WIDTH
         }
     }
 }

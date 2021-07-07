@@ -1,116 +1,116 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.Drawing;
+using System.Linq;
 using Rage;
 using RAGENativeUI;
 using RAGENativeUI.Elements;
+using SceneManager.Managers;
+using SceneManager.Menus;
+using SceneManager.Paths;
 using SceneManager.Utils;
 
 namespace SceneManager
 {
-    class EditPathMenu
+    internal class EditPathMenu
     {
-        internal static UIMenu editPathMenu = new UIMenu("Scene Manager", "~o~Edit Path");
-        private static UIMenuItem editPathWaypoints, deletePath, exportPath;
-        internal static UIMenuCheckboxItem disablePath;
+        internal static UIMenu Menu { get; } = new UIMenu("Scene Manager", "~o~Edit Path");
+        private static UIMenuCheckboxItem DisablePath { get; } = new UIMenuCheckboxItem("Disable Path Collection", false);
+        private static UIMenuItem EditWaypoints { get; } = new UIMenuItem("Edit Waypoints");
+        private static UIMenuItem DeletePath { get; } = new UIMenuItem("Delete Path");
+        private static UIMenuItem ChangePathName { get; } = new UIMenuItem("Change Path Name");
+        internal static Path CurrentPath { get; set; }
 
-        internal static void InstantiateMenu()
+        internal static void Initialize()
         {
-            editPathMenu.ParentMenu = PathMainMenu.pathMainMenu;
-            MenuManager.menuPool.Add(editPathMenu);
-            editPathMenu.OnItemSelect += EditPath_OnItemSelected;
-            editPathMenu.OnCheckboxChange += EditPath_OnCheckboxChange;
-            editPathMenu.OnMenuOpen += EditPath_OnMenuOpen;
+            Menu.ParentMenu = PathMainMenu.Menu;
+            MenuManager.MenuPool.Add(Menu);
+
+            Menu.OnItemSelect += EditPath_OnItemSelected;
+            Menu.OnCheckboxChange += EditPath_OnCheckboxChange;
+            Menu.OnMenuOpen += EditPath_OnMenuOpen;
         }
 
-        internal static void BuildEditPathMenu()
+        internal static void Build()
         {
-            editPathMenu.AddItem(disablePath = new UIMenuCheckboxItem("Disable Path", false));
-            editPathMenu.AddItem(editPathWaypoints = new UIMenuItem("Edit Waypoints"));
-            editPathWaypoints.ForeColor = Color.Gold;
-            editPathMenu.AddItem(deletePath = new UIMenuItem("Delete Path"));
-            deletePath.ForeColor = Color.Gold;
-            //editPathMenu.AddItem(exportPath = new UIMenuItem("Export Path"));
-            //exportPath.ForeColor = Color.Gold;
-            editPathMenu.RefreshIndex();
-        }
+            Menu.Clear();
 
-        private static void EditPathWaypoints()
-        {
-            if (!SettingsMenu.threeDWaypoints.Checked)
-            {
-                Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~You have 3D waypoints disabled in your settings.  It's recommended to enable 3D waypoints while working with waypoints.");
-            }
-            EditWaypointMenu.BuildEditWaypointMenu();
-        }
+            Menu.AddItem(DisablePath);
+            Menu.AddItem(EditWaypoints);
+            EditWaypoints.ForeColor = Color.Gold;
+            Menu.AddItem(ChangePathName);
+            ChangePathName.ForeColor = Color.Gold;
+            Menu.AddItem(DeletePath);
+            DeletePath.ForeColor = Color.Gold;
 
-        private static void DeletePath()
-        {
-            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
-            PathMainMenu.DeletePath(currentPath, Delete.Single);
-        }
-
-        private static void DisablePath()
-        {
-            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
-            if (disablePath.Checked)
-            {
-                currentPath.DisablePath();
-                Game.LogTrivial($"Path {currentPath.Number} disabled.");
-            }
-            else
-            {
-                currentPath.EnablePath();
-                Game.LogTrivial($"Path {currentPath.Number} enabled.");
-            }
-        }
-
-        private static void ExportPath()
-        {
-            var currentPath = PathMainMenu.paths[PathMainMenu.editPath.Index];
-            // Reference PNWParks's UserInput class from LiveLights
-            var filename = PNWUserInput.GetUserInput("Type the name you would like to save your file as", "Enter a filename", 100) + ".xml";
-
-            // If filename != null or empty, check if export directory exists (GTA V/Plugins/SceneManager/Saved Paths)
-            if(string.IsNullOrWhiteSpace(filename))
-            {
-                Game.DisplayHelp($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
-                Game.LogTrivial($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.");
-                return;
-            }
-            Game.LogTrivial($"Filename: {filename}");
-            currentPath.Save(filename);
+            Menu.RefreshIndex();
         }
 
         private static void EditPath_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
         {
-            if (selectedItem == editPathWaypoints)
+            if (selectedItem == EditWaypoints)
             {
-                EditPathWaypoints();
+                if (!SettingsMenu.ThreeDWaypoints.Checked)
+                {
+                    Hints.Display($"~o~Scene Manager ~y~[Hint]\n~w~You have 3D waypoints disabled in your settings.  It's recommended to enable 3D waypoints while working with waypoints.");
+                }
+                EditWaypointMenu.BuildEditWaypointMenu();
             }
 
-            if (selectedItem == deletePath)
+            if (selectedItem == DeletePath)
             {
-                DeletePath();
+                var currentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
+                currentPath.Delete();
+                PathMainMenu.Build();
+                PathMainMenu.Menu.Visible = true;
+                BarrierMenu.Build();
             }
 
-            if(selectedItem == exportPath)
+            if(selectedItem == ChangePathName)
             {
-                ExportPath();
+                var currentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
+                currentPath.ChangeName();
+                MenuManager.BuildMenus();
+                Menu.Visible = true;
             }
         }
 
         private static void EditPath_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool @checked)
         {
-            if (checkboxItem == disablePath)
+            if (checkboxItem == DisablePath)
             {
-                DisablePath();
+                //var currentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
+                var currentPath = PathManager.Paths.FirstOrDefault(x => x.Name == PathMainMenu.EditPath.OptionText);
+                if(currentPath == null)
+                {
+                    return;
+                }
+
+                if (DisablePath.Checked)
+                {
+                    currentPath.Disable();
+                }
+                else
+                {
+                    currentPath.Enable();
+                }
             }
         }
 
         private static void EditPath_OnMenuOpen(UIMenu menu)
         {
             var scrollerItems = new List<UIMenuScrollerItem> {  };
-            RNUIMouseInputHandler.Initialize(menu, scrollerItems);
+            GameFiber.StartNew(() => UserInput.InitializeMenuMouseControl(menu, scrollerItems), "RNUI Mouse Input Fiber");
+            if (CurrentPath == null)
+            {
+                Menu.SubtitleText = $"~o~Currently editing: ~r~[ERROR GETTING CURRENT PATH]";
+                ChangePathName.Description = $"Change the path name from ~r~[ERROR] ~w~to something else.";
+            }
+            else
+            {
+                Menu.SubtitleText = $"~o~Currently editing: ~b~{CurrentPath.Name}";
+                ChangePathName.Description = $"Change the path name from ~b~{CurrentPath.Name} ~w~to something else.";
+            }
         }
     }
 }
