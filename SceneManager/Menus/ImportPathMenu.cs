@@ -6,9 +6,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Rage;
 using SceneManager.Managers;
-using SceneManager.Paths;
-using System;
-using System.Windows.Forms;
+using System.IO;
 
 namespace SceneManager.Menus
 {
@@ -16,8 +14,7 @@ namespace SceneManager.Menus
     {
         internal static UIMenu Menu = new UIMenu("Scene Manager", "~o~Import Path Menu");
         internal static UIMenuItem Import { get; } = new UIMenuItem("Import", "Import the selected paths.");
-
-        private static List<string> _HasBeenImported = new List<string>();
+        internal static List<string> ImportedFileNames { get; } = new List<string>();
 
         internal static void Initialize()
         {
@@ -32,11 +29,12 @@ namespace SceneManager.Menus
         internal static void Build()
         {
             Menu.Clear();
-            PathManager.ImportPaths();
-            foreach(KeyValuePair<string, List<Path>> kvp in PathManager.ImportedPaths)
+
+            GetFileNamesForPathsToImport();
+            foreach(string fileName in ImportedFileNames)
             {
-                var menuItem = new UIMenuCheckboxItem(kvp.Key, false);
-                if(!_HasBeenImported.Contains(kvp.Key))
+                var menuItem = new UIMenuCheckboxItem(fileName, false);
+                if (!PathManager.LoadedFiles.Contains(fileName))
                 {
                     menuItem.LeftBadge = UIMenuItem.BadgeStyle.Star;
                 }
@@ -57,54 +55,57 @@ namespace SceneManager.Menus
         {
             if(selectedItem == Import)
             {
-                var checkboxItems = Menu.MenuItems.Where(x => x.GetType() == typeof(UIMenuCheckboxItem));
-                foreach(UIMenuCheckboxItem menuItem in checkboxItems)
+                var checkboxItems = Menu.MenuItems.Where(x => x.GetType() == typeof(UIMenuCheckboxItem)).Cast<UIMenuCheckboxItem>();
+                var checkedItems = checkboxItems.Where(x => x.Checked);
+
+                foreach(var menuItem in checkedItems)
                 {
-                    if(menuItem.Checked)
+                    var importedPaths = PathManager.ImportPathsFromFile(menuItem.Text);
+                    if (importedPaths != null)
                     {
-                        var pathsFromFile = PathManager.ImportedPaths.FirstOrDefault(x => x.Key == menuItem.Text).Value;
-                        foreach(Path path in pathsFromFile)
-                        {
-                            if(PathManager.Paths.Any(x => x != null && x.Name == path.Name))
-                            {
-                                Game.DisplayHelp($"A path with the name ~b~{path.Name} ~w~already exists.  Do you want to replace it?  ~{Keys.Y.GetInstructionalId()}~ or ~{Keys.N.GetInstructionalId()}~");
-                                GameFiber.Sleep(100);
-                                GameFiber.SleepUntil(() => Game.IsKeyDown(Keys.Y) || Game.IsKeyDown(Keys.N), 8300);
-
-                                if(Game.IsKeyDown(Keys.Y))
-                                {
-                                    var pathToReplace = PathManager.Paths.First(x => x.Name == path.Name);
-                                    var pathToReplaceIndex = Array.IndexOf(PathManager.Paths, pathToReplace);
-                                    pathToReplace.Delete();
-                                    PathManager.Paths[pathToReplaceIndex] = path;
-                                    path.Load();
-                                    Rage.Native.NativeFunction.Natives.CLEAR_ALL_HELP_MESSAGES();
-                                    _HasBeenImported.Add(PathManager.ImportedPaths.FirstOrDefault(x => x.Key == menuItem.Text).Key);
-                                    continue;
-                                }
-                                else
-                                {
-                                    Game.DisplayNotification($"~o~Scene Manager ~y~[Import]\n~w~Path ~b~{path.Name} ~w~was not imported.");
-                                    Rage.Native.NativeFunction.Natives.CLEAR_ALL_HELP_MESSAGES();
-                                    continue;
-                                }
-                            }
-
-                            var firstNullPathIndex = Array.IndexOf(PathManager.Paths, PathManager.Paths.First(x => x == null));
-                            PathManager.Paths[firstNullPathIndex] = path;
-                            path.Load();
-                            _HasBeenImported.Add(PathManager.ImportedPaths.FirstOrDefault(x => x.Key == menuItem.Text).Key);
-                        }
-
-                        var numberOfNonNullPaths = PathManager.Paths.Where(x => x != null).Count();
-                        Game.LogTrivial($"{menuItem.Text} added to paths collection.  Paths count: {numberOfNonNullPaths}");
-                        Menu.RefreshIndex();
+                        PathManager.LoadImportedPaths(importedPaths, menuItem.Text);
                     }
                 }
+                Menu.RefreshIndex();
 
                 MenuManager.BuildMenus();
                 Menu.Visible = true;
             }
+        }
+
+        private static void GetFileNamesForPathsToImport()
+        {
+            ImportedFileNames.Clear();
+
+            // Check if Saved Paths directory exists
+            var GAME_DIRECTORY = Directory.GetCurrentDirectory();
+            var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "\\plugins\\SceneManager\\Saved Paths\\";
+            if (!Directory.Exists(SAVED_PATHS_DIRECTORY))
+            {
+                Game.LogTrivial($"Directory '\\plugins\\SceneManager\\Saved Paths' does not exist.  No paths available to import.");
+                return;
+            }
+
+            // Check if any XML files are available to import from Saved Paths
+            var savedPathFiles = Directory.GetFiles(SAVED_PATHS_DIRECTORY, "*.xml");
+            if (savedPathFiles.Length == 0)
+            {
+                Game.LogTrivial($"No saved paths found.");
+                return;
+            }
+            else
+            {
+                Game.LogTrivial($"{savedPathFiles.Length} path(s) available to import.");
+            }
+
+            // Import file names
+            foreach (string file in savedPathFiles)
+            {
+                string fileName = System.IO.Path.GetFileNameWithoutExtension(file);
+                Game.LogTrivial($"File: {fileName}");
+                ImportedFileNames.Add(fileName);
+            }
+            Game.LogTrivial($"Successfully populated menu with {ImportedFileNames.Count} file(s).");
         }
 
         private static void ImportPathMenu_OnCheckboxChange(UIMenu sender, UIMenuCheckboxItem checkboxItem, bool Checked)
