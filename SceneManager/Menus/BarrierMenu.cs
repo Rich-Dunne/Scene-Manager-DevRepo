@@ -31,6 +31,7 @@ namespace SceneManager.Menus
         {
             Menu.ParentMenu = MainMenu.Menu;
             MenuManager.MenuPool.Add(Menu);
+            Menu.MaxItemsOnScreen = 11;
 
             Menu.OnItemSelect += BarrierMenu_OnItemSelected;
             Menu.OnScrollerChange += BarrierMenu_OnScrollerChanged;
@@ -41,7 +42,6 @@ namespace SceneManager.Menus
         internal static void Build()
         {
             Menu.Clear();
-            Menu.MaxItemsOnScreen = 11;
 
             Menu.AddItem(BarrierList);
             BarrierList.ForeColor = Color.Gold;
@@ -93,13 +93,19 @@ namespace SceneManager.Menus
             if (BarrierList.SelectedItem == "Flare")
             {
                 RotateBarrier.Enabled = false;
+                Invincible.Enabled = false;
+                Immobile.Enabled = false;
+                BarrierTexture.Enabled = false;
+                SetBarrierLights.Enabled = false;
             }
             else
             {
                 RotateBarrier.Enabled = true;
+                Invincible.Enabled = true;
+                Immobile.Enabled = true;
+                BarrierTexture.Enabled = true;
+                SetBarrierLights.Enabled = true;
             }
-
-            Menu.Width = SetMenuWidth();
         }
 
         private static void BarrierMenu_OnCheckboxChanged(UIMenu sender, UIMenuCheckboxItem checkbox, bool @checked)
@@ -135,9 +141,10 @@ namespace SceneManager.Menus
 
             if (scrollerItem == RotateBarrier)
             {
-                //RotateBarrier();
                 BarrierManager.RotateBarrier();
             }
+
+            MenuManager.SetMenuWidth(Menu);
         }
 
         private static void BarrierMenu_OnItemSelected(UIMenu sender, UIMenuItem selectedItem, int index)
@@ -165,7 +172,7 @@ namespace SceneManager.Menus
 
         private static void BarrierMenu_OnMenuOpen(UIMenu menu)
         {
-            var scrollerItems = new List<UIMenuScrollerItem> { BarrierList, BarrierTexture, SetBarrierTrafficLight, RotateBarrier, RemoveBarrierOptions };
+            var scrollerItems = new List<UIMenuScrollerItem> { BarrierList, BarrierTexture, SetBarrierTrafficLight, RotateBarrier, AddToPath, AddUnassignedToPath, RemoveBarrierOptions };
 
             //CreatePlaceholderBarrier();
             BarrierManager.CreatePlaceholderBarrier();
