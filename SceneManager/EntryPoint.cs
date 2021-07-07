@@ -42,11 +42,20 @@ namespace SceneManager
 
         private static void TerminationHandler(object sender, EventArgs e)
         {
+            try
+            {
+                ExportPathMenu.ExportOnUnload();
+            }
+            catch(Exception ex)
+            {
+                Game.LogTrivial($"Autosave error: {ex.Message}");
+                Game.DisplayNotification($"~o~Scene Manager ~r~[Error]\n~w~There was a problem autosaving the paths.");
+            }
             BarrierMenu.Cleanup();
             PathManager.DeleteAllPaths();
 
             Game.LogTrivial($"Plugin has shut down.");
-            Game.DisplayNotification($"~o~Scene Manager ~r~[Terminated]\n~w~The plugin has shut down.");
+            //Game.DisplayNotification($"~o~Scene Manager ~r~[Terminated]\n~w~The plugin has shut down.");
         }
     }
 }
