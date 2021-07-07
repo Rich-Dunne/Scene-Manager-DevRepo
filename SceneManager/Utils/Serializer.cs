@@ -129,5 +129,15 @@ namespace SceneManager.Utils
         {
             ModifyItemInXML<List<T>>(path, t => t.Add(objectToAdd));
         }
+
+        internal static XmlAttributeOverrides DefineOverrides()
+        {
+            XmlAttributeOverrides overrides = new XmlAttributeOverrides();
+            XmlAttributes attr = new XmlAttributes();
+            attr.XmlRoot = new XmlRootAttribute("Paths");
+            overrides.Add(typeof(List<Paths.Path>), attr);
+
+            return overrides;
+        }
     }
 }
