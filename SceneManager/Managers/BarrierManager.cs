@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using Rage;
+using RAGENativeUI;
 using SceneManager.Barriers;
 using SceneManager.Menus;
 using SceneManager.Paths;
@@ -159,19 +160,6 @@ namespace SceneManager.Managers
             {
                 var flare = new Weapon("weapon_flare", PlaceholderBarrier.Position, 1);
                 Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(flare, true);
-                GameFiber.Sleep(1);
-                GameFiber.StartNew(() =>
-                {
-                    while (flare && flare.HeightAboveGround > 0.05f)
-                    {
-                        GameFiber.Yield();
-                    }
-                    GameFiber.Sleep(1000);
-                    if (flare)
-                    {
-                        flare.IsPositionFrozen = true;
-                    }
-                }, "Spawn Flare Fiber");
 
                 barrier = new Barrier(flare, BarrierMenu.Invincible.Checked, BarrierMenu.Immobile.Checked);
                 Barriers.Add(barrier);
@@ -238,6 +226,7 @@ namespace SceneManager.Managers
         {
             //GameFiber.StartNew(() =>
             //{
+                Game.DisplayHelp($"~{InstructionalKey.SymbolBusySpinner.GetId()}~ Resetting barriers...");
                 var currentBarriers = Barriers.Where(b => b.ModelName != "0xa2c44e80").ToList(); // 0xa2c44e80 is the flare weapon hash
                 foreach (Barrier barrier in currentBarriers)
                 {
