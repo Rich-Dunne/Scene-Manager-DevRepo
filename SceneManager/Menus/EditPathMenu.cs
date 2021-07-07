@@ -15,7 +15,7 @@ namespace SceneManager
     internal class EditPathMenu
     {
         internal static UIMenu Menu { get; } = new UIMenu("Scene Manager", "~o~Edit Path");
-        private static UIMenuCheckboxItem DisablePath { get; } = new UIMenuCheckboxItem("Disable Path", false);
+        private static UIMenuCheckboxItem DisablePath { get; } = new UIMenuCheckboxItem("Disable Path Collection", false);
         private static UIMenuItem EditWaypoints { get; } = new UIMenuItem("Edit Waypoints");
         private static UIMenuItem DeletePath { get; } = new UIMenuItem("Delete Path");
         private static UIMenuItem ChangePathName { get; } = new UIMenuItem("Change Path Name");
@@ -101,8 +101,16 @@ namespace SceneManager
         {
             var scrollerItems = new List<UIMenuScrollerItem> {  };
             GameFiber.StartNew(() => UserInput.InitializeMenuMouseControl(menu, scrollerItems), "RNUI Mouse Input Fiber");
-            Menu.SubtitleText = $"~o~Currently editing: ~b~{CurrentPath.Name}";
-            ChangePathName.Description = $"Change the path name from ~b~{CurrentPath.Name} ~w~to something else.";
+            if (CurrentPath == null)
+            {
+                Menu.SubtitleText = $"~o~Currently editing: ~r~[ERROR GETTING CURRENT PATH]";
+                ChangePathName.Description = $"Change the path name from ~r~[ERROR] ~w~to something else.";
+            }
+            else
+            {
+                Menu.SubtitleText = $"~o~Currently editing: ~b~{CurrentPath.Name}";
+                ChangePathName.Description = $"Change the path name from ~b~{CurrentPath.Name} ~w~to something else.";
+            }
         }
     }
 }
