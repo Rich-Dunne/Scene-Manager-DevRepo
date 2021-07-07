@@ -18,7 +18,7 @@ namespace SceneManager.Menus
         internal static UIMenuItem ExportPath { get; } = new UIMenuItem("Export Paths", "Export selected paths to ~b~plugins/SceneManager/Saved Paths");
         internal static UIMenuItem DeleteAllPaths { get; } = new UIMenuItem("Delete All Paths");
         internal static UIMenuListScrollerItem<string> EditPath { get; private set; }
-        internal static UIMenuCheckboxItem DisableAllPaths { get; } = new UIMenuCheckboxItem("Disable All Paths", false);
+        internal static UIMenuCheckboxItem DisableAllPaths { get; } = new UIMenuCheckboxItem("Disable All Path Collection", false);
 
         internal static void Initialize()
         {
@@ -39,7 +39,7 @@ namespace SceneManager.Menus
             CreateNewPath.ForeColor = Color.Gold;
             Menu.AddItem(ImportPath);
             ImportPath.ForeColor = Color.Gold;
-            ImportPath.Enabled = PathManager.ImportedPaths.Count > 0;
+            ImportPath.Enabled = ImportPathMenu.ImportedFileNames.Count > 0;
             Menu.AddItem(ExportPath);
             ExportPath.ForeColor = Color.Gold;
             ExportPath.Enabled = PathManager.Paths.Any(x => x != null);
@@ -62,7 +62,7 @@ namespace SceneManager.Menus
                 DeleteAllPaths.Enabled = false;
                 DisableAllPaths.Enabled = false;
             }
-            if(PathManager.ImportedPaths.Count == 0)
+            if(ImportPathMenu.ImportedFileNames.Count == 0)
             {
                 ImportPath.Enabled = false;
             }
@@ -95,10 +95,9 @@ namespace SceneManager.Menus
             if (selectedItem == DeleteAllPaths)
             {
                 PathManager.DeleteAllPaths();
-                DisableAllPaths.Checked = false;
-                Build();
+                PathManager.LoadedFiles.Clear();
+                MenuManager.BuildMenus();
                 Menu.Visible = true;
-                BarrierMenu.Build();
             }
         }
 
