@@ -69,12 +69,10 @@ namespace SceneManager.Utils
                     nearbyCollectedVehicleOtherPath.Dismiss(Dismiss.FromDirected, path);
                 }
                 Game.LogTrivial($"[Direct Driver] Adding {nearbyVehicle.Model.Name} to directed path.");
-                path.CollectedPeds.Add(collectedVehicleOnThisPath = new CollectedPed(nearbyVehicle.Driver, path, targetWaypoint) { Directed = true });
-                //collectedVehicleOnThisPath.Directed = true;
-                collectedVehicleOnThisPath.Tasks.Clear();
+                var newCollectedPed = new CollectedPed(nearbyVehicle.Driver, path, targetWaypoint) { Directed = true };
+                path.CollectedPeds.Add(newCollectedPed);
+                //collectedVehicleOnThisPath.Tasks.Clear();
             }
-
-            //GameFiber.StartNew(() => collectedVehicleOnThisPath.AssignWaypointTasks(path, targetWaypoint));
         }
     }
 }
