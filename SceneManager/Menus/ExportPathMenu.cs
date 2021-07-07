@@ -132,34 +132,56 @@ namespace SceneManager.Menus
 
             var GAME_DIRECTORY = Directory.GetCurrentDirectory();
             var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "/plugins/SceneManager/Saved Paths/";
-            var overrides = DefineOverridesForCombinedPath();
+            var overrides = Serializer.DefineOverrides();
             Serializer.SaveItemToXML(ExportPaths, SAVED_PATHS_DIRECTORY + fileName + ".xml", overrides);
             Game.DisplayNotification($"~o~Scene Manager ~g~[Success]\n~w~Path exported as ~b~{fileName}.xml~w~.");
         }
 
-        private static void ExportAsCombinedFile(IEnumerable<UIMenuCheckboxItem> checkedItems)
+        private static void ExportAsCombinedFile(IEnumerable<UIMenuCheckboxItem> checkedItems, bool autosave = false)
         {
-            // If any file contains all (and only) path names from checkedItems, it can be quicksaved        
-            string existingFile = GetNameForExistingCombinedPathsFile(checkedItems);
-            if(existingFile == "")
-            {
-                existingFile = UserInput.PromptPlayerForFileName("Type the name you would like to save your file as", "Enter a filename", 100);
+            var GAME_DIRECTORY = Directory.GetCurrentDirectory();
+            var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "/plugins/SceneManager/Saved Paths/";
+            var overrides = Serializer.DefineOverrides();
 
-                if (string.IsNullOrWhiteSpace(existingFile))
+            if (autosave)
+            {
+                Serializer.SaveItemToXML(ExportPaths, SAVED_PATHS_DIRECTORY + "autosave.xml", overrides);
+                Game.DisplayNotification($"~o~Scene Manager ~g~[Success]\n~w~Paths exported as ~b~autosave.xml~w~.");
+                return;
+            }
+
+            // If any file contains all (and only) path names from checkedItems, it can be quicksaved  
+            string existingFile = GetNameForExistingCombinedPathsFile(checkedItems);
+            string exportFilename = existingFile;
+
+            if (exportFilename == "")
+            {
+                exportFilename = UserInput.PromptPlayerForFileName("Type the name you would like to save your file as", "Enter a filename", 100);
+
+                if (string.IsNullOrWhiteSpace(exportFilename))
                 {
                     Game.DisplayHelp($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.  Defaulting to ~b~\"{checkedItems.First().Text}\"");
                     Game.LogTrivial($"Invalid filename given.  Filename cannot be null, empty, or consist of just white spaces.  Defaulting to \"{checkedItems.First().Text}\"");
-                    existingFile = checkedItems.First().Text;
+                    exportFilename = checkedItems.First().Text;
                 }
             }
-
-            Game.LogTrivial($"Filename: {existingFile}");
+            Game.LogTrivial($"Filename: {exportFilename}");
             
-            var GAME_DIRECTORY = Directory.GetCurrentDirectory();
-            var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "/plugins/SceneManager/Saved Paths/";
-            var overrides = DefineOverridesForCombinedPath();
-            Serializer.SaveItemToXML(ExportPaths, SAVED_PATHS_DIRECTORY + existingFile + ".xml", overrides);
-            Game.DisplayNotification($"~o~Scene Manager ~g~[Success]\n~w~Paths exported as ~b~{existingFile}.xml~w~.");
+            Serializer.SaveItemToXML(ExportPaths, SAVED_PATHS_DIRECTORY + exportFilename + ".xml", overrides);
+            Game.DisplayNotification($"~o~Scene Manager ~g~[Success]\n~w~Paths exported as ~b~{exportFilename}.xml~w~.");
+        }
+
+        internal static void ExportOnUnload()
+        {
+            ExportPaths.Clear();
+            var checkboxItems = Menu.MenuItems.Where(x => x.GetType() == typeof(UIMenuCheckboxItem)).Select(x => (UIMenuCheckboxItem)x);
+            foreach (UIMenuCheckboxItem checkboxItem in checkboxItems)
+            {
+                var pathToExport = PathManager.Paths.First(x => x != null && x.Name == checkboxItem.Text);
+                ExportPaths.Add(pathToExport);
+            }
+
+            ExportAsCombinedFile(checkboxItems, true);
         }
 
         private static bool CanQuickSavePath(Paths.Path pathToExport) 
@@ -190,16 +212,6 @@ namespace SceneManager.Menus
             }
 
             return "";
-        }
-
-        private static XmlAttributeOverrides DefineOverridesForCombinedPath()
-        {
-            XmlAttributeOverrides overrides = new XmlAttributeOverrides();
-            XmlAttributes attr = new XmlAttributes();
-            attr.XmlRoot = new XmlRootAttribute("Paths");
-            overrides.Add(typeof(List<Paths.Path>), attr);
-
-            return overrides;
         }
     }
 }
