@@ -461,7 +461,7 @@
 		FromPath = 0,
 		FromWaypoint = 1,
 		FromWorld = 2,
-		FromPlayer = 3,
+		ByPlayer = 3,
 		FromDirected = 4
 	}
 
