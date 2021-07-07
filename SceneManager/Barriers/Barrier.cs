@@ -35,30 +35,40 @@ namespace SceneManager.Barriers
                 obj.Delete();
             }
 
-            _object = new Object(ModelName, Position, Heading);
-            if(!_object)
+            if (ModelName == "0xa2c44e80") // Flare
             {
-                Game.LogTrivial($"New barrier object is invalid.");
-                return;
-            }
+                var flare = new Weapon("weapon_flare", Position, 1);
+                Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(flare, true);
+                _object = flare;
 
-            _object.SetPositionWithSnap(Position);
-            Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY<bool>(_object);
-
-            Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(_object, true);
-            if (Invincible)
-            {
-                Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(_object, true);
-                if (ModelName != "prop_barrier_wat_03a")
+                GameFiber.StartNew(() =>
                 {
-                    Rage.Native.NativeFunction.Natives.SET_DISABLE_BREAKING(_object, true);
-                }
+                    Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(_object, true);
+                    GameFiber.Sleep(1000);
+                    Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(_object, false);
+                }, "Spawn Flare Fiber");
             }
-            _object.IsPositionFrozen = Immobile;
-
-            if (Settings.EnableAdvancedBarricadeOptions)
+            else // Any other barrier object
             {
-                SetAdvancedOptions();
+                _object = new Object(ModelName, Position, Heading);
+                _object.SetPositionWithSnap(Position);
+                Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY<bool>(_object);
+                Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(_object, true);
+
+                if (Invincible)
+                {
+                    Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(_object, true);
+                    if (ModelName != "prop_barrier_wat_03a")
+                    {
+                        Rage.Native.NativeFunction.Natives.SET_DISABLE_BREAKING(_object, true);
+                    }
+                }
+                _object.IsPositionFrozen = Immobile;
+
+                if (Settings.EnableAdvancedBarricadeOptions)
+                {
+                    SetAdvancedOptions();
+                }
             }
         }
 
@@ -76,25 +86,38 @@ namespace SceneManager.Barriers
                 BarrierManager.PlaceholderBarrier.Delete();
             }
 
-            _object = new Object(ModelName, Position, Heading);
-
-            _object.SetPositionWithSnap(Position);
-            Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY<bool>(_object);
-
-            Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(_object, true);
-            if (Invincible)
+            if (ModelName == "0xa2c44e80") // Flare
             {
-                Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(_object, true);
-                if (ModelName != "prop_barrier_wat_03a")
+                _object = obj;
+
+                GameFiber.StartNew(() =>
                 {
-                    Rage.Native.NativeFunction.Natives.SET_DISABLE_BREAKING(_object, true);
-                }
+                    Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(_object, true);
+                    GameFiber.Sleep(1000);
+                    Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(_object, false);
+                }, "Spawn Flare Fiber");
             }
-            _object.IsPositionFrozen = Immobile;
-
-            if (Settings.EnableAdvancedBarricadeOptions)
+            else // Any other barrier object
             {
-                SetAdvancedOptions();
+                _object = new Object(ModelName, Position, Heading);
+                _object.SetPositionWithSnap(Position);
+                Rage.Native.NativeFunction.Natives.PLACE_OBJECT_ON_GROUND_PROPERLY<bool>(_object);
+                Rage.Native.NativeFunction.Natives.SET_ENTITY_DYNAMIC(_object, true);
+
+                if (Invincible)
+                {
+                    Rage.Native.NativeFunction.Natives.SET_DISABLE_FRAG_DAMAGE(_object, true);
+                    if (ModelName != "prop_barrier_wat_03a")
+                    {
+                        Rage.Native.NativeFunction.Natives.SET_DISABLE_BREAKING(_object, true);
+                    }
+                }
+                _object.IsPositionFrozen = Immobile;
+
+                if (Settings.EnableAdvancedBarricadeOptions)
+                {
+                    SetAdvancedOptions();
+                }
             }
         }
 
