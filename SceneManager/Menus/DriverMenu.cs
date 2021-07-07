@@ -39,11 +39,13 @@ namespace SceneManager.Menus
             DirectDriver.Enabled = true;
             Menu.AddItem(DismissDriver);
             DismissDriver.ForeColor = Color.Gold;
+            DismissDriver.Enabled = true;
 
-            if (PathManager.Paths.Length == 0)
+            if (PathManager.Paths.All(x => x == null))
             {
                 DirectOptions.Enabled = false;
                 DirectDriver.Enabled = false;
+                DismissDriver.Enabled = false;
             }
 
             Menu.RefreshIndex();
