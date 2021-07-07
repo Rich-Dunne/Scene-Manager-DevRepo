@@ -3,7 +3,6 @@ using Rage.Attributes;
 using Rage.ConsoleCommands.AutoCompleters;
 using System.Linq;
 using System;
-using System.Collections.Generic;
 using SceneManager.Managers;
 using SceneManager.Paths;
 
@@ -65,6 +64,15 @@ namespace SceneManager.Utils
             if (ped && ped != Game.LocalPlayer.Character)
             {
                 ped.Delete();
+            }
+        }
+
+        [ConsoleCommand("GetNumberOfVehiclesOnPath")]
+        internal static void Command_GetNumberOfVehiclesOnPath()
+        {
+            foreach(Path path in PathManager.Paths.Where(x => x != null))
+            {
+                Game.LogTrivial($"Path \"{path.Name}\" has {path.CollectedPeds.Count} collected peds.");
             }
         }
     }
