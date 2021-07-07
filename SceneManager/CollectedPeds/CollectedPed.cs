@@ -9,26 +9,22 @@ namespace SceneManager.CollectedPeds
 {
     internal class CollectedPed : Ped
     {
-        internal Path Path { get; private set; }
-        internal Waypoint CurrentWaypoint { get; private set; }
+        internal Path Path { get; set; }
+        internal Waypoint CurrentWaypoint { get; set; }
         internal bool StoppedAtWaypoint { get; private set; } = false;
         internal bool Dismissed { get; private set; } = false;
         internal bool Directed { get; set; } = false;
         internal bool SkipWaypoint { get; private set; } = false;
         internal bool ReadyForDirectTasks { get; private set; } = true;
 
-        internal CollectedPed(Ped ped, Path path, Waypoint waypoint)
+        internal CollectedPed(Ped basePed, Path path, Waypoint waypoint) : base(basePed.Handle) 
         {
-            if(!ped)
-            {
-                Game.LogTrivial($"Ped is invalid.");
-            }
-            Handle = ped.Handle;
+            Handle = basePed.Handle;
             Path = path;
             CurrentWaypoint = waypoint;
             SetPersistence();
-            Game.LogTrivial($"Added {CurrentVehicle.Model.Name} to collection from path {Path.Number} waypoint {CurrentWaypoint.Number}.");
-            
+            Game.LogTrivial($"Added {CurrentVehicle.Model.Name} to collection from path \"{Path.Name}\" waypoint {CurrentWaypoint.Number}.");
+
             GameFiber.StartNew(() => AssignWaypointTasks(), "Task Assignment Fiber");
         }
 
@@ -60,16 +56,19 @@ namespace SceneManager.CollectedPeds
                 DriveToNextWaypoint();
             }
 
-            if (Path.State == State.Deleting || (!Dismissed && !VehicleAndDriverAreValid()) || Directed)
+            if (Path.State == State.Deleting || !VehicleAndDriverAreValid())
             {
+                Dismiss();
                 return;
             }
 
-            Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] all Path {Path.Number} tasks complete.");
-            if (!Dismissed)
+            if(Directed)
             {
-                Dismiss();
+                Dismiss(Utils.Dismiss.FromDirected);
             }
+
+            Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] all path \"{Path.Name}\" tasks complete.");
+            Dismiss();
         }
 
         private void AssignDirectedTask()
@@ -107,7 +106,7 @@ namespace SceneManager.CollectedPeds
         {
             float acceptedDistance = GetAcceptedStoppingDistance(Path.Waypoints, Path.Waypoints.IndexOf(CurrentWaypoint));
             Vector3 oldPosition = CurrentWaypoint.Position;
-            Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] is driving to path {Path.Number} waypoint {CurrentWaypoint.Number} (directed)");
+            Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] is driving to path \"{Path.Name}\" waypoint {CurrentWaypoint.Number} (directed)");
             Tasks.DriveToPosition(CurrentWaypoint.Position, CurrentWaypoint.Speed, (VehicleDrivingFlags)CurrentWaypoint.DrivingFlagType, acceptedDistance);
             LoopWhileDrivingToDirectedWaypoint();
 
@@ -159,7 +158,7 @@ namespace SceneManager.CollectedPeds
                 return;
             }
 
-            Game.LogTrivial($"Preparing to run task loop for {CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] on path {Path.Number}");
+            Game.LogTrivial($"Preparing to run task loop for {CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] on path \"{Path.Name}\"");
             for (int currentWaypointTask = CurrentWaypoint.Number; currentWaypointTask < Path.Waypoints.Count; currentWaypointTask++)
             {
                 var oldPosition = Path.Waypoints[currentWaypointTask].Position;
@@ -181,7 +180,7 @@ namespace SceneManager.CollectedPeds
                     CurrentWaypoint = Path.Waypoints[currentWaypointTask];
                     float acceptedDistance = GetAcceptedStoppingDistance(Path.Waypoints, currentWaypointTask);
 
-                    Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] is driving to path {Path.Number} waypoint {Path.Waypoints[currentWaypointTask].Number} (Stop: {CurrentWaypoint.IsStopWaypoint}, Driving flag: {CurrentWaypoint.DrivingFlagType})");
+                    Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] is driving to path \"{Path.Name}\" waypoint {Path.Waypoints[currentWaypointTask].Number} (Stop: {CurrentWaypoint.IsStopWaypoint}, Driving flag: {CurrentWaypoint.DrivingFlagType})");
                     Tasks.DriveToPosition(Path.Waypoints[currentWaypointTask].Position, Path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)Path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
                     LoopWhileDrivingToWaypoint(currentWaypointTask, acceptedDistance, oldPosition);
 
@@ -212,6 +211,7 @@ namespace SceneManager.CollectedPeds
 
             void LoopWhileDrivingToWaypoint(int currentWaypointTask, float acceptedDistance, Vector3 oldPosition)
             {
+                int lostTasks = 0;
                 while (VehicleAndDriverAreValid() && !Dismissed && !SkipWaypoint && !Directed && Path.Waypoints.ElementAtOrDefault(currentWaypointTask) != null && CurrentVehicle.FrontPosition.DistanceTo2D(Path.Waypoints[currentWaypointTask].Position) > acceptedDistance)
                 {
                     if (oldPosition != Path.Waypoints[currentWaypointTask].Position)
@@ -224,9 +224,16 @@ namespace SceneManager.CollectedPeds
                     {
                         //Game.DisplayNotification($"~o~Scene Manager ~r~[Error]\n{Vehicle.Model.Name} [{Vehicle.Handle}] driver [{Driver.Handle}] has no task.  Reassiging current waypoint task.");
                         Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] driver [{Handle}] has no task.  Reassiging current waypoint task.");
+                        if(lostTasks == 3)
+                        {
+                            Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] driver [{Handle}] lost their task too many times.  Dismissing from world to prevent problems.");
+                            Dismiss(Utils.Dismiss.FromWorld);
+                            return;
+                        }
                         if (CurrentVehicle)
                         {
                             Tasks.DriveToPosition(Path.Waypoints[currentWaypointTask].Position, Path.Waypoints[currentWaypointTask].Speed, (VehicleDrivingFlags)Path.Waypoints[currentWaypointTask].DrivingFlagType, acceptedDistance);
+                            lostTasks++;
                             Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] driver [{Handle}] should have a task now.");
                         }
                         else
@@ -235,8 +242,7 @@ namespace SceneManager.CollectedPeds
                             return;
                         }
                     }
-                    //GameFiber.Sleep(100);
-                    GameFiber.Yield();
+                    GameFiber.Sleep(100);
                 }
             }
         }
@@ -244,7 +250,7 @@ namespace SceneManager.CollectedPeds
         private void StopAtWaypoint()
         {
             var stoppingDistance = GetAcceptedStoppingDistance(CurrentWaypoint.Path.Waypoints, CurrentWaypoint.Path.Waypoints.IndexOf(CurrentWaypoint));
-            Game.LogTrivial($"{CurrentVehicle.Model.Name} stopping at path {CurrentWaypoint.Path.Number} waypoint.");
+            Game.LogTrivial($"{CurrentVehicle.Model.Name} stopping at path \"{CurrentWaypoint.Path.Name}\" waypoint.");
             var vehicleToStop = CurrentVehicle;
             Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(vehicleToStop, stoppingDistance, -1, true);
             StoppedAtWaypoint = true;
@@ -258,32 +264,23 @@ namespace SceneManager.CollectedPeds
                 Game.LogTrivial($"{vehicleToStop.Model.Name} releasing from stop waypoint.");
                 Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(vehicleToStop, 0f, 1, true);
             }
-
-            //if (this && OriginalVehicle)
-            //{
-            //    Game.LogTrivial($"{OriginalVehicle.Model.Name} releasing from stop waypoint.");
-            //    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(OriginalVehicle, 0f, 1, true);
-            //    Tasks.CruiseWithVehicle(5f);
-            //}
         }
 
         private bool VehicleAndDriverAreValid()
         {
-            if (this == null || !this)
+            if (!this)
             {
-                Game.LogTrivial($"CollectedVehicle is null");
+                Game.LogTrivial($"CollectedPed is null");
                 return false;
             }
             if (!CurrentVehicle)
             {
                 Game.LogTrivial($"Vehicle is null");
-                Dismiss();
                 return false;
             }
             if (!IsAlive)
             {
                 Game.LogTrivial($"Driver is null or dead or not in a vehicle");
-                Dismiss();
                 return false;
             }
             return true;
@@ -291,26 +288,15 @@ namespace SceneManager.CollectedPeds
 
         internal void Dismiss(Dismiss dismissOption = Utils.Dismiss.FromPath, Path newPath = null)
         {
-            if(CurrentVehicle)
+            if(!this)
             {
-                if (StoppedAtWaypoint)
-                {
-                    Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(CurrentVehicle, 0f, 1, true);
-                }
-                CurrentVehicle.Dismiss();
-            }
-            if (this)
-            {
-                base.Dismiss();
-            }
-            if (!CurrentVehicle)
-            {
-                Game.LogTrivial($"Vehicle is null.");
+                Game.LogTrivial($"CollectedPed is not valid in Dismiss.");
+                Path.CollectedPeds.Remove(this);
                 return;
             }
-            if (!this)
+            if(Dismissed)
             {
-                Game.LogTrivial($"Driver is null.");
+                Game.LogTrivial($"CollectedPed is already dismissed.");
                 return;
             }
 
@@ -320,13 +306,7 @@ namespace SceneManager.CollectedPeds
                 return;
             }
 
-            if (dismissOption == Utils.Dismiss.FromPlayer)
-            {
-                DismissFromPlayer();
-                return;
-            }
-
-            if(CurrentVehicle && StoppedAtWaypoint)
+            if (CurrentVehicle && StoppedAtWaypoint)
             {
                 StoppedAtWaypoint = false;
                 Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(LastVehicle, 0f, 1, true);
@@ -344,40 +324,49 @@ namespace SceneManager.CollectedPeds
                 DismissFromPath();
             }
 
-            if(dismissOption == Utils.Dismiss.FromDirected)
+            if (dismissOption == Utils.Dismiss.FromDirected)
             {
                 DismissFromDirect();
-            }
-
-            void DismissFromPlayer()
-            {
-                Dismissed = true;
-                base.Dismiss();
-                Rage.Native.NativeFunction.Natives.x260BE8F09E326A20(CurrentVehicle, 0f, 1, true);
-                CurrentVehicle.Dismiss();
-                Path.CollectedPeds.Remove(this);
             }
 
             void DismissFromWorld()
             {
                 Game.LogTrivial($"Dismissed {CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] from the world");
-                while (CurrentVehicle.HasOccupants)
+                if (GetAttachedBlip())
+                {
+                    GetAttachedBlip().Delete();
+                }
+                while (this && CurrentVehicle && CurrentVehicle.HasOccupants)
                 {
                     foreach (Ped occupant in CurrentVehicle.Occupants)
                     {
-                        occupant.Dismiss();
                         occupant.Delete();
                     }
                     GameFiber.Yield();
                 }
-                CurrentVehicle.Delete();
+                if(!this)
+                {
+                    Path.CollectedPeds.Remove(this);
+                    return;
+                }
+                if (CurrentVehicle)
+                {
+                    CurrentVehicle.Delete();
+                }
+                Path.CollectedPeds.Remove(this);
             }
 
             void DismissFromWaypoint()
             {
-                if (CurrentWaypoint == null || Path == null)
+                if (Path == null)
                 {
-                    Game.LogTrivial($"CurrentWaypoint or Path is null");
+                    Game.LogTrivial($"Path is null");
+                    return;
+                }
+
+                if(CurrentWaypoint == null)
+                {
+                    Game.LogTrivial($"CurrentWaypoint is null");
                     return;
                 }
                 
@@ -394,18 +383,27 @@ namespace SceneManager.CollectedPeds
 
             void DismissFromPath()
             {
+                if(!this)
+                {
+                    Game.LogTrivial($"CollectedPed is not valid in DismissFromPath.");
+                    Path.CollectedPeds.Remove(this);
+                    return;
+                }
+
+                if(Dismissed)
+                {
+                    Game.LogTrivial($"CollectedPed is already dismissed.");
+                    return;
+                }
+
                 Game.LogTrivial($"Dismissing {CurrentVehicle?.Model.Name} [{CurrentVehicle?.Handle}] from path");
                 Dismissed = true;
 
                 // Check if the vehicle is near any of the path's collector waypoints
-                GameFiber.StartNew(() =>
-                {
+                //GameFiber.StartNew(() =>
+                //{
                     //var nearestCollectorWaypoint = Path.Waypoints.Where(wp => wp.IsCollector).OrderBy(wp => CurrentVehicle.DistanceTo2D(wp.Position)).FirstOrDefault();
-                    //if(nearestCollectorWaypoint == null)
-                    //{
-                    //    Game.LogTrivial($"Nearest collector is null");
-                    //}
-                    //else
+                    //if (nearestCollectorWaypoint != null)
                     //{
                     //    while (nearestCollectorWaypoint != null && CurrentVehicle && CurrentVehicle.HasDriver && this && IsAlive && CurrentVehicle.FrontPosition.DistanceTo2D(nearestCollectorWaypoint.Position) <= nearestCollectorWaypoint.CollectorRadius)
                     //    {
@@ -413,34 +411,33 @@ namespace SceneManager.CollectedPeds
                     //    }
                     //}
 
-                    if (!this || !CurrentVehicle)
+                if (!Directed)
+                {
+                    if (this)
                     {
-                        Game.LogTrivial($"Vehicle or driver is null");
-                        return;
-                    }
-
-                    if (!Directed)
-                    {
-                        Path.CollectedPeds.Remove(this);
-                        Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] dismissed successfully.");
-                        if (this)
+                        if (GetAttachedBlip())
                         {
-                            if (GetAttachedBlip())
-                            {
-                                GetAttachedBlip().Delete();
-                            }
-                            BlockPermanentEvents = false;
-                            base.Dismiss();
+                            GetAttachedBlip().Delete();
                         }
+                        BlockPermanentEvents = false;
+                        IsPersistent = false;
+                        base.Dismiss();
+                    }
+                    
+                    if (CurrentVehicle)
+                    {
+                        Game.LogTrivial($"{CurrentVehicle.Model.Name} [{CurrentVehicle.Handle}] dismissed successfully.");
+                        LastVehicle.Dismiss();
+
                         if (CurrentVehicle)
                         {
-                            CurrentVehicle.Dismiss();
-                            CurrentVehicle.IsSirenOn = false;
-                            CurrentVehicle.IsSirenSilent = true;
+                            LastVehicle.IsSirenOn = false;
+                            LastVehicle.IsSirenSilent = true;
                         }
                     }
-                }, "DismissFromPath Fiber");
-                
+                    Path.CollectedPeds.Remove(this);
+                }
+                //}, "DismissFromPath Fiber");         
             }
 
             void DismissFromDirect()
