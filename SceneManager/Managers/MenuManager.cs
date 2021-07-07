@@ -1,5 +1,6 @@
 ﻿using RAGENativeUI;
 using SceneManager.Menus;
+using SceneManager.Utils;
 using Rage;
 using System.Linq;
 using RAGENativeUI.Elements;
@@ -50,6 +51,11 @@ namespace SceneManager.Managers
             PathCreationMenu.Build();
             EditPathMenu.Build();
             BarrierMenu.Build();
+            foreach(UIMenu menu in MenuPool)
+            {
+                //Game.LogTrivial($"Setting with of {menu.SubtitleText} menu.");
+                SetMenuWidth(menu);
+            }
         }
 
         internal static void ColorMenuItems()
@@ -76,6 +82,53 @@ namespace SceneManager.Managers
                 ColorMenuItems();
                 GameFiber.Yield();
             }
+        }
+
+        internal static void SetMenuWidth(UIMenu menu)
+        {
+            float MINIMUM_WIDTH = 0.25f;
+            //float PADDING = 0.00390625f * 2; // typical padding used in RNUI
+            float widthToAssign = MINIMUM_WIDTH;
+            //float scrollerItemWidth = 0;
+            //float totalWidth = 0;
+
+            //Game.LogTrivial($"~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~");
+            foreach(UIMenuItem menuItem in menu.MenuItems)
+            {
+                //Game.LogTrivial($"========== Menu Item: {menuItem.Text}");
+                float textWidth = menuItem.GetTextWidth();
+                //Game.LogTrivial($"Menu Item Text Width: {textWidth}");
+
+                float newWidth = textWidth;
+                if (menuItem.GetType() == typeof(UIMenuListScrollerItem<string>))
+                {
+                    var scrollerItem = menuItem as UIMenuListScrollerItem<string>;
+                    float selectedItemTextWidth = scrollerItem.GetSelectedItemTextWidth();
+                    //Game.LogTrivial($"Menu Item Scroller Text Width: {selectedItemTextWidth}");
+                    
+                    //totalWidth = textWidth + selectedItemTextWidth;
+                    //Game.LogTrivial($"Total Width: {totalWidth}");
+
+                    newWidth += selectedItemTextWidth * 1.3f;
+                    //Game.LogTrivial($"========== New Width from Longer Selected Item Text: {newWidth}");
+                }
+
+                if (menuItem.LeftBadge != UIMenuItem.BadgeStyle.None)
+                {
+                    newWidth += 0.02f;
+                }
+
+                if(newWidth > 0.25f && menuItem.LeftBadge != UIMenuItem.BadgeStyle.None)
+                {
+                    newWidth += 0.02f;
+                }
+
+                if (newWidth > widthToAssign)
+                {
+                    widthToAssign = newWidth;
+                }
+            }
+            menu.Width = widthToAssign;
         }
     }
 }
