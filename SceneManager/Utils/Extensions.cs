@@ -1,4 +1,5 @@
 ﻿using Rage;
+using RAGENativeUI.Elements;
 using SceneManager.Managers;
 using SceneManager.Paths;
 using SceneManager.Waypoints;
@@ -163,16 +164,24 @@ namespace SceneManager.Utils
                 if (!vehicle.HasDriver)
                 {
                     vehicle.CreateRandomDriver();
-                    while (vehicle && !vehicle.HasDriver)
-                    {
-                        GameFiber.Yield();
-                    }
-                    if(!vehicle || !vehicle.Driver)
+                    GameFiber.Yield();
+                    //while (vehicle && !vehicle.HasDriver)
+                    //{
+                    //    Game.LogTrivial($"Trying to create new driver");
+                    //    GameFiber.Yield();
+                    //}
+                    if(!vehicle)
                     {
                         return false;
                     }
+                    if(!vehicle.Driver)
+                    {
+                        Game.LogTrivial($"Unable to create a new driver");
+                        vehicle.Delete();
+                        return false;
+                    }
                     Game.LogTrivial($"Vehicle has a new driver");
-                    vehicle.Driver.IsPersistent = true;
+                    //vehicle.Driver.IsPersistent = true;
                     vehicle.Driver.BlockPermanentEvents = true;
                 }
                 return true;
@@ -181,6 +190,29 @@ namespace SceneManager.Utils
             {
                 return false;
             }
+        }
+
+        internal static float GetTextWidth(this UIMenuItem menuItem)
+        {
+            menuItem.TextStyle.Apply();
+            Rage.Native.NativeFunction.Natives.x54CE8AC98E120CAB("STRING"); // _BEGIN_TEXT_COMMAND_GET_WIDTH
+            Rage.Native.NativeFunction.Natives.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(menuItem.Text);
+            return Rage.Native.NativeFunction.Natives.x85F061DA64ED2F67<float>(true); // _END_TEXT_COMMAND_GET_WIDTH
+        }
+
+        internal static float GetSelectedItemTextWidth(this UIMenuListScrollerItem<string> scrollerItem)
+        {
+            if (scrollerItem.OptionCount == 0)
+            {
+                return 0;
+            }
+            scrollerItem.GetTextWidth();
+            scrollerItem.TextStyle.Apply();
+
+            Rage.Native.NativeFunction.Natives.x54CE8AC98E120CAB("STRING"); // _BEGIN_TEXT_COMMAND_GET_WIDTH
+            Rage.Native.NativeFunction.Natives.ADD_TEXT_COMPONENT_SUBSTRING_PLAYER_NAME(scrollerItem.SelectedItem);
+
+            return Rage.Native.NativeFunction.Natives.x85F061DA64ED2F67<float>(true); // _END_TEXT_COMMAND_GET_WIDTH
         }
     }
 }
