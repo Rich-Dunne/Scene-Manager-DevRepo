@@ -29,6 +29,7 @@ namespace SceneManager.Menus
         {
             Menu.ParentMenu = EditPathMenu.Menu;
             MenuManager.MenuPool.Add(Menu);
+            Menu.MaxItemsOnScreen = 11;
 
             Menu.OnScrollerChange += EditWaypoint_OnScrollerChanged;
             Menu.OnCheckboxChange += EditWaypoint_OnCheckboxChanged;
