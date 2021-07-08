@@ -75,7 +75,10 @@ namespace SceneManager.Menus
             }
 
             Menu.AddItem(ChangeWaypointSpeed = new UIMenuNumericScrollerItem<int>("Waypoint Speed", $"How fast the AI will drive to the waypoint in ~b~{SettingsMenu.SpeedUnits.SelectedItem}", 5, 100, 5));
-            ChangeWaypointSpeed.Value = (int)MathHelper.ConvertMetersPerSecondToMilesPerHour(currentWaypoint.Speed);
+
+            ChangeWaypointSpeed.Value = SettingsMenu.SpeedUnits.SelectedItem == SpeedUnits.KPH
+                ? MathHelper.ConvertMetersPerSecondToKilometersPerHourRounded(currentWaypoint.Speed)
+                : (int)MathHelper.ConvertMetersPerSecondToMilesPerHour(currentWaypoint.Speed);
 
             Menu.AddItem(UpdateWaypointPosition);
             Menu.AddItem(UpdateWaypoint);
@@ -93,7 +96,9 @@ namespace SceneManager.Menus
 
         private static void UpdateMenuSettings(Waypoint currentWaypoint)
         {
-            ChangeWaypointSpeed.Value = (int)MathHelper.ConvertMetersPerSecondToMilesPerHour(currentWaypoint.Speed);
+            ChangeWaypointSpeed.Value = SettingsMenu.SpeedUnits.SelectedItem == SpeedUnits.KPH
+                ? MathHelper.ConvertMetersPerSecondToKilometersPerHourRounded(currentWaypoint.Speed)
+                : (int)MathHelper.ConvertMetersPerSecondToMilesPerHour(currentWaypoint.Speed);
             StopWaypointType.Checked = currentWaypoint.IsStopWaypoint;
             DirectWaypointBehavior.Checked = currentWaypoint.DrivingFlagType == DrivingFlagType.Direct ? true : false;
             CollectorWaypoint.Checked = currentWaypoint.IsCollector;
@@ -173,7 +178,7 @@ namespace SceneManager.Menus
             if (selectedItem == RemoveWaypoint)
             {
                 PathManager.RemoveEditWaypoint(currentPath);
-                if(PathManager.Paths.Length < 1)
+                if(!PathManager.Paths.Contains(currentPath))
                 {
                     return;
                 }
