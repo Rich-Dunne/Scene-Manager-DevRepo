@@ -100,7 +100,7 @@ namespace SceneManager.Paths
         internal void Finish()
         {
             Game.LogTrivial($"[Path Creation] Path \"{Name}\" finished with {Waypoints.Count} waypoints.");
-            Game.DisplayNotification($"~o~Scene Manager ~w~[~g~Success~w~]\n~w~Path ~b~{Name} ~w~complete.");
+            Game.DisplayNotification($"~o~Scene Manager ~g~[Success~w~]\n~w~Path ~b~{Name} ~w~complete.");
             State = State.Finished;
             IsEnabled = true;
             Waypoints.ForEach(x => x.EnableBlip());
