@@ -87,7 +87,7 @@ namespace SceneManager.Managers
             {
                 Game.LogTrivial($"Deleting the last waypoint from the path.");
                 currentPath.Delete();
-                Paths[Array.IndexOf(Paths, currentPath)] = null;
+                
                 PathMainMenu.Build();
 
                 EditWaypointMenu.Menu.Visible = false;
