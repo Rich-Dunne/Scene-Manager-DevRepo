@@ -13,8 +13,8 @@
 </rule>
 </module>
 <probePath>..\..\..\packages\InputManager.1.0.0\lib</probePath>
+<probePath>..\..\..\packages\RAGENativeUI.1.8.0\lib\net472</probePath>
 <probePath>..\..\..\packages\RagePluginHook.1.86.1\lib\net472</probePath>
 <probePath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8</probePath>
 <probePath>C:\Program Files (x86)\Reference Assemblies\Microsoft\Framework\.NETFramework\v4.8\Facades</probePath>
-<probePath>..\..\..\packages\RAGENativeUI.1.8.0\lib\net472</probePath>
 </project>
