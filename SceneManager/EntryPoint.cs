@@ -18,6 +18,7 @@ namespace SceneManager
             if (!DependencyChecker.DependenciesInstalled())
             {
                 Game.UnloadActivePlugin();
+                return;
             }
 
             while (Game.IsLoading)
@@ -55,7 +56,6 @@ namespace SceneManager
             PathManager.DeleteAllPaths();
 
             Game.LogTrivial($"Plugin has shut down.");
-            //Game.DisplayNotification($"~o~Scene Manager ~r~[Terminated]\n~w~The plugin has shut down.");
         }
     }
 }
