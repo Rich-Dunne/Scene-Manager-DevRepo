@@ -52,7 +52,7 @@ namespace SceneManager.Utils
 
         internal static void Direct(Vehicle nearbyVehicle, Path path, Waypoint targetWaypoint)
         {
-            var nearbyVehiclesPath = PathManager.Paths.FirstOrDefault(p => p.CollectedPeds.Any(v => v.CurrentVehicle == nearbyVehicle));
+            var nearbyVehiclesPath = PathManager.Paths.FirstOrDefault(p => p != null && p.CollectedPeds.Any(v => v.CurrentVehicle == nearbyVehicle));
             if(nearbyVehiclesPath == null)
             {
                 Game.LogTrivial($"Nearby vehicle does not belong to any path.");
