@@ -2,10 +2,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Reflection;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace SceneManager.Utils
 {
@@ -13,7 +10,7 @@ namespace SceneManager.Utils
     {
         internal static bool DependenciesInstalled()
         {
-            if (!InputManagerChecker() || !CheckRNUIVersion())
+            if (!InputManagerChecker() || !CheckRNUIVersion() || !IniFilePresent())
             {
                 return false;
             }
@@ -58,6 +55,17 @@ namespace SceneManager.Utils
                 return false;
             }
             return true;
+        }
+
+        private static bool IniFilePresent()
+        {
+            var exists = File.Exists("Plugins/SceneManager.ini");
+            if (!exists)
+            {
+                Game.LogTrivial($"SceneManager.ini was not found in the Plugins folder.");
+                Game.DisplayNotification($"~o~Scene Manager ~r~[Error]\n~w~SceneManager.ini was not found in your Plugins folder.  Please install SceneManager.ini and try again.");
+            }
+            return exists;
         }
     }
 }
