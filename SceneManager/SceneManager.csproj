@@ -62,6 +62,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="API\Functions.cs" />
     <Compile Include="Menus\DriverMenu.cs" />
     <Compile Include="Menus\ExportPathMenu.cs" />
     <Compile Include="Menus\ImportPathMenu.cs" />
