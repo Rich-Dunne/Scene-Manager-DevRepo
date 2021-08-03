@@ -89,7 +89,7 @@ namespace SceneManager.Menus
                 var checkedItems = checkboxItems.Where(x => x.Checked);
                 foreach(UIMenuCheckboxItem checkedItem in checkedItems)
                 {
-                    var pathToExport = PathManager.Paths.First(x => x.Name == checkedItem.Text);
+                    var pathToExport = PathManager.Paths.First(x => x != null && x.Name == checkedItem.Text);
                     ExportPaths.Add(pathToExport);
                 }
 
@@ -97,7 +97,7 @@ namespace SceneManager.Menus
                 {
                     foreach (UIMenuCheckboxItem menuItem in checkedItems)
                     {
-                        var pathToExport = PathManager.Paths.First(x => x.Name == menuItem.Text);
+                        var pathToExport = PathManager.Paths.First(x => x != null && x.Name == menuItem.Text);
                         ExportAsIndividualFile(pathToExport);
                     }
                 }

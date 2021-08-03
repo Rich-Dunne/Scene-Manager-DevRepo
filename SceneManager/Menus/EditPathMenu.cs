@@ -80,7 +80,7 @@ namespace SceneManager
             if (checkboxItem == DisablePath)
             {
                 //var currentPath = PathManager.Paths[PathMainMenu.EditPath.Index];
-                var currentPath = PathManager.Paths.FirstOrDefault(x => x.Name == PathMainMenu.EditPath.OptionText);
+                var currentPath = PathManager.Paths.FirstOrDefault(x => x != null && x.Name == PathMainMenu.EditPath.OptionText);
                 if(currentPath == null)
                 {
                     return;

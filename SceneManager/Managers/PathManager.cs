@@ -54,7 +54,7 @@ namespace SceneManager.Managers
 
         internal static void UpdateWaypoint()
         {
-            var currentPath = Paths.FirstOrDefault(x => x.Name == PathMainMenu.EditPath.OptionText);
+            var currentPath = Paths.FirstOrDefault(x => x != null && x.Name == PathMainMenu.EditPath.OptionText);
             var currentWaypoint = currentPath.Waypoints[EditWaypointMenu.EditWaypoint.Index];
             DrivingFlagType drivingFlag = EditWaypointMenu.DirectWaypointBehavior.Checked ? DrivingFlagType.Direct : DrivingFlagType.Normal;
 
@@ -198,27 +198,33 @@ namespace SceneManager.Managers
             Menus.MainMenu.Build();
         }
 
-        internal static List<Paths.Path> ImportPathsFromFile(string file)
+        internal static List<Paths.Path> ImportPathsFromFile(string fileName, string filePath = "")
         {
-            List<Paths.Path> importedPaths;
             var GAME_DIRECTORY = Directory.GetCurrentDirectory();
-            var SAVED_PATHS_DIRECTORY = GAME_DIRECTORY + "\\plugins\\SceneManager\\Saved Paths\\";
-            if (!Directory.Exists(SAVED_PATHS_DIRECTORY))
+            var PATH_FILE_DIRECTORY = GAME_DIRECTORY + "\\plugins\\SceneManager\\Saved Paths\\";
+
+            if(filePath != "")
             {
-                Game.LogTrivial($"Directory '\\plugins\\SceneManager\\Saved Paths' does not exist.  No paths available to import.");
+                PATH_FILE_DIRECTORY = filePath;
+            }
+
+            if (!Directory.Exists(PATH_FILE_DIRECTORY))
+            {
+                Game.LogTrivial($"Directory {PATH_FILE_DIRECTORY} does not exist.  No paths available to import.");
                 return null;
             }
 
+            List<Paths.Path> importedPaths;
             var overrides = Serializer.DefineOverrides();
             try
             {
-                importedPaths = Serializer.LoadItemFromXML<List<Paths.Path>>(SAVED_PATHS_DIRECTORY + Path.GetFileName(file) + ".xml", overrides);
-                ImportedPaths.Add(file, importedPaths);
+                importedPaths = Serializer.LoadItemFromXML<List<Paths.Path>>(PATH_FILE_DIRECTORY + Path.GetFileName(fileName) + ".xml", overrides);
+                ImportedPaths.Add(fileName, importedPaths);
                 
             }
             catch (Exception ex)
             {
-                Game.DisplayNotification($"~y~Scene Manager ~w~[~r~ERROR~w~]: There was a problem importing file ~b~{file}~w~.  This is likely due to an XML error.  Double check any changes you've made to this file.");
+                Game.DisplayNotification($"~y~Scene Manager ~w~[~r~ERROR~w~]: There was a problem importing file ~b~{fileName}~w~.  This is likely due to an XML error.  Double check any changes you've made to this file.");
                 Game.LogTrivial($"Error: {ex.Message}");
                 return null;
             }
@@ -238,7 +244,7 @@ namespace SceneManager.Managers
 
                     if (Game.IsKeyDown(Keys.Y))
                     {
-                        var pathToReplace = Paths.First(x => x.Name == path.Name);
+                        var pathToReplace = Paths.First(x => x != null && x.Name == path.Name);
                         var pathToReplaceIndex = Array.IndexOf(Paths, pathToReplace);
                         pathToReplace.Delete();
                         Paths[pathToReplaceIndex] = path;
