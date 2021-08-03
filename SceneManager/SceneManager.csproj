@@ -36,8 +36,8 @@
     <Reference Include="InputManager, Version=1.0.0.0, Culture=neutral, processorArchitecture=MSIL">
       <HintPath>..\packages\InputManager.1.0.0\lib\InputManager.dll</HintPath>
     </Reference>
-    <Reference Include="RAGENativeUI, Version=1.8.0.0, Culture=neutral, processorArchitecture=AMD64">
-      <HintPath>..\packages\RAGENativeUI.1.8.0\lib\net472\RAGENativeUI.dll</HintPath>
+    <Reference Include="RAGENativeUI, Version=1.8.1.0, Culture=neutral, processorArchitecture=AMD64">
+      <HintPath>..\packages\RAGENativeUI.1.8.1\lib\net472\RAGENativeUI.dll</HintPath>
     </Reference>
     <Reference Include="RagePluginHook, Version=0.0.0.0, Culture=neutral, processorArchitecture=AMD64">
       <HintPath>..\packages\RagePluginHook.1.86.1\lib\net472\RagePluginHook.dll</HintPath>
