@@ -149,7 +149,7 @@ namespace SceneManager.Managers
 
             if (barrier != null && BarrierMenu.BelongsToPath.Checked)
             {
-                var matchingPath = PathManager.Paths.FirstOrDefault(x => x.Name == BarrierMenu.AddToPath.OptionText);
+                var matchingPath = PathManager.Paths.FirstOrDefault(x => x != null && x.Name == BarrierMenu.AddToPath.OptionText);
                 if(matchingPath != null)
                 {
                     matchingPath.Barriers.Add(barrier);
@@ -257,7 +257,7 @@ namespace SceneManager.Managers
                 return;
             }
 
-            var pathToAssignTo = PathManager.Paths.First(x => x.Name == BarrierMenu.AddUnassignedToPath.OptionText);
+            var pathToAssignTo = PathManager.Paths.First(x => x != null && x.Name == BarrierMenu.AddUnassignedToPath.OptionText);
             foreach (Barrier barrier in unassignedBarriers)
             {
                 pathToAssignTo.Barriers.Add(barrier);
