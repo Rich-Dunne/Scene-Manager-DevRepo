@@ -61,7 +61,7 @@ namespace SceneManager.Menus
                 //setBarrierTrafficLight.Index = 3;
             }
             Menu.AddItem(BelongsToPath);
-            BelongsToPath.Enabled = PathManager.Paths.Count() > 0 ? true : false;
+            BelongsToPath.Enabled = PathManager.Paths.Any(x => x != null);
             BelongsToPath.Checked = false;
 
             AddToPath = new UIMenuListScrollerItem<string>("Path", "The path the barrier will be saved with when the path is exported.", PathManager.Paths.Where(x => x != null).Select(x => x.Name));
