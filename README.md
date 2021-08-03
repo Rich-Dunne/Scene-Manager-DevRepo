@@ -1,17 +1,17 @@
 # Scene Manager
 
 ## INSTALLATION
-Drag and drop the contents from within the downloaded GTA V folder into where your GTA V is installed.
+Drag and drop the contents from within the downloaded GTA V folder into where your GTA V is installed.  Ensure the plugin is set to load on startup in the RagePluginHook settings, or load it manually via the in-game console.
 ![How to drag and drop](https://i.imgur.com/OzQWv2B.jpg)
-
-## GET SUPPORT AND REPORT PROBLEMS
-For the fastest support, [join my Discord](https://discord.gg/cUQaTNQ) and ask your question in the **correct category/channel**.  For slower support, [use this thread on the LSPDFR forums](https://www.lcpdfr.com/forums/topic/107730-richs-plugin-support-thread/).
 
 ## GET SUPPORT AND REPORT PROBLEMS
 For the fastest support, [join my Discord](https://discord.gg/cUQaTNQ) and ask your question in the **correct category/channel**.  For slower support, [use this thread on the LSPDFR forums](https://www.lcpdfr.com/forums/topic/107730-richs-plugin-support-thread/).
 
 ## HOW TO USE SCENE MANAGER
 ### Using the Menus:
+
+The default keybind to open the menu is Left Shift and T.
+
 Menu options with gold colored text are selectable, which means when you select these menu items, something will happen (opening a new menu, adding a waypoint, placing a barrier, etc).  Menu options with white colored text are interactable (can be scrolled through, for example), but nothing will happen if you try to select them.
 
 ![Menus](https://i.imgur.com/GQNZrm4.jpg)
@@ -60,6 +60,25 @@ Menu options with gold colored text are selectable, which means when you select 
 5.  You should have the 3D Waypoints setting enabled anytime you work with waypoints.
 
 ![Scene overview](https://i.imgur.com/Rd5Z5qe.jpg)
+
+## Using the API
+For plugin developers who would like to utilize the Scene Manager API, you must first resolve the assembly in your plugin since Scene Manager is not in the GTA V root directory.  Including the follwing code when your plugin is initialized should work:
+
+```
+private static Assembly OnAssemblyResolve(object sender, ResolveEventArgs args)
+{
+    if (args.Name.StartsWith("SceneManager"))
+    {
+        return Assembly.Load(File.ReadAllBytes(@"Plugins\SceneManager.dll"));
+    }
+
+    return null;
+}
+```
+
+As of V2.3.3, the API includes two functions: `LoadPathsFromFile` and `DeleteLoadedPaths`.  `LoadPathsFromFile` has one mandatory parameter, the file name for the path, and an optional parameter where you can specify the file path location.  Be default, all paths are loaded from `SceneManager/Saved Paths`.  When you load paths through the API, they are loaded using a separate instance of Scene Manager, so you cannot interact with them using the traditional Scene Manager menu.
+
+When you're finished with the path, you should call `DeleteLoadedPaths` method to clean everything up.
 
 ## CREDITS
 * Author: Rich
