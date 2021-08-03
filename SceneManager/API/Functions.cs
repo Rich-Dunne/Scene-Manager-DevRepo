@@ -1,4 +1,7 @@
-﻿namespace SceneManager.API
+﻿using Rage;
+using SceneManager.Managers;
+
+namespace SceneManager.API
 {
     public static class Functions
     {
@@ -6,10 +9,26 @@
         /// Import paths from the Saved Paths folder and load them into the game world.
         /// </summary>
         /// <param name="fileName">The name of the file containing the path (extension excluded).</param>
-        public static void LoadPaths(string fileName)
+        /// <param name="filePath">Specify the path from where the file will be loaded from.</param>
+        public static void LoadPathsFromFile(string fileName, string filePath = "")
         {
-            var importedPaths = Managers.PathManager.ImportPathsFromFile(fileName);
-            Managers.PathManager.LoadImportedPaths(importedPaths, fileName);
+            if(PathManager.ImportedPaths.ContainsKey(fileName))
+            {
+                Game.LogTrivial($"A file with that name is already loaded.");
+                return;
+            }
+
+            var importedPaths = PathManager.ImportPathsFromFile(fileName, filePath);
+            PathManager.LoadImportedPaths(importedPaths, fileName);
+        }
+
+        /// <summary>
+        /// Delete paths loaded from <see cref="LoadPathsFromFile"/>.
+        /// </summary>
+        public static void DeleteLoadedPaths()
+        {
+            PathManager.DeleteAllPaths();
+            PathManager.ImportedPaths.Clear();
         }
     }
 }
